@@ -1,6 +1,6 @@
 import { Elysia } from 'elysia';
 import { authContext } from '#shared/auth-context';
-import { requireUser } from '#shared/access';
+import { assertTimeVisible, requireUser } from '#shared/access';
 import { guards } from '#shared/guards';
 import { mcpTool } from '#mcp/generate';
 import { accessErrors, commonErrors } from '#shared/responses';
@@ -274,7 +274,10 @@ export const analyticsRoutes = new Elysia({
 
   .get(
     '/projects/:projectKey/analytics/time-by-user',
-    async ({ project }) => getTimeByUser(project.id),
+    async ({ project, user }) => {
+      await assertTimeVisible(project.id, user);
+      return getTimeByUser(project.id);
+    },
     {
       permission: ['dashboards', 'read'],
       response: { 200: TimeByUserListResponse, ...accessErrors },
@@ -287,7 +290,10 @@ export const analyticsRoutes = new Elysia({
 
   .get(
     '/projects/:projectKey/analytics/time-goal',
-    async ({ project }) => getTimeGoal(project.id),
+    async ({ project, user }) => {
+      await assertTimeVisible(project.id, user);
+      return getTimeGoal(project.id);
+    },
     {
       permission: ['dashboards', 'read'],
       response: { 200: TimeGoalDto, ...accessErrors },

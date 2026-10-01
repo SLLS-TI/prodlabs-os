@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'bun:test';
 import { authedApi, type Api } from '#tests/helpers/app';
 import { signUpTestUser } from '#tests/helpers/auth';
 import { addProjectMember } from '#tests/helpers/members';
+import { createRole } from '#tests/helpers/roles';
 import { resetDb } from '#tests/helpers/db';
 
 // The time logged on an issue: one entry per stretch of work, each belonging to the
@@ -290,5 +291,56 @@ describe('worklogs', () => {
     await asOwner.issues({ issueId: issue.id }).delete();
 
     expect((await asOwner.worklogs({ worklogId: entry.id }).delete()).status).toBe(404);
+  });
+
+  describe('time-visibility gate', () => {
+    function restrictTo(client: Api, roleIds: number[]) {
+      return client.projects({ projectKey: 'MKT' }).settings.estimates.patch({
+        points: false,
+        time: false,
+        logging: true,
+        timeGoalMinutes: null,
+        timeGoalPeriod: null,
+        timeVisibleRoleIds: roleIds,
+      });
+    }
+
+    it('403s worklog list/create and 200/201s owner + allowlisted member', async () => {
+      const { asOwner, columnId } = await setupProject();
+      const allowed = await createRole(asOwner, 'MKT', {
+        name: 'Allowed',
+        permissions: { work_items: { read: true, create: true, edit: true } },
+      });
+      const other = await createRole(asOwner, 'MKT', {
+        name: 'Other',
+        permissions: { work_items: { read: true, create: true, edit: true } },
+      });
+      const allowedMember = await addProjectMember(asOwner, 'MKT', allowed.data!.id);
+      const otherMember = await addProjectMember(asOwner, 'MKT', other.data!.id);
+      const issue = (await createIssue(asOwner, columnId)).data!;
+      await restrictTo(asOwner, [allowed.data!.id]);
+
+      expect((await otherMember.issues({ issueId: issue.id }).worklogs.get()).status).toBe(403);
+      expect((await log(otherMember, issue.id, { minutes: 10 })).status).toBe(403);
+
+      expect((await allowedMember.issues({ issueId: issue.id }).worklogs.get()).status).toBe(200);
+      expect((await log(allowedMember, issue.id, { minutes: 10 })).status).toBe(201);
+      expect((await asOwner.issues({ issueId: issue.id }).worklogs.get()).status).toBe(200);
+      expect((await log(asOwner, issue.id, { minutes: 10 })).status).toBe(201);
+    });
+
+    it('still allows a member when the allowlist is empty', async () => {
+      const { asOwner, columnId } = await setupProject();
+      const other = await createRole(asOwner, 'MKT', {
+        name: 'Other',
+        permissions: { work_items: { read: true, create: true, edit: true } },
+      });
+      const otherMember = await addProjectMember(asOwner, 'MKT', other.data!.id);
+      const issue = (await createIssue(asOwner, columnId)).data!;
+      await restrictTo(asOwner, []);
+
+      expect((await otherMember.issues({ issueId: issue.id }).worklogs.get()).status).toBe(200);
+      expect((await log(otherMember, issue.id, { minutes: 10 })).status).toBe(201);
+    });
   });
 });

@@ -8,6 +8,8 @@ import {
 import { featureLabel, type ProjectFeature } from './features';
 import { getMembership, getMemberContext, getTeamPermissions } from '#modules/members/service';
 import { getTeamMembership, runsTeam, type TeamStanding } from '#modules/teams/service';
+import { getDefaultRoleId } from '#modules/roles/service';
+import { canSeeTimeTracking } from '#modules/projects/visibility';
 import { hasPermission, type PermissionAction, type PermissionResource } from './permissions';
 
 // The authenticated user carried on the request context. Populated by the
@@ -208,6 +210,46 @@ export async function assertPermission(
   if (!hasPermission(ctx.permissions, resource, action)) {
     throw new HttpError(403, `You do not have permission to ${action} ${resourceLabel(resource)}`);
   }
+}
+
+// Asserts the viewer may read this project's time tracking, 403 otherwise. The
+// per-project read gate behind every time surface (worklogs, the analytics time
+// endpoints, and the timer). Owners always pass; otherwise the project's
+// time_visible_role_ids allowlist decides, with the viewer's role resolved to the
+// team's default when they have none. Operating the timer still also needs
+// work_items edit — this is the additional read gate, so a member who cannot see
+// time cannot operate it. God mode is not special-cased, consistent with
+// assertPermission: a god who is a project owner passes, one who is not a member
+// has already been refused upstream.
+export async function assertTimeVisible(
+  projectId: number,
+  user: AuthUser | null | undefined,
+): Promise<void> {
+  const current = requireUser(user);
+  const ctx = await getMemberContext(projectId, current.id);
+  if (!ctx) throw new HttpError(403, 'You do not have access to this project');
+  const project = await getProjectById(projectId);
+  if (!project) throw new HttpError(404, 'Project not found');
+  const effectiveRoleId = ctx.roleId ?? (await getDefaultRoleId(project.teamId));
+  if (!canSeeTimeTracking(ctx.role, effectiveRoleId, project.timeVisibleRoleIds)) {
+    throw new HttpError(403, 'You cannot view time tracking in this project');
+  }
+}
+
+// Whether the viewer may read the project's time tracking, without throwing. Used to
+// redact per-issue logged time from the board/list/detail payloads of a restricted
+// member, so no time total leaks through a field even though the UI is hidden.
+export async function checkTimeVisible(
+  projectId: number,
+  user: AuthUser | null | undefined,
+): Promise<boolean> {
+  if (!user) return false;
+  const ctx = await getMemberContext(projectId, user.id);
+  if (!ctx) return false;
+  const project = await getProjectById(projectId);
+  if (!project) return false;
+  const effectiveRoleId = ctx.roleId ?? (await getDefaultRoleId(project.teamId));
+  return canSeeTimeTracking(ctx.role, effectiveRoleId, project.timeVisibleRoleIds);
 }
 
 // Asserts the user is an owner of the project, addressed by id — the parallel of

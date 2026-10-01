@@ -126,6 +126,9 @@ export const ProjectResponse = t.Object({
   timeLoggingEnabled: t.Boolean(),
   timeGoalMinutes: t.Nullable(t.Integer({ minimum: 1 })),
   timeGoalPeriod: t.Nullable(t.Union([t.Literal('total'), t.Literal('weekly')])),
+  // Which team roles may see the project's time tracking. Empty means every role.
+  // Editor-only config, read by the settings page.
+  timeVisibleRoleIds: t.Array(t.Integer()),
   availableFeatures: t.Array(t.UnionEnum([...PROJECT_FEATURES])),
   createdAt: t.String(),
 });
@@ -146,6 +149,9 @@ export const ProjectListResponse = t.Array(
       isFavorite: t.Boolean({ description: 'Whether you starred this project.' }),
       isHidden: t.Boolean({
         description: 'Whether you hid this project in your navigation. Does not restrict access.',
+      }),
+      canSeeTimeTracking: t.Boolean({
+        description: "Whether you may see this project's time tracking (owner or an allowed role).",
       }),
       permissions: t.Optional(PermissionMatrixSchema),
     }),
@@ -195,6 +201,9 @@ export const ProjectBoardResponse = t.Object({
   viewer: ViewerResponse,
   // The caller's resolved permission matrix (owners get every flag).
   permissions: PermissionMatrixSchema,
+  // Whether the caller may see this project's time tracking (owner or an allowed
+  // role). The web app hides every time surface behind it; the API enforces it too.
+  canSeeTimeTracking: t.Boolean(),
 });
 
 // Which optional sections the project shows (ProjectFeatures from the service).
@@ -250,6 +259,9 @@ export const EstimatesResponse = t.Object({
   // time ever logged ('total') or the current week's ('weekly'). Both null together.
   timeGoalMinutes: t.Nullable(t.Integer({ minimum: 1 })),
   timeGoalPeriod: t.Nullable(t.Union([t.Literal('total'), t.Literal('weekly')])),
+  // Which team roles may see the project's time tracking. Empty means every role.
+  // The write validates each id belongs to the project's team.
+  timeVisibleRoleIds: t.Array(t.Integer()),
 });
 
 export const updateEstimatesBody = EstimatesResponse;

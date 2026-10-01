@@ -3,7 +3,13 @@ import { mcpTool } from '#mcp/generate';
 import { noContent } from '#shared/http';
 import { guards, entityGuard, assertMcpAllowed, requiresPermission } from '#shared/guards';
 import { authContext } from '#shared/auth-context';
-import { assertPermission, assertProjectOwner, requireUser } from '#shared/access';
+import {
+  assertPermission,
+  assertProjectOwner,
+  assertTimeVisible,
+  checkTimeVisible,
+  requireUser,
+} from '#shared/access';
 import { HttpError } from '#shared/lib';
 import { accessErrors, commonErrors, errors } from '#shared/responses';
 import { deleteObject } from '@repo/storage';
@@ -454,12 +460,15 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   // search_issues, and read an issue's relations with the issue itself.
   .get(
     '/projects/:projectKey/issues/board',
-    async ({ project }) => ({
-      issues: await attachSubtaskCounts(
-        await attachBoardLinks(await listIssues(project), project.id),
-        project.id,
-      ),
-    }),
+    async ({ project, user }) => {
+      const canSeeTime = await checkTimeVisible(project.id, user);
+      return {
+        issues: await attachSubtaskCounts(
+          await attachBoardLinks(await listIssues(project, canSeeTime), project.id),
+          project.id,
+        ),
+      };
+    },
     {
       params: projectKeyParams,
       permission: ['work_items', 'read'],
@@ -472,7 +481,8 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   // and restore. Same read permission as the board.
   .get(
     '/projects/:projectKey/issues/archived',
-    async ({ project }) => listArchivedIssues(project),
+    async ({ project, user }) =>
+      listArchivedIssues(project, await checkTimeVisible(project.id, user)),
     {
       params: projectKeyParams,
       permission: ['work_items', 'read'],
@@ -486,8 +496,9 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   // identifier-based issue page. Same read permission as the by-id read.
   .get(
     '/projects/:projectKey/issues/:sequenceNumber',
-    async ({ project, params }) => {
-      const issue = await getIssueBySequence(project.id, params.sequenceNumber);
+    async ({ project, params, user }) => {
+      const canSeeTime = await checkTimeVisible(project.id, user);
+      const issue = await getIssueBySequence(project.id, params.sequenceNumber, canSeeTime);
       if (!issue) throw new HttpError(404, 'Issue not found');
       const fields = await getIssueFieldValues(issue.id);
       const links = await listIssueLinks(issue.id);
@@ -528,12 +539,14 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   .get(
     '/issues/:issueId',
     async ({ params, user, request }) => {
-      const issue = await getIssue(params.issueId);
-      if (!issue) throw new HttpError(404, 'Issue not found');
-      await assertPermission(issue.projectId, user, 'work_items', 'read');
+      const projectId = await getIssueProjectId(params.issueId);
+      if (projectId == null) throw new HttpError(404, 'Issue not found');
+      await assertPermission(projectId, user, 'work_items', 'read');
       // This route resolves the project itself, so it also enforces the per-project
       // MCP toggle itself (it does not run through the workItem guard).
-      await assertMcpAllowed(issue.projectId, request.headers);
+      await assertMcpAllowed(projectId, request.headers);
+      const issue = await getIssue(params.issueId, await checkTimeVisible(projectId, user));
+      if (!issue) throw new HttpError(404, 'Issue not found');
       const fields = await getIssueFieldValues(issue.id);
       const links = await listIssueLinks(issue.id);
       const watchers = await listIssueWatchers(issue.projectId, issue.id);
@@ -1066,21 +1079,29 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   // The time logged on the issue. The entries are their own read: the issue payload
   // carries their sum, which is what a board and the Time property show, and only
   // the section that lists them needs the entries themselves.
-  .get('/issues/:issueId/worklogs', async ({ params }) => listWorklogs(params.issueId), {
-    params: issueParams,
-    workItem: 'read',
-    response: { 200: t.Array(WorklogResponse), ...commonErrors },
-    detail: {
-      summary: "List an issue's logged time",
-      description:
-        'Every time entry on an issue, the newest day first. The time an issue took is the sum of them.',
-      ...mcpTool('list_worklogs'),
+  .get(
+    '/issues/:issueId/worklogs',
+    async ({ params, projectId, user }) => {
+      await assertTimeVisible(projectId, user);
+      return listWorklogs(params.issueId);
     },
-  })
+    {
+      params: issueParams,
+      workItem: 'read',
+      response: { 200: t.Array(WorklogResponse), ...commonErrors },
+      detail: {
+        summary: "List an issue's logged time",
+        description:
+          'Every time entry on an issue, the newest day first. The time an issue took is the sum of them.',
+        ...mcpTool('list_worklogs'),
+      },
+    },
+  )
 
   .post(
     '/issues/:issueId/worklogs',
-    async ({ params, body, user, set }) => {
+    async ({ params, body, user, projectId, set }) => {
+      await assertTimeVisible(projectId, user);
       set.status = 201;
       return createWorklog(params.issueId, requireUser(user).id, body);
     },
@@ -1103,7 +1124,8 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   // cannot make two. A worklog is written only when the timer is stopped.
   .post(
     '/issues/:issueId/timer/start',
-    async ({ params, user, set }) => {
+    async ({ params, user, projectId, set }) => {
+      await assertTimeVisible(projectId, user);
       set.status = 201;
       return startTimer(params.issueId, requireUser(user).id);
     },
@@ -1123,7 +1145,10 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   // elapsed time (rounded up to at least one minute). 404 when none is running.
   .post(
     '/issues/:issueId/timer/stop',
-    async ({ params, user }) => stopTimer(params.issueId, requireUser(user).id),
+    async ({ params, user, projectId }) => {
+      await assertTimeVisible(projectId, user);
+      return stopTimer(params.issueId, requireUser(user).id);
+    },
     {
       params: issueParams,
       workItem: 'edit',
@@ -1138,7 +1163,10 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
 
   .patch(
     '/worklogs/:worklogId',
-    async ({ params, body, user }) => updateWorklog(params.worklogId, body, requireUser(user).id),
+    async ({ params, body, user, projectId }) => {
+      await assertTimeVisible(projectId, user);
+      return updateWorklog(params.worklogId, body, requireUser(user).id);
+    },
     {
       body: updateWorklogBody,
       params: worklogParams,
@@ -1157,7 +1185,8 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
 
   .delete(
     '/worklogs/:worklogId',
-    async ({ params, user }) => {
+    async ({ params, user, projectId }) => {
+      await assertTimeVisible(projectId, user);
       const removed = await deleteWorklog(params.worklogId, requireUser(user).id);
       if (!removed) throw new HttpError(404, 'Time entry not found');
       return noContent();
