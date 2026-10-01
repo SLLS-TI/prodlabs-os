@@ -114,6 +114,7 @@ import {
   createWorklogBody,
   updateWorklogBody,
   TimerSessionResponse,
+  RunningTimerResponse,
   StopTimerResponse,
   IssueWithFieldsResponse,
   IssueSearchHitResponse,
@@ -529,7 +530,7 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   // wins over the numeric param. Reads only the caller's own sessions, so it needs
   // no project guard beyond the session. Web-only.
   .get('/issues/timers/running', async ({ user }) => listRunningTimers(requireUser(user).id), {
-    response: { 200: t.Array(TimerSessionResponse), ...accessErrors },
+    response: { 200: t.Array(RunningTimerResponse), ...accessErrors },
     detail: { summary: "Get the caller's running timers" },
   })
 

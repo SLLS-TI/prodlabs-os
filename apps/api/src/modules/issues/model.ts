@@ -284,12 +284,26 @@ export const createWorklogBody = t.Object({
 
 export const updateWorklogBody = t.Partial(createWorklogBody);
 
-// TimerSessionRow from timers.ts: a member's running timer on an issue.
+// TimerSessionRow from timers.ts: the bare session returned by start and inside stop.
 export const TimerSessionResponse = t.Object({
   id: t.Number(),
   issueId: t.Number(),
   userId: t.String(),
   startedAt: t.String(),
+});
+
+// RunningTimerRow from timers.ts: a running session enriched with its issue and
+// project, returned by GET /issues/timers/running. identifier is the human label
+// ("MKT-42"); projectKey is the full ref ("<teamRef>.<key>") for routing and stopping.
+export const RunningTimerResponse = t.Object({
+  id: t.Number(),
+  issueId: t.Number(),
+  userId: t.String(),
+  startedAt: t.String(),
+  title: t.String(),
+  identifier: t.String(),
+  sequenceNumber: t.Number(),
+  projectKey: t.String(),
 });
 
 // The result of stopping a timer: the stopped session and the worklog it wrote, or

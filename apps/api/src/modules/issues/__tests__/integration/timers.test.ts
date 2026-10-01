@@ -163,6 +163,32 @@ describe('timers', () => {
       expect(memberList).toHaveLength(1);
       expect(memberList[0].id).not.toBe(ownerList[0].id);
     });
+
+    it('enriches each session with the issue title, identifier, number and project ref', async () => {
+      const { asOwner, columnId } = await setupProject();
+      const issue = (await createIssue(asOwner, columnId, 'Ship it')).data!;
+      const start201 = (await start(asOwner, issue.id)).data!;
+      // start returns the bare session shape (no enrichment).
+      expect(start201).not.toHaveProperty('title');
+
+      const list = await running(asOwner);
+      const session = list.find((s) => s.issueId === issue.id)!;
+      expect(session.title).toBe('Ship it');
+      expect(session.sequenceNumber).toBe(issue.sequenceNumber);
+      expect(session.identifier).toBe(`MKT-${issue.sequenceNumber}`);
+      // projectKey is the full ref "<teamRef>.<key>" (the team has no slug, so teamId).
+      const teamId = (await asOwner.projects.get()).data!.find((p) => p.key === 'MKT')!.teamId;
+      expect(session.projectKey).toBe(`${teamId}.MKT`);
+    });
+
+    it('returns the bare session shape on stop', async () => {
+      const { asOwner, columnId } = await setupProject();
+      const issue = (await createIssue(asOwner, columnId)).data!;
+      await start(asOwner, issue.id);
+      const stopped = (await stop(asOwner, issue.id)).data!;
+      expect(stopped.session).not.toHaveProperty('title');
+      expect(stopped.session).toMatchObject({ issueId: issue.id });
+    });
   });
 
   it('removes a running session with the issue', async () => {
