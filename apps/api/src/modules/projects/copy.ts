@@ -270,6 +270,8 @@ export async function copyProject(
         pointsEstimateEnabled: project.pointsEstimateEnabled,
         timeEstimateEnabled: project.timeEstimateEnabled,
         timeLoggingEnabled: project.timeLoggingEnabled,
+        timeGoalMinutes: project.timeGoalMinutes,
+        timeGoalPeriod: project.timeGoalPeriod,
       })
       .from(project)
       .where(eq(project.id, sourceProjectId));

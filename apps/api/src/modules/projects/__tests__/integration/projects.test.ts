@@ -415,13 +415,15 @@ describe('projects', () => {
       expect(settings.data?.mcpEnabled).toBe(false);
     });
 
-    it('copies the estimate kinds and time logging the source project carries', async () => {
+    it('copies the estimate kinds, time logging and time goal the source project carries', async () => {
       const { api } = await signUpClient();
       await api.projects.post({ key: 'SRC', name: 'Source' });
       await api.projects({ projectKey: 'SRC' }).settings.estimates.patch({
         points: true,
         time: true,
         logging: true,
+        timeGoalMinutes: 1200,
+        timeGoalPeriod: 'weekly',
       });
 
       await api.projects({ projectKey: 'SRC' }).copy.post({ key: 'DST', name: 'Destination' });
@@ -431,6 +433,8 @@ describe('projects', () => {
         pointsEstimateEnabled: true,
         timeEstimateEnabled: true,
         timeLoggingEnabled: true,
+        timeGoalMinutes: 1200,
+        timeGoalPeriod: 'weekly',
       });
     });
 
@@ -1056,6 +1060,7 @@ describe('projects', () => {
 
   describe('estimate settings', () => {
     const estimates = (client: Api) => client.projects({ projectKey: 'MKT' }).settings.estimates;
+    const noGoal = { timeGoalMinutes: null, timeGoalPeriod: null } as const;
 
     it('defaults a new project to both kinds and time logging off', async () => {
       const { api } = await signUpClient();
@@ -1065,6 +1070,8 @@ describe('projects', () => {
         pointsEstimateEnabled: false,
         timeEstimateEnabled: false,
         timeLoggingEnabled: false,
+        timeGoalMinutes: null,
+        timeGoalPeriod: null,
       });
     });
 
@@ -1072,7 +1079,12 @@ describe('projects', () => {
       const { api } = await signUpClient();
       await api.projects.post({ key: 'MKT', name: 'Marketing' });
 
-      const patch = await estimates(api).patch({ points: true, time: false, logging: true });
+      const patch = await estimates(api).patch({
+        points: true,
+        time: false,
+        logging: true,
+        ...noGoal,
+      });
       expect(patch.status).toBe(200);
       expect(patch.data).toMatchObject({ points: true, time: false, logging: true });
 
@@ -1088,12 +1100,12 @@ describe('projects', () => {
       const { api } = await signUpClient();
       await api.projects.post({ key: 'MKT', name: 'Marketing' });
       const view = await viewOf(api, 'MKT');
-      await estimates(api).patch({ points: true, time: true, logging: false });
+      await estimates(api).patch({ points: true, time: true, logging: false, ...noGoal });
       const issue = await api
         .projects({ projectKey: 'MKT' })
         .issues.post({ columnId: view.data!.columns[0].id, title: 'Sized', estimatePoints: 5 });
 
-      await estimates(api).patch({ points: false, time: false, logging: false });
+      await estimates(api).patch({ points: false, time: false, logging: false, ...noGoal });
       expect((await api.issues({ issueId: issue.data!.id }).get()).data).toMatchObject({
         estimatePoints: 5,
       });
@@ -1105,7 +1117,8 @@ describe('projects', () => {
       const member = await addProjectMember(owner.api, 'MKT');
 
       expect(
-        (await estimates(member).patch({ points: true, time: true, logging: true })).status,
+        (await estimates(member).patch({ points: true, time: true, logging: true, ...noGoal }))
+          .status,
       ).toBe(403);
     });
 
@@ -1118,9 +1131,96 @@ describe('projects', () => {
       });
       const member = await addProjectMember(owner.api, 'MKT', role.data!.id);
 
-      const res = await estimates(member).patch({ points: true, time: true, logging: true });
+      const res = await estimates(member).patch({
+        points: true,
+        time: true,
+        logging: true,
+        ...noGoal,
+      });
       expect(res.status).toBe(200);
       expect(res.data).toMatchObject({ points: true, time: true, logging: true });
+    });
+
+    describe('time goal', () => {
+      const withGoal = (over: {
+        timeGoalMinutes: number | null;
+        timeGoalPeriod: 'total' | 'weekly' | null;
+      }) => ({ points: false, time: false, logging: true, ...over });
+
+      it('sets a total goal and carries it on the project payload', async () => {
+        const { api } = await signUpClient();
+        await api.projects.post({ key: 'MKT', name: 'Marketing' });
+
+        const res = await estimates(api).patch(
+          withGoal({ timeGoalMinutes: 6000, timeGoalPeriod: 'total' }),
+        );
+        expect(res.status).toBe(200);
+        expect(res.data).toMatchObject({ timeGoalMinutes: 6000, timeGoalPeriod: 'total' });
+        expect((await viewOf(api, 'MKT')).data?.project).toMatchObject({
+          timeGoalMinutes: 6000,
+          timeGoalPeriod: 'total',
+        });
+      });
+
+      it('sets a weekly goal', async () => {
+        const { api } = await signUpClient();
+        await api.projects.post({ key: 'MKT', name: 'Marketing' });
+
+        const res = await estimates(api).patch(
+          withGoal({ timeGoalMinutes: 1200, timeGoalPeriod: 'weekly' }),
+        );
+        expect(res.status).toBe(200);
+        expect(res.data).toMatchObject({ timeGoalMinutes: 1200, timeGoalPeriod: 'weekly' });
+      });
+
+      it('clears the goal when both fields are null', async () => {
+        const { api } = await signUpClient();
+        await api.projects.post({ key: 'MKT', name: 'Marketing' });
+        await estimates(api).patch(withGoal({ timeGoalMinutes: 300, timeGoalPeriod: 'total' }));
+
+        const res = await estimates(api).patch(
+          withGoal({ timeGoalMinutes: null, timeGoalPeriod: null }),
+        );
+        expect(res.status).toBe(200);
+        expect(res.data).toMatchObject({ timeGoalMinutes: null, timeGoalPeriod: null });
+      });
+
+      it('rejects a half-set goal with 400', async () => {
+        const { api } = await signUpClient();
+        await api.projects.post({ key: 'MKT', name: 'Marketing' });
+
+        expect(
+          (await estimates(api).patch(withGoal({ timeGoalMinutes: 300, timeGoalPeriod: null })))
+            .status,
+        ).toBe(400);
+        expect(
+          (
+            await estimates(api).patch(
+              withGoal({ timeGoalMinutes: null, timeGoalPeriod: 'weekly' }),
+            )
+          ).status,
+        ).toBe(400);
+      });
+
+      it('rejects a non-positive goal and an unknown period with 400', async () => {
+        const { api } = await signUpClient();
+        await api.projects.post({ key: 'MKT', name: 'Marketing' });
+
+        expect(
+          (await estimates(api).patch(withGoal({ timeGoalMinutes: 0, timeGoalPeriod: 'total' })))
+            .status,
+        ).toBe(400);
+        expect(
+          (
+            await estimates(api).patch(
+              withGoal({
+                timeGoalMinutes: 100,
+                timeGoalPeriod: 'monthly' as unknown as 'total',
+              }),
+            )
+          ).status,
+        ).toBe(400);
+      });
     });
   });
 

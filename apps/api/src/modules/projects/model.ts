@@ -124,6 +124,8 @@ export const ProjectResponse = t.Object({
   pointsEstimateEnabled: t.Boolean(),
   timeEstimateEnabled: t.Boolean(),
   timeLoggingEnabled: t.Boolean(),
+  timeGoalMinutes: t.Nullable(t.Integer({ minimum: 1 })),
+  timeGoalPeriod: t.Nullable(t.Union([t.Literal('total'), t.Literal('weekly')])),
   availableFeatures: t.Array(t.UnionEnum([...PROJECT_FEATURES])),
   createdAt: t.String(),
 });
@@ -244,6 +246,10 @@ export const EstimatesResponse = t.Object({
   points: t.Boolean(),
   time: t.Boolean(),
   logging: t.Boolean(),
+  // The project's time goal, or null for none. timeGoalPeriod reads it against all
+  // time ever logged ('total') or the current week's ('weekly'). Both null together.
+  timeGoalMinutes: t.Nullable(t.Integer({ minimum: 1 })),
+  timeGoalPeriod: t.Nullable(t.Union([t.Literal('total'), t.Literal('weekly')])),
 });
 
 export const updateEstimatesBody = EstimatesResponse;
