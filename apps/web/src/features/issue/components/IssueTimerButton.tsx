@@ -94,7 +94,11 @@ export function IssueTimerButton({
       stop.mutate(
         { issueId, projectKey },
         {
+          // The detail (inline) view already shows the result — the worklog tally
+          // updates and the button flips — so only the compact variants, where the
+          // write is otherwise invisible, toast.
           onSuccess: (result) => {
+            if (variant === 'inline') return;
             toast.success(
               result.worklog
                 ? t('stopped', { time: formatMinutes(result.worklog.minutes) })
