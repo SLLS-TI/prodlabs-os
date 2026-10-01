@@ -4,6 +4,7 @@ import { signUpTestUser, type TestUser } from '#tests/helpers/auth';
 import { resetDb } from '#tests/helpers/db';
 import { pulseRows } from '../../service';
 import { createAgent } from '#tests/helpers/agents';
+import { addProjectMember } from '#tests/helpers/members';
 
 // Read-only project analytics. Every figure is derived from the issue /
 // project_column / issue_activity / issue_status tables, so the tests build state
@@ -759,6 +760,109 @@ describe('analytics', () => {
     });
   });
 
+  describe('time tracking', () => {
+    const today = () => new Date().toISOString().slice(0, 10);
+
+    function dayFromToday(days: number): string {
+      const date = new Date();
+      date.setUTCDate(date.getUTCDate() + days);
+      return date.toISOString().slice(0, 10);
+    }
+
+    function log(client: Api, issueId: number, minutes: number, spentOn = today()) {
+      return client.issues({ issueId }).worklogs.post({ minutes, spentOn });
+    }
+
+    function setGoal(client: Api, timeGoalMinutes: number, timeGoalPeriod: 'total' | 'weekly') {
+      return client.projects({ projectKey: 'MKT' }).settings.estimates.patch({
+        points: false,
+        time: false,
+        logging: true,
+        timeGoalMinutes,
+        timeGoalPeriod,
+      });
+    }
+
+    const byUser = (client: Api) =>
+      client.projects({ projectKey: 'MKT' })['analytics']['time-by-user'].get();
+    const goal = (client: Api) =>
+      client.projects({ projectKey: 'MKT' })['analytics']['time-goal'].get();
+
+    describe('time by user', () => {
+      it('sums per user and sorts most minutes first', async () => {
+        const { asOwner, col } = await setupProject();
+        const asMember = await addProjectMember(asOwner, 'MKT');
+        const issue = await createIssue(asOwner, col.backlog);
+
+        await log(asOwner, issue.id, 30);
+        await log(asOwner, issue.id, 60);
+        await log(asMember, issue.id, 120);
+
+        const res = await byUser(asOwner);
+        expect(res.status).toBe(200);
+        expect(res.data!.map((r) => r.minutes)).toEqual([120, 90]);
+      });
+
+      it('returns an empty list for a project with no logged time', async () => {
+        const { asOwner } = await setupProject();
+        const res = await byUser(asOwner);
+        expect(res.status).toBe(200);
+        expect(res.data).toEqual([]);
+      });
+    });
+
+    describe('time goal', () => {
+      it('reports status none when no goal is set', async () => {
+        const { asOwner, col } = await setupProject();
+        const issue = await createIssue(asOwner, col.backlog);
+        await log(asOwner, issue.id, 45);
+
+        const res = await goal(asOwner);
+        expect(res.status).toBe(200);
+        expect(res.data).toMatchObject({
+          goalMinutes: null,
+          period: null,
+          loggedMinutes: 45,
+          status: 'none',
+        });
+      });
+
+      it('reports under, on and over against a total goal', async () => {
+        const { asOwner, col } = await setupProject();
+        const issue = await createIssue(asOwner, col.backlog);
+        await setGoal(asOwner, 100, 'total');
+
+        await log(asOwner, issue.id, 40);
+        expect((await goal(asOwner)).data).toMatchObject({ loggedMinutes: 40, status: 'under' });
+
+        await log(asOwner, issue.id, 60);
+        expect((await goal(asOwner)).data).toMatchObject({ loggedMinutes: 100, status: 'on' });
+
+        await log(asOwner, issue.id, 1);
+        expect((await goal(asOwner)).data).toMatchObject({ loggedMinutes: 101, status: 'over' });
+      });
+
+      it('counts only the current week against a weekly goal', async () => {
+        const { asOwner, col } = await setupProject();
+        const issue = await createIssue(asOwner, col.backlog);
+        await setGoal(asOwner, 120, 'weekly');
+
+        // One entry in a previous week (a week ago is always before this Monday),
+        // one today — only today's counts toward the weekly window.
+        await log(asOwner, issue.id, 200, dayFromToday(-10));
+        await log(asOwner, issue.id, 75, today());
+
+        const res = await goal(asOwner);
+        expect(res.data).toMatchObject({
+          goalMinutes: 120,
+          period: 'weekly',
+          loggedMinutes: 75,
+          status: 'under',
+        });
+      });
+    });
+  });
+
   describe('access', () => {
     it('returns 404 for an unknown project', async () => {
       const { asOwner } = await setupProject();
@@ -783,6 +887,8 @@ describe('analytics', () => {
       expect((await scope['analytics']['agent-run-stats'].get()).status).toBe(403);
       expect((await scope['analytics']['webhook-stats'].get()).status).toBe(403);
       expect((await scope['analytics']['agent-workload'].get()).status).toBe(403);
+      expect((await scope['analytics']['time-by-user'].get()).status).toBe(403);
+      expect((await scope['analytics']['time-goal'].get()).status).toBe(403);
     });
   });
 });

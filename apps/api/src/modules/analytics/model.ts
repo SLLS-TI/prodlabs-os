@@ -128,6 +128,22 @@ export const AgentRunFeedListResponse = t.Array(AgentRunFeedItem);
 
 export const AgentWorkloadListResponse = t.Array(AgentWorkloadItem);
 
+const TimeByUserItem = t.Object({
+  userId: t.String(),
+  userName: t.Nullable(t.String()),
+  userImage: t.Nullable(t.String()),
+  minutes: t.Number(),
+});
+
+export const TimeByUserListResponse = t.Array(TimeByUserItem);
+
+export const TimeGoalDto = t.Object({
+  goalMinutes: t.Nullable(t.Number()),
+  period: t.Nullable(t.Union([t.Literal('total'), t.Literal('weekly')])),
+  loggedMinutes: t.Number(),
+  status: t.Union([t.Literal('under'), t.Literal('on'), t.Literal('over'), t.Literal('none')]),
+});
+
 export const breakdownQuery = t.Object({
   by: t.Union([
     t.Literal('status'),

@@ -1,6 +1,8 @@
 import {
   db,
   issue,
+  issueWorklog,
+  project,
   projectColumn,
   projectMember,
   issueActivity,
@@ -814,4 +816,74 @@ export async function getAgentWorkload(projectId: number): Promise<AgentWorkload
         b.runsTotal - a.runsTotal ||
         a.agentName.localeCompare(b.agentName),
     );
+}
+
+// --- Time tracking ---------------------------------------------------------------
+
+export interface TimeByUserItem {
+  userId: string;
+  userName: string | null;
+  userImage: string | null;
+  minutes: number;
+}
+
+// Time logged per user across the project's issues, most minutes first. Sums the
+// worklog entries joined to the issue (for the project filter) and the user (for the
+// name and picture the widget shows).
+export async function getTimeByUser(projectId: number): Promise<TimeByUserItem[]> {
+  return db
+    .select({
+      userId: issueWorklog.userId,
+      userName: user.name,
+      userImage: user.image,
+      minutes: sql<number>`sum(${issueWorklog.minutes})::int`,
+    })
+    .from(issueWorklog)
+    .innerJoin(issue, eq(issue.id, issueWorklog.issueId))
+    .innerJoin(user, eq(user.id, issueWorklog.userId))
+    .where(eq(issue.projectId, projectId))
+    .groupBy(issueWorklog.userId, user.name, user.image)
+    .orderBy(sql`sum(${issueWorklog.minutes}) desc`);
+}
+
+export interface TimeGoalStats {
+  goalMinutes: number | null;
+  period: 'total' | 'weekly' | null;
+  loggedMinutes: number;
+  status: 'under' | 'on' | 'over' | 'none';
+}
+
+// The project's time goal and the time logged against it. 'total' sums every worklog
+// entry; 'weekly' sums only the current week's, which is Monday 00:00 to the next
+// Monday (date_trunc('week', ...), the boundary getThroughput/getPulse use). spent_on
+// is a date, so this is pure calendar arithmetic with no timezone. status is 'none'
+// when no goal is set.
+export async function getTimeGoal(projectId: number): Promise<TimeGoalStats> {
+  const [row] = await db
+    .select({ goalMinutes: project.timeGoalMinutes, period: project.timeGoalPeriod })
+    .from(project)
+    .where(eq(project.id, projectId));
+  if (!row) throw new HttpError(404, 'Project not found');
+
+  const period = row.period as 'total' | 'weekly' | null;
+  const [logged] = await db
+    .select({ minutes: sql<number>`coalesce(sum(${issueWorklog.minutes}), 0)::int` })
+    .from(issueWorklog)
+    .innerJoin(issue, eq(issue.id, issueWorklog.issueId))
+    .where(
+      and(
+        eq(issue.projectId, projectId),
+        period === 'weekly'
+          ? sql`${issueWorklog.spentOn} >= date_trunc('week', current_date)
+                AND ${issueWorklog.spentOn} < date_trunc('week', current_date) + interval '7 days'`
+          : undefined,
+      ),
+    );
+  const loggedMinutes = logged?.minutes ?? 0;
+
+  if (row.goalMinutes == null)
+    return { goalMinutes: null, period: null, loggedMinutes, status: 'none' };
+  const status =
+    loggedMinutes > row.goalMinutes ? 'over' : loggedMinutes === row.goalMinutes ? 'on' : 'under';
+  return { goalMinutes: row.goalMinutes, period, loggedMinutes, status };
 }
