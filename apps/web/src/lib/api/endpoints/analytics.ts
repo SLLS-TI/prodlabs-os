@@ -113,6 +113,23 @@ export interface AgentWorkloadItem {
   runsFailed: number;
 }
 
+export interface TimeByUserItem {
+  userId: string;
+  userName: string | null;
+  userImage: string | null;
+  minutes: number;
+}
+
+// The project's time goal and the time logged against it. status is 'none' when no
+// goal is set; period says whether loggedMinutes is all-time ('total') or this week's
+// ('weekly').
+export interface TimeGoalStats {
+  goalMinutes: number | null;
+  period: 'total' | 'weekly' | null;
+  loggedMinutes: number;
+  status: 'under' | 'on' | 'over' | 'none';
+}
+
 // Analytics — read-only project metrics behind the dashboard widgets.
 export const getBreakdown = (projectKey: string, by: BreakdownBy) =>
   request<BreakdownItem[]>(`/projects/${projectKey}/analytics/breakdown?by=${by}`);
@@ -180,3 +197,9 @@ export const getWebhookStats = (projectKey: string, days = 30) =>
 
 export const getAgentWorkload = (projectKey: string) =>
   request<AgentWorkloadItem[]>(`/projects/${projectKey}/analytics/agent-workload`);
+
+export const getTimeByUser = (projectKey: string) =>
+  request<TimeByUserItem[]>(`/projects/${projectKey}/analytics/time-by-user`);
+
+export const getTimeGoal = (projectKey: string) =>
+  request<TimeGoalStats>(`/projects/${projectKey}/analytics/time-goal`);

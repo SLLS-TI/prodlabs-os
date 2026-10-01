@@ -184,6 +184,13 @@
     "edit": "Ubah entri ini",
     "remove": "Hapus entri ini"
   },
+  "timer": {
+    "start": "Mulai timer",
+    "stop": "Hentikan timer",
+    "running": "Timer berjalan: {time}",
+    "stopped": "Mencatat {time}",
+    "stoppedNoTime": "Timer dihentikan"
+  },
   "links": {
     "title": "Tautan",
     "remove": "Hapus tautan ke {issue}",

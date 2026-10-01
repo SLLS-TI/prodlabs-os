@@ -80,6 +80,8 @@ export interface ProjectRow {
   pointsEstimateEnabled: boolean;
   timeEstimateEnabled: boolean;
   timeLoggingEnabled: boolean;
+  timeGoalMinutes: number | null;
+  timeGoalPeriod: 'total' | 'weekly' | null;
   // The sections this project may use at all. A section missing here is blocked for
   // the team that owns the project: its flag above reads as off and the settings page
   // does not offer it.
@@ -155,6 +157,8 @@ export async function mapProject(row: ProjectWithTeam): Promise<ProjectRow> {
     pointsEstimateEnabled: row.pointsEstimateEnabled,
     timeEstimateEnabled: row.timeEstimateEnabled,
     timeLoggingEnabled: row.timeLoggingEnabled,
+    timeGoalMinutes: row.timeGoalMinutes,
+    timeGoalPeriod: row.timeGoalPeriod as 'total' | 'weekly' | null,
     availableFeatures: PROJECT_FEATURES.filter((feature) => !blockedFeatures.includes(feature)),
     createdAt: iso(row.createdAt),
   };
@@ -592,20 +596,31 @@ export interface EstimateSettings {
   points: boolean;
   time: boolean;
   logging: boolean;
+  // The project's time goal, or null for none. timeGoalPeriod says how it is read:
+  // 'total' against all time ever logged, 'weekly' against the current week's. Both
+  // are null together; a goal needs a period.
+  timeGoalMinutes: number | null;
+  timeGoalPeriod: 'total' | 'weekly' | null;
 }
 
 // Turns them on or off. One turned off keeps what the issues already carry — the
-// estimates, the logged entries — which show again when it is turned back on.
+// estimates, the logged entries — which show again when it is turned back on. The
+// time goal is both fields or neither; a half-set goal is rejected.
 export async function setEstimateSettings(
   projectId: number,
   input: EstimateSettings,
 ): Promise<EstimateSettings | null> {
+  if ((input.timeGoalMinutes === null) !== (input.timeGoalPeriod === null))
+    throw new HttpError(400, 'A time goal needs both a value and a period');
+
   const [row] = await db
     .update(project)
     .set({
       pointsEstimateEnabled: input.points,
       timeEstimateEnabled: input.time,
       timeLoggingEnabled: input.logging,
+      timeGoalMinutes: input.timeGoalMinutes,
+      timeGoalPeriod: input.timeGoalPeriod,
     })
     .where(eq(project.id, projectId))
     .returning();
@@ -614,6 +629,8 @@ export async function setEstimateSettings(
         points: row.pointsEstimateEnabled,
         time: row.timeEstimateEnabled,
         logging: row.timeLoggingEnabled,
+        timeGoalMinutes: row.timeGoalMinutes,
+        timeGoalPeriod: row.timeGoalPeriod as 'total' | 'weekly' | null,
       }
     : null;
 }

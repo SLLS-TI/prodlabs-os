@@ -26,7 +26,8 @@
   "showRows": "显示 {count} 条",
   "widgetGroups": {
     "issues": "工作项",
-    "agents": "AI 代理和 Webhook"
+    "agents": "AI 代理和 Webhook",
+    "time": "时间跟踪"
   },
   "widgets": {
     "stat": {
@@ -72,6 +73,18 @@
     "agent_workload": {
       "label": "代理工作量",
       "description": "各代理接收的工作项及运行结果"
+    },
+    "time_by_user": {
+      "label": "按用户统计工时",
+      "description": "该项目中每位成员记录的工时"
+    },
+    "time_goal": {
+      "label": "时间目标",
+      "description": "相对于项目时间目标的进度"
+    },
+    "time_total": {
+      "label": "总工时",
+      "description": "该项目记录的总工时"
     }
   },
   "breakdown": {
@@ -225,6 +238,25 @@
       "external": "外部",
       "internal": "内置"
     }
+  },
+  "timeByUser": {
+    "empty": "该项目尚未记录工时。"
+  },
+  "timeGoal": {
+    "noGoal": "尚未设置时间目标。请在配置中设置。",
+    "goal": "目标 {time}",
+    "period": {
+      "total": "总计",
+      "weekly": "本周"
+    },
+    "status": {
+      "under": "低于目标",
+      "on": "达到目标",
+      "over": "超过目标"
+    }
+  },
+  "timeTotal": {
+    "label": "记录的总工时"
   },
   "defaultWidgets": {
     "open": "未关闭",

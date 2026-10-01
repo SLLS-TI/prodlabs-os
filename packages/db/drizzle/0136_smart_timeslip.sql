@@ -1,0 +1,2 @@
+DROP INDEX "issue_timer_session_running_idx";--> statement-breakpoint
+CREATE UNIQUE INDEX "issue_timer_session_running_idx" ON "issue_timer_session" USING btree ("user_id","issue_id") WHERE "issue_timer_session"."stopped_at" IS NULL;

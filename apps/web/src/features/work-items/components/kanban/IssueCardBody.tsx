@@ -24,22 +24,27 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { StateIcon } from '@/features/issue/components/shared/IssueIcons';
+import { IssueTimerButton } from '@/features/issue/components/IssueTimerButton';
 import { IssueIdentifier } from '../shared/IssueIdentifier';
 import { IssueCardLinks } from './IssueCardLinks';
 import { IssueCardSubtasks } from './IssueCardSubtasks';
 
 // One board card's content. Which properties render is driven by `properties`.
-// onOpen opens an issue the card links to; the drag preview passes none.
+// onOpen opens an issue the card links to; the drag preview passes none. `timer` is
+// set by the real card when the project logs time; the drag preview leaves it off so
+// its copy carries no ticking control.
 export function IssueCardBody({
   issue,
   maps,
   properties,
   onOpen,
+  timer,
 }: {
   issue: BoardIssue;
   maps: Maps;
   properties: PropertyKey[];
   onOpen?: (id: number) => void;
+  timer?: { projectKey: string; canEdit: boolean };
 }) {
   const t = useTranslations('workItems');
   const has = (p: DisplayProperty) => properties.includes(p);
@@ -190,30 +195,37 @@ export function IssueCardBody({
         </div>
       )}
 
-      {footerShown && (
+      {(footerShown || timer) && (
         <div className="mt-2 flex items-center justify-between gap-2">
           <span className="text-[11px] text-muted-foreground/70">
             {has('created') && t('createdOn', { date: formatShortDate(issue.createdAt) })}
             {has('created') && has('updated') && ' · '}
             {has('updated') && t('updatedOn', { date: formatShortDate(issue.updatedAt) })}
           </span>
-          {/* Negative spacing so a delegate and an assignee shown together
-              overlap; the ring in the card color keeps them separated. */}
-          <div className="flex items-center -space-x-1.5">
-            {has('delegate') && delegate && (
-              <DelegateAvatar
-                name={delegate.name}
-                image={delegate.image}
-                className="ring-2 ring-[var(--kanban-card)]"
+          <div className="flex items-center gap-1">
+            {timer && (
+              <IssueTimerButton
+                issueId={issue.id}
+                projectKey={timer.projectKey}
+                canEdit={timer.canEdit}
               />
             )}
-            {has('assignee') && assignee && (
-              <AssigneeAvatar
-                name={assignee.name}
-                image={assignee.image}
-                className="ring-2 ring-[var(--kanban-card)]"
-              />
-            )}
+            <div className="flex items-center -space-x-1.5">
+              {has('delegate') && delegate && (
+                <DelegateAvatar
+                  name={delegate.name}
+                  image={delegate.image}
+                  className="ring-2 ring-[var(--kanban-card)]"
+                />
+              )}
+              {has('assignee') && assignee && (
+                <AssigneeAvatar
+                  name={assignee.name}
+                  image={assignee.image}
+                  className="ring-2 ring-[var(--kanban-card)]"
+                />
+              )}
+            </div>
           </div>
         </div>
       )}

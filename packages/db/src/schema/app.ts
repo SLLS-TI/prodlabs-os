@@ -135,9 +135,22 @@ export const project = pgTable(
     // the same place. Independent of the time estimate: a team can log time without
     // estimating first. Turning it off hides the entries and keeps them.
     timeLoggingEnabled: boolean('time_logging_enabled').notNull().default(false),
+    // A time goal for the project, or null for none. time_goal_period says how the
+    // goal is read: 'total' compares the goal to all time ever logged, 'weekly' to the
+    // current week's. Both columns are null together; a goal needs a period.
+    timeGoalMinutes: integer('time_goal_minutes'),
+    timeGoalPeriod: text('time_goal_period'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [unique('project_team_key_uq').on(t.teamId, t.key)],
+  (t) => [
+    unique('project_team_key_uq').on(t.teamId, t.key),
+    check(
+      'project_time_goal_check',
+      sql`(${t.timeGoalMinutes} IS NULL) = (${t.timeGoalPeriod} IS NULL)
+          AND (${t.timeGoalPeriod} IS NULL OR ${t.timeGoalPeriod} IN ('total', 'weekly'))
+          AND (${t.timeGoalMinutes} IS NULL OR ${t.timeGoalMinutes} > 0)`,
+    ),
+  ],
 );
 
 // Per-project key-value settings, mirroring app_setting but scoped to a project.
@@ -1714,6 +1727,35 @@ export const issueWorklog = pgTable(
     // Backs the entries of an issue, read newest day first, and the sums the issue
     // payload carries.
     index('issue_worklog_issue_idx').on(t.issueId, t.spentOn.desc()),
+  ],
+);
+
+// A member's running or finished timer on an issue. Running while stopped_at IS NULL;
+// stopping it stamps stopped_at and writes an issue_worklog from the elapsed time. A
+// member may run several at once (one per issue), but at most one running session per
+// (user, issue) — the partial unique index enforces that so a concurrent double-start
+// cannot create two.
+export const issueTimerSession = pgTable(
+  'issue_timer_session',
+  {
+    id: serial('id').primaryKey(),
+    issueId: integer('issue_id')
+      .notNull()
+      .references(() => issue.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+    stoppedAt: timestamp('stopped_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    // Backs the running sessions of a user across views and makes the per-(issue,user)
+    // dedupe on start atomic. Partial on the running rows only, so it stays small as
+    // finished sessions accumulate and a finished pair can repeat.
+    uniqueIndex('issue_timer_session_running_idx')
+      .on(t.userId, t.issueId)
+      .where(sql`${t.stoppedAt} IS NULL`),
   ],
 );
 

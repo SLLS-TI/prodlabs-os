@@ -59,6 +59,7 @@ import {
   listWorklogs,
   updateWorklog,
 } from './worklogs';
+import { listRunningTimers, startTimer, stopTimer } from './timers';
 import { listIssueCycles } from './cycle-history';
 import {
   createAndLinkPullRequest,
@@ -106,6 +107,8 @@ import {
   WorklogResponse,
   createWorklogBody,
   updateWorklogBody,
+  TimerSessionResponse,
+  StopTimerResponse,
   IssueWithFieldsResponse,
   IssueSearchHitResponse,
   FeedItemResponse,
@@ -507,6 +510,17 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
       },
     },
   )
+
+  // The caller's running timers across the whole instance. Read by every view on
+  // page init so each can show which of its issues are ticking for this user; the
+  // running state is resolved client-side from this one list, with no per-issue
+  // request. Registered before /issues/:issueId so the literal "timers" segment
+  // wins over the numeric param. Reads only the caller's own sessions, so it needs
+  // no project guard beyond the session. Web-only.
+  .get('/issues/timers/running', async ({ user }) => listRunningTimers(requireUser(user).id), {
+    response: { 200: t.Array(TimerSessionResponse), ...accessErrors },
+    detail: { summary: "Get the caller's running timers" },
+  })
 
   // Reads the full issue including its custom field values. The handler fetches the
   // issue for the response, so it asserts access on that row instead of using the
@@ -1080,6 +1094,44 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
         description:
           'Log the time spent on an issue. The entry belongs to whoever logs it, and the day it was spent on cannot be in the future.',
         ...mcpTool('create_worklog'),
+      },
+    },
+  )
+
+  // Starts a timer on the issue. Idempotent per (issue, caller): a second start while
+  // one is running returns the running session, so a double-click or a second tab
+  // cannot make two. A worklog is written only when the timer is stopped.
+  .post(
+    '/issues/:issueId/timer/start',
+    async ({ params, user, set }) => {
+      set.status = 201;
+      return startTimer(params.issueId, requireUser(user).id);
+    },
+    {
+      params: issueParams,
+      workItem: 'edit',
+      response: { 201: TimerSessionResponse, ...commonErrors },
+      detail: {
+        summary: 'Start a timer on an issue',
+        description:
+          "Start the caller's timer on an issue. Already running returns the running session.",
+      },
+    },
+  )
+
+  // Stops the caller's running timer on the issue and writes a worklog from the
+  // elapsed time (rounded up to at least one minute). 404 when none is running.
+  .post(
+    '/issues/:issueId/timer/stop',
+    async ({ params, user }) => stopTimer(params.issueId, requireUser(user).id),
+    {
+      params: issueParams,
+      workItem: 'edit',
+      response: { 200: StopTimerResponse, ...commonErrors },
+      detail: {
+        summary: 'Stop a timer on an issue',
+        description:
+          "Stop the caller's running timer on an issue and log the elapsed time as a worklog.",
       },
     },
   )

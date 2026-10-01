@@ -184,6 +184,13 @@
     "edit": "修改这条记录",
     "remove": "删除这条记录"
   },
+  "timer": {
+    "start": "开始计时",
+    "stop": "停止计时",
+    "running": "计时中：{time}",
+    "stopped": "已记录 {time}",
+    "stoppedNoTime": "计时已停止"
+  },
   "links": {
     "title": "关联",
     "remove": "移除与 {issue} 的关联",

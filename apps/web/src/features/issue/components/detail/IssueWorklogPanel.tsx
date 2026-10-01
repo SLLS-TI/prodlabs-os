@@ -16,6 +16,7 @@ import {
   useUpdateWorklog,
   useWorklogsQuery,
 } from '../../services/worklogs.service';
+import { IssueTimerButton } from '../IssueTimerButton';
 import IssueSectionHeading from './IssueSectionHeading';
 import IssueWorklogForm from './IssueWorklogForm';
 import IssueWorklogRow from './IssueWorklogRow';
@@ -56,11 +57,24 @@ export default function IssueWorklogPanel({
           onToggle={toggle}
           tally={issue.loggedMinutes > 0 ? formatMinutes(issue.loggedMinutes) : undefined}
         />
-        {open && canLog && !adding && (
-          <Button variant="ghost" size="sm" className="h-7 gap-1.5" onClick={() => setAdding(true)}>
-            <Plus className="size-4" /> {tCommon('add')}
-          </Button>
-        )}
+        <div className="flex items-center gap-1.5">
+          <IssueTimerButton
+            issueId={issue.id}
+            projectKey={projectKey}
+            canEdit={canLog}
+            variant="inline"
+          />
+          {open && canLog && !adding && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5"
+              onClick={() => setAdding(true)}
+            >
+              <Plus className="size-4" /> {tCommon('add')}
+            </Button>
+          )}
+        </div>
       </div>
 
       {open && (

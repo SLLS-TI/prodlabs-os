@@ -3,9 +3,11 @@ import type { ProjectDetail } from '@/lib/api/endpoints/projects';
 import type { Issue } from '@/lib/api/endpoints/issues';
 import { useIsPhone } from '@/hooks/useIsPhone';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useProjectFeatures } from '@/hooks/useProjectFeatures';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import IssueContextMenu from '@/features/issue/components/actions/IssueContextMenu';
+import { IssueTimerButton } from '@/features/issue/components/IssueTimerButton';
 
 // A draggable chip inside a day cell. A click (no drag) opens the issue; a drag
 // moves it to another day or the unscheduled panel.
@@ -24,6 +26,7 @@ export function CalendarDayChip({
   // (see the `sm:touch-none` below), and without work_items edit (rescheduling a
   // issue is an issue edit).
   const { can } = usePermissions();
+  const features = useProjectFeatures();
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: issue.id,
     disabled: useIsPhone() || !can('work_items', 'edit'),
@@ -51,6 +54,15 @@ export function CalendarDayChip({
               style={{ backgroundColor: color }}
             />
             <span className="truncate text-foreground">{issue.title}</span>
+            {features.timeLogging && (
+              <span className="ms-auto">
+                <IssueTimerButton
+                  issueId={issue.id}
+                  projectKey={project.project.ref}
+                  canEdit={can('work_items', 'edit')}
+                />
+              </span>
+            )}
           </div>
         </TooltipTrigger>
       </IssueContextMenu>

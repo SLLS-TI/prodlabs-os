@@ -284,6 +284,21 @@ export const createWorklogBody = t.Object({
 
 export const updateWorklogBody = t.Partial(createWorklogBody);
 
+// TimerSessionRow from timers.ts: a member's running timer on an issue.
+export const TimerSessionResponse = t.Object({
+  id: t.Number(),
+  issueId: t.Number(),
+  userId: t.String(),
+  startedAt: t.String(),
+});
+
+// The result of stopping a timer: the stopped session and the worklog it wrote, or
+// null when the span rounded to no minutes.
+export const StopTimerResponse = t.Object({
+  session: TimerSessionResponse,
+  worklog: t.Nullable(WorklogResponse),
+});
+
 // GET /issues/:issueId returns the full issue plus its custom field values, its
 // relations to other issues, the members watching it, and its checklists.
 export const IssueWithFieldsResponse = t.Composite([

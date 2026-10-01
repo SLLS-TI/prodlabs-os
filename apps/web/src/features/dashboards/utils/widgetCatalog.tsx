@@ -3,9 +3,11 @@ import {
   BarChart3,
   Bot,
   CalendarDays,
+  Clock,
   Hash,
   ListChecks,
   PieChart,
+  Target,
   TrendingUp,
   Users,
   Webhook,
@@ -29,11 +31,14 @@ export const WIDGET_ICON: Record<WidgetType, LucideIcon> = {
   agent_health: Activity,
   webhook_health: Webhook,
   agent_workload: Users,
+  time_by_user: Clock,
+  time_goal: Target,
+  time_total: Clock,
 };
 
 // Widget types grouped by subject for the add-widget picker. The picker renders one
 // section per group, in this order.
-export const WIDGET_GROUPS: { key: 'issues' | 'agents'; types: WidgetType[] }[] = [
+export const WIDGET_GROUPS: { key: 'issues' | 'agents' | 'time'; types: WidgetType[] }[] = [
   {
     key: 'issues',
     types: ['stat', 'breakdown', 'throughput', 'burnup', 'pulse', 'recent_issues', 'activity_feed'],
@@ -41,5 +46,9 @@ export const WIDGET_GROUPS: { key: 'issues' | 'agents'; types: WidgetType[] }[] 
   {
     key: 'agents',
     types: ['agent_runs', 'agent_health', 'webhook_health', 'agent_workload'],
+  },
+  {
+    key: 'time',
+    types: ['time_total', 'time_by_user', 'time_goal'],
   },
 ];

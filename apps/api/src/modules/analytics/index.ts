@@ -14,6 +14,8 @@ import {
   PulseListResponse,
   StatsDto,
   ThroughputListResponse,
+  TimeByUserListResponse,
+  TimeGoalDto,
   WebhookStatsDto,
   activityQuery,
   agentRunFeedQuery,
@@ -34,6 +36,8 @@ import {
   getAgentRunStats,
   getWebhookStats,
   getAgentWorkload,
+  getTimeByUser,
+  getTimeGoal,
   type ActivityCursor,
   type PulseUnit,
 } from './service';
@@ -264,6 +268,33 @@ export const analyticsRoutes = new Elysia({
         summary: 'Get agent workload',
         description: 'Per-agent open delegated issues and run outcomes.',
         ...mcpTool('get_agent_workload'),
+      },
+    },
+  )
+
+  .get(
+    '/projects/:projectKey/analytics/time-by-user',
+    async ({ project }) => getTimeByUser(project.id),
+    {
+      permission: ['dashboards', 'read'],
+      response: { 200: TimeByUserListResponse, ...accessErrors },
+      detail: {
+        summary: 'Get time logged per user',
+        description: 'Minutes each member logged on the project, most first.',
+      },
+    },
+  )
+
+  .get(
+    '/projects/:projectKey/analytics/time-goal',
+    async ({ project }) => getTimeGoal(project.id),
+    {
+      permission: ['dashboards', 'read'],
+      response: { 200: TimeGoalDto, ...accessErrors },
+      detail: {
+        summary: 'Get time logged against the goal',
+        description:
+          "The project's time goal and the time logged against it (all-time or this week).",
       },
     },
   );

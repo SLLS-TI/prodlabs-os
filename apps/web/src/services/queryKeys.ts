@@ -244,6 +244,9 @@ export const qk = {
   // The time entries of one issue. Their sum comes with the issue, so a write
   // refreshes that read too.
   worklogs: (id: number) => ['worklogs', id] as const,
+  // The current user's running timers across every issue, loaded once and shared by
+  // every view; running state is resolved from it client-side.
+  timerSessions: () => ['timerSessions'] as const,
   // A project's inbox notifications (the list, scoped by the active filters) and the
   // project's unread count (the sidebar badge + live-refresh target).
   notifications: (projectKey: string, filters?: unknown) =>
