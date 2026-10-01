@@ -184,6 +184,13 @@
     "edit": "Alterar este registro",
     "remove": "Excluir este registro"
   },
+  "timer": {
+    "start": "Iniciar timer",
+    "stop": "Parar timer",
+    "running": "Timer em andamento: {time}",
+    "stopped": "Registrado {time}",
+    "stoppedNoTime": "Timer parado"
+  },
   "links": {
     "title": "Links",
     "remove": "Remover o link para {issue}",

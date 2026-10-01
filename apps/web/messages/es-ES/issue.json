@@ -184,6 +184,13 @@
     "edit": "Cambiar esta entrada",
     "remove": "Eliminar esta entrada"
   },
+  "timer": {
+    "start": "Iniciar temporizador",
+    "stop": "Detener temporizador",
+    "running": "Temporizador en marcha: {time}",
+    "stopped": "Registrado {time}",
+    "stoppedNoTime": "Temporizador detenido"
+  },
   "links": {
     "title": "Enlaces",
     "remove": "Quitar el enlace a {issue}",

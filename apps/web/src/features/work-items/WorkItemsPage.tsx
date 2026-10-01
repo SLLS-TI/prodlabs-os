@@ -56,7 +56,7 @@ export default function WorkItemsPage() {
   const projectKey = project?.project.ref ?? '';
   useLiveRefresh({
     scope: project ? revScope.board(project.project.id) : null,
-    targets: [qk.boardIssues(projectKey)],
+    targets: [qk.boardIssues(projectKey), qk.timerSessions()],
   });
 
   if (!project || !filteredProject) return null;

@@ -184,6 +184,13 @@
     "edit": "Change this entry",
     "remove": "Delete this entry"
   },
+  "timer": {
+    "start": "Start timer",
+    "stop": "Stop timer",
+    "running": "Timer running: {time}",
+    "stopped": "Logged {time}",
+    "stoppedNoTime": "Timer stopped"
+  },
   "links": {
     "title": "Links",
     "remove": "Remove the link to {issue}",

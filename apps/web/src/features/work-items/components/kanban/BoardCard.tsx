@@ -6,6 +6,7 @@ import type { BoardIssue } from '@/lib/api/endpoints/issues';
 import { type Maps } from '@/utils/project';
 import { useIsPhone } from '@/hooks/useIsPhone';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useProjectFeatures } from '@/hooks/useProjectFeatures';
 import { isBlocked } from '@/utils/issueLinks';
 import { cn } from '@/lib/utils';
 import type { PropertyKey } from '@/utils/viewSettings';
@@ -39,6 +40,10 @@ export function BoardCard({
   // up a card (see the `sm:touch-none` on the card below), and without work_items
   // edit (moving a card is an issue edit).
   const { can } = usePermissions();
+  const features = useProjectFeatures();
+  const timer = features.timeLogging
+    ? { projectKey: project.project.ref, canEdit: can('work_items', 'edit') }
+    : undefined;
   const selection = useSelection();
   const selected = selection.isSelected(issue.id);
   const { setNodeRef, attributes, listeners } = useDraggable({
@@ -102,7 +107,13 @@ export function BoardCard({
           selected && 'kanban-card-selected',
         )}
       >
-        <IssueCardBody issue={issue} maps={maps} properties={properties} onOpen={onOpen} />
+        <IssueCardBody
+          issue={issue}
+          maps={maps}
+          properties={properties}
+          onOpen={onOpen}
+          timer={timer}
+        />
       </div>
     </IssueContextMenu>
   );

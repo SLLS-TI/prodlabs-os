@@ -63,6 +63,7 @@ export function useIssueDetail(
       qk.issue(issueId),
       qk.feed(issueId),
       qk.issueDocumentLinks(project.project.ref, issueId),
+      qk.timerSessions(),
     ],
   });
 

@@ -184,6 +184,13 @@
     "edit": "Modifier cette entrée",
     "remove": "Supprimer cette entrée"
   },
+  "timer": {
+    "start": "Démarrer le minuteur",
+    "stop": "Arrêter le minuteur",
+    "running": "Minuteur en cours : {time}",
+    "stopped": "{time} enregistré",
+    "stoppedNoTime": "Minuteur arrêté"
+  },
   "links": {
     "title": "Liens",
     "remove": "Retirer le lien vers {issue}",
