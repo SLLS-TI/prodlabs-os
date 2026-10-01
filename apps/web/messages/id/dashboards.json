@@ -26,7 +26,8 @@
   "showRows": "Tampilkan {count}",
   "widgetGroups": {
     "issues": "Issue",
-    "agents": "Agen AI & webhook"
+    "agents": "Agen AI & webhook",
+    "time": "Pelacakan waktu"
   },
   "widgets": {
     "stat": {
@@ -72,6 +73,18 @@
     "agent_workload": {
       "label": "Beban kerja agen",
       "description": "Issue yang didelegasikan dan hasil eksekusi per agen"
+    },
+    "time_by_user": {
+      "label": "Waktu per pengguna",
+      "description": "Waktu dicatat per anggota pada proyek ini"
+    },
+    "time_goal": {
+      "label": "Target waktu",
+      "description": "Kemajuan terhadap target waktu proyek"
+    },
+    "time_total": {
+      "label": "Total waktu",
+      "description": "Total waktu dicatat pada proyek ini"
     }
   },
   "breakdown": {
@@ -225,6 +238,25 @@
       "external": "Eksternal",
       "internal": "Internal"
     }
+  },
+  "timeByUser": {
+    "empty": "Belum ada waktu yang dicatat pada proyek ini."
+  },
+  "timeGoal": {
+    "noGoal": "Belum ada target waktu. Atur di Konfigurasi.",
+    "goal": "Target {time}",
+    "period": {
+      "total": "Total",
+      "weekly": "Minggu ini"
+    },
+    "status": {
+      "under": "Di bawah target",
+      "on": "Tepat target",
+      "over": "Di atas target"
+    }
+  },
+  "timeTotal": {
+    "label": "Total waktu dicatat"
   },
   "defaultWidgets": {
     "open": "Terbuka",

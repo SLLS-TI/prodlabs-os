@@ -26,7 +26,8 @@
   "showRows": "Afficher {count}",
   "widgetGroups": {
     "issues": "Tickets",
-    "agents": "Agents IA et webhooks"
+    "agents": "Agents IA et webhooks",
+    "time": "Suivi du temps"
   },
   "widgets": {
     "stat": {
@@ -72,6 +73,18 @@
     "agent_workload": {
       "label": "Charge des agents",
       "description": "Tickets délégués et résultats des exécutions, par agent"
+    },
+    "time_by_user": {
+      "label": "Temps par utilisateur",
+      "description": "Temps enregistré par membre sur ce projet"
+    },
+    "time_goal": {
+      "label": "Objectif de temps",
+      "description": "Progression vers l'objectif de temps du projet"
+    },
+    "time_total": {
+      "label": "Temps total",
+      "description": "Temps total enregistré sur ce projet"
     }
   },
   "breakdown": {
@@ -225,6 +238,25 @@
       "external": "Externe",
       "internal": "Interne"
     }
+  },
+  "timeByUser": {
+    "empty": "Aucun temps enregistré sur ce projet pour le moment."
+  },
+  "timeGoal": {
+    "noGoal": "Aucun objectif de temps défini. Définissez-en un dans la Configuration.",
+    "goal": "Objectif {time}",
+    "period": {
+      "total": "Total",
+      "weekly": "Cette semaine"
+    },
+    "status": {
+      "under": "En dessous de l'objectif",
+      "on": "À l'objectif",
+      "over": "Au-dessus de l'objectif"
+    }
+  },
+  "timeTotal": {
+    "label": "Temps total enregistré"
   },
   "defaultWidgets": {
     "open": "Ouverts",

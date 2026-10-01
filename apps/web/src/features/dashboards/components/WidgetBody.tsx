@@ -11,6 +11,9 @@ import AgentRunsWidget from './widgets/AgentRunsWidget';
 import AgentHealthWidget from './widgets/AgentHealthWidget';
 import WebhookHealthWidget from './widgets/WebhookHealthWidget';
 import AgentWorkloadWidget from './widgets/AgentWorkloadWidget';
+import TimeByUserWidget from './widgets/TimeByUserWidget';
+import TimeGoalWidget from './widgets/TimeGoalWidget';
+import TimeTotalWidget from './widgets/TimeTotalWidget';
 
 // The widget body for a given type. Each widget reads its own config and analytics
 // query and renders a static view; its config is edited through WidgetSettings.
@@ -47,6 +50,12 @@ export default function WidgetBody({
       return <WebhookHealthWidget projectKey={projectKey} config={config} />;
     case 'agent_workload':
       return <AgentWorkloadWidget projectKey={projectKey} />;
+    case 'time_by_user':
+      return <TimeByUserWidget projectKey={projectKey} />;
+    case 'time_goal':
+      return <TimeGoalWidget projectKey={projectKey} />;
+    case 'time_total':
+      return <TimeTotalWidget projectKey={projectKey} />;
     default:
       return null;
   }

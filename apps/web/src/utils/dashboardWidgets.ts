@@ -18,7 +18,10 @@ export type WidgetType =
   | 'agent_runs'
   | 'agent_health'
   | 'webhook_health'
-  | 'agent_workload';
+  | 'agent_workload'
+  | 'time_by_user'
+  | 'time_goal'
+  | 'time_total';
 
 export type BreakdownBy = 'status' | 'priority' | 'type' | 'assignee' | 'delegate';
 
@@ -107,6 +110,9 @@ export const WIDGET_DEFAULTS: Record<
   agent_health: { w: 3, h: 3, minH: 3, config: { days: 30 } },
   webhook_health: { w: 3, h: 3, minH: 3, config: { days: 30 } },
   agent_workload: { w: 6, h: 6, minH: 3, config: {} },
+  time_by_user: { w: 6, h: 6, minH: 3, config: {} },
+  time_goal: { w: 4, h: 4, minH: 3, config: {} },
+  time_total: { w: 3, h: 3, minH: 2, config: {} },
 };
 
 // A fresh widget instance with a unique id and the type's default size/config.

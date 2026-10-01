@@ -26,7 +26,8 @@
   "showRows": "Show {count}",
   "widgetGroups": {
     "issues": "Issues",
-    "agents": "AI agents & webhooks"
+    "agents": "AI agents & webhooks",
+    "time": "Time tracking"
   },
   "widgets": {
     "stat": {
@@ -72,6 +73,18 @@
     "agent_workload": {
       "label": "Agent workload",
       "description": "Delegated issues and run outcomes per agent"
+    },
+    "time_by_user": {
+      "label": "Time by user",
+      "description": "Time logged per member on this project"
+    },
+    "time_goal": {
+      "label": "Time goal",
+      "description": "Progress against the project time goal"
+    },
+    "time_total": {
+      "label": "Total time",
+      "description": "Total time logged on this project"
     }
   },
   "breakdown": {
@@ -225,6 +238,25 @@
       "external": "External",
       "internal": "Internal"
     }
+  },
+  "timeByUser": {
+    "empty": "No time logged on this project yet."
+  },
+  "timeGoal": {
+    "noGoal": "No time goal set. Set one in Configuration.",
+    "goal": "Goal {time}",
+    "period": {
+      "total": "Total",
+      "weekly": "This week"
+    },
+    "status": {
+      "under": "Under the goal",
+      "on": "On the goal",
+      "over": "Over the goal"
+    }
+  },
+  "timeTotal": {
+    "label": "Total time logged"
   },
   "defaultWidgets": {
     "open": "Open",

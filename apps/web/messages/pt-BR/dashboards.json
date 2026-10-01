@@ -26,7 +26,8 @@
   "showRows": "Mostrar {count}",
   "widgetGroups": {
     "issues": "Issues",
-    "agents": "Agentes de IA e webhooks"
+    "agents": "Agentes de IA e webhooks",
+    "time": "Controle de tempo"
   },
   "widgets": {
     "stat": {
@@ -72,6 +73,18 @@
     "agent_workload": {
       "label": "Carga dos agentes",
       "description": "Issues delegadas e resultados de execução por agente"
+    },
+    "time_by_user": {
+      "label": "Tempo por usuário",
+      "description": "Tempo registrado por membro neste projeto"
+    },
+    "time_goal": {
+      "label": "Meta de tempo",
+      "description": "Progresso em relação à meta de tempo do projeto"
+    },
+    "time_total": {
+      "label": "Tempo total",
+      "description": "Tempo total registrado neste projeto"
     }
   },
   "breakdown": {
@@ -225,6 +238,25 @@
       "external": "Externo",
       "internal": "Interno"
     }
+  },
+  "timeByUser": {
+    "empty": "Nenhum tempo registrado neste projeto ainda."
+  },
+  "timeGoal": {
+    "noGoal": "Nenhuma meta de tempo definida. Defina uma na Configuração.",
+    "goal": "Meta {time}",
+    "period": {
+      "total": "Total",
+      "weekly": "Esta semana"
+    },
+    "status": {
+      "under": "Abaixo da meta",
+      "on": "Na meta",
+      "over": "Acima da meta"
+    }
+  },
+  "timeTotal": {
+    "label": "Tempo total registrado"
   },
   "defaultWidgets": {
     "open": "Abertas",
