@@ -140,6 +140,11 @@ export const project = pgTable(
     // current week's. Both columns are null together; a goal needs a period.
     timeGoalMinutes: integer('time_goal_minutes'),
     timeGoalPeriod: text('time_goal_period'),
+    // Which team roles may see this project's time tracking (teamRole ids). Empty means
+    // every role sees it — the default, which keeps time visible in every existing project.
+    // An owner and an instance admin bypass the list. Operating the timer still also needs
+    // work_items edit; this is the read gate.
+    timeVisibleRoleIds: jsonb('time_visible_role_ids').$type<number[]>().notNull().default([]),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
