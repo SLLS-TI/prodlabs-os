@@ -32,5 +32,17 @@ export function usePermissions(source?: ProjectDetail | null) {
   const isAdmin =
     viewer?.role === 'owner' || viewer?.teamRole === 'owner' || viewer?.teamRole === 'manager';
 
-  return { can, role: viewer?.role ?? null, isOwner: viewer?.role === 'owner', isAdmin };
+  // Whether the caller may see this project's time tracking. Computed on the API from
+  // the per-project role allowlist; the web hides every time surface when it is false.
+  // Default false when no project is loaded, so a time surface stays hidden until the
+  // scaffold confirms access.
+  const canSeeTime = project?.canSeeTimeTracking ?? false;
+
+  return {
+    can,
+    role: viewer?.role ?? null,
+    isOwner: viewer?.role === 'owner',
+    isAdmin,
+    canSeeTime,
+  };
 }

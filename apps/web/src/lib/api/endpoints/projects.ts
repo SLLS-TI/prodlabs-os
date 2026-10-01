@@ -54,6 +54,9 @@ export interface Project {
   // time ever logged ('total') or the current week's ('weekly'). Both null together.
   timeGoalMinutes: number | null;
   timeGoalPeriod: 'total' | 'weekly' | null;
+  // Which team roles may see the project's time tracking. Empty means every role.
+  // Editor-only config, read by the Configuration settings page.
+  timeVisibleRoleIds: number[];
   createdAt: string;
   // Latest work-item activity or comment, present on the project list response.
   lastActivityAt?: string | null;
@@ -62,6 +65,9 @@ export interface Project {
   // The caller's role in this project. Only present on the /projects list
   // response; absent on the create/copy responses.
   role?: MemberRole;
+  // Whether the caller may see this project's time tracking (owner or an allowed
+  // role). Present on the scaffold and the list response.
+  canSeeTimeTracking?: boolean;
 }
 
 export interface Assignee {
@@ -109,6 +115,9 @@ export interface ProjectScaffold {
   viewer: ProjectViewer;
   // The caller's resolved permission matrix (owners get every flag).
   permissions: Permissions;
+  // Whether the caller may see this project's time tracking (owner or an allowed
+  // role). Every time surface is hidden behind it; the API enforces it too.
+  canSeeTimeTracking: boolean;
 }
 
 // The scaffold composed with its issues and the project's unfinished cycles, as

@@ -30,6 +30,8 @@ export function toPublicProjectDetail(
     issueTemplates: [],
     viewer: { role: 'member', teamRole: null },
     permissions: {} as Permissions,
+    // A public share never exposes time tracking.
+    canSeeTimeTracking: false,
     issues,
     // A share bundle carries no cycle list; a view grouped by cycle gets its lanes
     // from the cycles the shared issues are planned into.
