@@ -1,6 +1,6 @@
 import { db, issueTimerSession } from '@repo/db';
 import { and, desc, eq, isNull } from 'drizzle-orm';
-import { HttpError, iso } from '#shared/lib';
+import { HttpError, iso, pgErrorCode } from '#shared/lib';
 import { createWorklog, type WorklogRow } from './worklogs';
 
 // A play/stop timer on an issue. A running session is a row with stopped_at IS NULL;
@@ -58,16 +58,27 @@ async function findRunning(issueId: number, userId: string): Promise<TimerSessio
 }
 
 // Starts a timer. Idempotent per (issueId, userId): an already-running session is
-// returned unchanged, so a double start cannot make two.
+// returned unchanged, so a double start cannot make two. The fast path reads then
+// inserts; a concurrent double-start races past that read, so the partial unique index
+// (issue_timer_session_running_idx) rejects the second insert and the caught 23505
+// returns the session the other request wrote.
 export async function startTimer(issueId: number, userId: string): Promise<TimerSessionRow> {
   const existing = await findRunning(issueId, userId);
   if (existing) return existing;
 
-  const [row] = await db
-    .insert(issueTimerSession)
-    .values({ issueId, userId })
-    .returning(timerColumns);
-  return mapSession(row);
+  try {
+    const [row] = await db
+      .insert(issueTimerSession)
+      .values({ issueId, userId })
+      .returning(timerColumns);
+    return mapSession(row);
+  } catch (err) {
+    if (pgErrorCode(err) === '23505') {
+      const running = await findRunning(issueId, userId);
+      if (running) return running;
+    }
+    throw err;
+  }
 }
 
 // Stops the caller's running session on this issue and writes a worklog from the

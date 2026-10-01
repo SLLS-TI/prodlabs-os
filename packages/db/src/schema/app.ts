@@ -1731,9 +1731,10 @@ export const issueWorklog = pgTable(
 );
 
 // A member's running or finished timer on an issue. Running while stopped_at IS NULL;
-// stopping it stamps stopped_at and writes an issue_worklog from the elapsed time. One
-// row per start — a member may run several at once, so there is no uniqueness on the
-// running pair; the API dedupes instead.
+// stopping it stamps stopped_at and writes an issue_worklog from the elapsed time. A
+// member may run several at once (one per issue), but at most one running session per
+// (user, issue) — the partial unique index enforces that so a concurrent double-start
+// cannot create two.
 export const issueTimerSession = pgTable(
   'issue_timer_session',
   {
@@ -1749,10 +1750,10 @@ export const issueTimerSession = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    // Backs the running sessions of a user across views and the per-(issue,user) dedupe
-    // on start. Partial on the running rows only, so it stays small as finished sessions
-    // accumulate.
-    index('issue_timer_session_running_idx')
+    // Backs the running sessions of a user across views and makes the per-(issue,user)
+    // dedupe on start atomic. Partial on the running rows only, so it stays small as
+    // finished sessions accumulate and a finished pair can repeat.
+    uniqueIndex('issue_timer_session_running_idx')
       .on(t.userId, t.issueId)
       .where(sql`${t.stoppedAt} IS NULL`),
   ],
