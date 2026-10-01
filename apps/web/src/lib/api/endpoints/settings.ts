@@ -16,6 +16,10 @@ export interface EstimateSettings {
   points: boolean;
   time: boolean;
   logging: boolean;
+  // The project's time goal, or null for none. timeGoalPeriod reads it against all
+  // time ever logged ('total') or the current week's ('weekly'). Both null together.
+  timeGoalMinutes: number | null;
+  timeGoalPeriod: 'total' | 'weekly' | null;
 }
 
 // Per-project subtask automations, both off by default. completeParent closes a

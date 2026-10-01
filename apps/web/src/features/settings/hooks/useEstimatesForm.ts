@@ -34,7 +34,13 @@ export function useEstimatesForm(project: Project): EstimatesForm {
   }, [project.pointsEstimateEnabled, project.timeEstimateEnabled, project.timeLoggingEnabled]);
 
   async function save() {
-    await update.mutateAsync({ points, time, logging });
+    await update.mutateAsync({
+      points,
+      time,
+      logging,
+      timeGoalMinutes: project.timeGoalMinutes,
+      timeGoalPeriod: project.timeGoalPeriod,
+    });
   }
 
   return {

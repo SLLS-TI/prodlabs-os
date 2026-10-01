@@ -15,6 +15,8 @@ import {
   getAgentRunStats,
   getWebhookStats,
   getAgentWorkload,
+  getTimeByUser,
+  getTimeGoal,
   listActivity,
 } from '@/lib/api/endpoints/analytics';
 import type { BreakdownBy } from '@/utils/dashboardWidgets';
@@ -83,6 +85,20 @@ export function useAgentWorkloadQuery(projectKey: string) {
   return useQuery({
     queryKey: qk.analytics(projectKey, 'agent-workload'),
     queryFn: () => getAgentWorkload(projectKey),
+  });
+}
+
+export function useTimeByUserQuery(projectKey: string) {
+  return useQuery({
+    queryKey: qk.analytics(projectKey, 'time-by-user'),
+    queryFn: () => getTimeByUser(projectKey),
+  });
+}
+
+export function useTimeGoalQuery(projectKey: string) {
+  return useQuery({
+    queryKey: qk.analytics(projectKey, 'time-goal'),
+    queryFn: () => getTimeGoal(projectKey),
   });
 }
 

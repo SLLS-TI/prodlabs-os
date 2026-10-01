@@ -50,6 +50,10 @@ export interface Project {
   // Whether members log the time they spend on the issues, set in the same place.
   // Independent of the time estimate.
   timeLoggingEnabled: boolean;
+  // The project's time goal, or null for none. timeGoalPeriod reads it against all
+  // time ever logged ('total') or the current week's ('weekly'). Both null together.
+  timeGoalMinutes: number | null;
+  timeGoalPeriod: 'total' | 'weekly' | null;
   createdAt: string;
   // Latest work-item activity or comment, present on the project list response.
   lastActivityAt?: string | null;
