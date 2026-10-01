@@ -31,6 +31,7 @@ import IssuePropertyGroupHeading from './IssuePropertyGroupHeading';
 import { type Embeddable } from '@/components/common/editor/attachmentEmbed';
 import { parseDate } from '@/utils/dates';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useTranslations } from 'next-intl';
 
 // The Properties grid of the issue detail: built-in fields and non-markdown
@@ -79,6 +80,7 @@ export default function IssueProperties({
   groupsOpen: { isOpen: (key: string) => boolean; toggle: (key: string) => void };
 }) {
   const t = useTranslations('issue.fields');
+  const { canSeeTime } = usePermissions(project);
   const hasMembers = project.assignees.some((a) => a.kind === 'member');
   const hasAgents = project.assignees.some((a) => a.kind === 'agent');
   // The calendars grey out days that would put one date on the wrong side of the
@@ -231,7 +233,7 @@ export default function IssueProperties({
           </IssuePropertyRow>
         ),
 
-        project.project.timeLoggingEnabled && issue.loggedMinutes > 0 && (
+        project.project.timeLoggingEnabled && canSeeTime && issue.loggedMinutes > 0 && (
           <IssuePropertyRow key="timeTracking" label={t('timeTracking')}>
             <IssueTimeTracking
               logged={issue.loggedMinutes}

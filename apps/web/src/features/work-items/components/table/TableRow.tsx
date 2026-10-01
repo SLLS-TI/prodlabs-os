@@ -58,7 +58,7 @@ export function TableRow({
   // Drag is disabled on phones so a touch scrolls the list instead of picking up
   // a row (see the `sm:touch-none` below), and without work_items edit (reordering
   // is an issue edit).
-  const { can } = usePermissions();
+  const { can, canSeeTime } = usePermissions();
   const features = useProjectFeatures();
   const subtasks = useSubtaskFold();
   const {
@@ -120,7 +120,7 @@ export function TableRow({
             open={subtasks.open}
             onToggle={subtasks.toggle}
           />
-          {features.timeLogging && (
+          {features.timeLogging && canSeeTime && (
             <IssueTimerButton
               issueId={issue.id}
               projectKey={project.project.ref}
@@ -142,7 +142,7 @@ export function TableRow({
             issueId={issue.id}
             maps={maps}
             onOpenIssue={onOpenIssue}
-            projectKey={features.timeLogging ? project.project.ref : undefined}
+            projectKey={features.timeLogging && canSeeTime ? project.project.ref : undefined}
             canEdit={can('work_items', 'edit')}
           />
         )}

@@ -188,7 +188,9 @@ export default function IssueDetailContent({
 
       {features.checklists && <IssueChecklistsPanel issue={issue} />}
 
-      {features.timeLogging && <IssueWorklogPanel project={project} issue={issue} />}
+      {features.timeLogging && permissions.canSeeTime && (
+        <IssueWorklogPanel project={project} issue={issue} />
+      )}
 
       <IssueDevelopmentPanel
         issueId={issue.id}
