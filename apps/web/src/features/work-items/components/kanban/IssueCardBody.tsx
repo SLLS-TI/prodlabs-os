@@ -210,8 +210,6 @@ export function IssueCardBody({
                 canEdit={timer.canEdit}
               />
             )}
-            {/* Negative spacing so a delegate and an assignee shown together
-                overlap; the ring in the card color keeps them separated. */}
             <div className="flex items-center -space-x-1.5">
               {has('delegate') && delegate && (
                 <DelegateAvatar

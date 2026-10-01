@@ -16,6 +16,13 @@ export interface TimerSessionRow {
   startedAt: string;
 }
 
+const timerColumns = {
+  id: issueTimerSession.id,
+  issueId: issueTimerSession.issueId,
+  userId: issueTimerSession.userId,
+  startedAt: issueTimerSession.startedAt,
+};
+
 function mapSession(row: {
   id: number;
   issueId: number;
@@ -29,12 +36,7 @@ function mapSession(row: {
 // on page init so every view can show which issues are ticking for this user.
 export async function listRunningTimers(userId: string): Promise<TimerSessionRow[]> {
   const rows = await db
-    .select({
-      id: issueTimerSession.id,
-      issueId: issueTimerSession.issueId,
-      userId: issueTimerSession.userId,
-      startedAt: issueTimerSession.startedAt,
-    })
+    .select(timerColumns)
     .from(issueTimerSession)
     .where(and(eq(issueTimerSession.userId, userId), isNull(issueTimerSession.stoppedAt)))
     .orderBy(desc(issueTimerSession.startedAt));
@@ -43,12 +45,7 @@ export async function listRunningTimers(userId: string): Promise<TimerSessionRow
 
 async function findRunning(issueId: number, userId: string): Promise<TimerSessionRow | null> {
   const [row] = await db
-    .select({
-      id: issueTimerSession.id,
-      issueId: issueTimerSession.issueId,
-      userId: issueTimerSession.userId,
-      startedAt: issueTimerSession.startedAt,
-    })
+    .select(timerColumns)
     .from(issueTimerSession)
     .where(
       and(
@@ -66,12 +63,10 @@ export async function startTimer(issueId: number, userId: string): Promise<Timer
   const existing = await findRunning(issueId, userId);
   if (existing) return existing;
 
-  const [row] = await db.insert(issueTimerSession).values({ issueId, userId }).returning({
-    id: issueTimerSession.id,
-    issueId: issueTimerSession.issueId,
-    userId: issueTimerSession.userId,
-    startedAt: issueTimerSession.startedAt,
-  });
+  const [row] = await db
+    .insert(issueTimerSession)
+    .values({ issueId, userId })
+    .returning(timerColumns);
   return mapSession(row);
 }
 
@@ -95,12 +90,7 @@ export async function stopTimer(
         isNull(issueTimerSession.stoppedAt),
       ),
     )
-    .returning({
-      id: issueTimerSession.id,
-      issueId: issueTimerSession.issueId,
-      userId: issueTimerSession.userId,
-      startedAt: issueTimerSession.startedAt,
-    });
+    .returning(timerColumns);
   if (!row) throw new HttpError(404, 'No running timer on this issue');
 
   const session = mapSession(row);
