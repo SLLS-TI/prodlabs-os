@@ -152,7 +152,8 @@
     "timeVisibility": "Time tracking visibility",
     "timeVisibilityHint": "Choose which roles can see time tracking in this project. Owners always see it.",
     "timeVisibilityAll": "All roles",
-    "timeVisibilityRestricted": "Only selected roles"
+    "timeVisibilityRestricted": "Only selected roles",
+    "timeVisibilityNone": "No roles selected — everyone can see time tracking."
   },
   "states": {
     "addState": "Add {type} state",

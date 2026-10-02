@@ -152,7 +152,8 @@
     "timeVisibility": "Видимість обліку часу",
     "timeVisibilityHint": "Виберіть, які ролі можуть бачити облік часу в цьому проєкті. Власники бачать його завжди.",
     "timeVisibilityAll": "Усі ролі",
-    "timeVisibilityRestricted": "Лише вибрані ролі"
+    "timeVisibilityRestricted": "Лише вибрані ролі",
+    "timeVisibilityNone": "Ролі не вибрано — облік часу бачать усі."
   },
   "states": {
     "addState": "Додати статус групи «{type}»",

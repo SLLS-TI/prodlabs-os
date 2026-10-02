@@ -152,7 +152,8 @@
     "timeVisibility": "Видимость учёта времени",
     "timeVisibilityHint": "Выберите, какие роли могут видеть учёт времени в этом проекте. Владельцы видят его всегда.",
     "timeVisibilityAll": "Все роли",
-    "timeVisibilityRestricted": "Только выбранные роли"
+    "timeVisibilityRestricted": "Только выбранные роли",
+    "timeVisibilityNone": "Роли не выбраны — учёт времени видят все."
   },
   "states": {
     "addState": "Добавить статус группы «{type}»",

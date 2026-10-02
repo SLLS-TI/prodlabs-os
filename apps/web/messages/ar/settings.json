@@ -152,7 +152,8 @@
     "timeVisibility": "ظهور تتبع الوقت",
     "timeVisibilityHint": "اختر الأدوار التي يمكنها رؤية تتبع الوقت في هذا المشروع. المالكون يرونه دائمًا.",
     "timeVisibilityAll": "كل الأدوار",
-    "timeVisibilityRestricted": "الأدوار المحددة فقط"
+    "timeVisibilityRestricted": "الأدوار المحددة فقط",
+    "timeVisibilityNone": "لم يتم تحديد أي دور — يمكن للجميع رؤية تتبع الوقت."
   },
   "states": {
     "addState": "إضافة حالة {type}",

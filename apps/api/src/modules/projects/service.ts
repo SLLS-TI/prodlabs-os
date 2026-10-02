@@ -648,15 +648,18 @@ export async function setEstimateSettings(
     throw new HttpError(400, 'A time goal needs both a value and a period');
 
   const teamId = await getProjectTeamId(projectId);
+  // Keep only ids that are still roles of the team, dropping any that are not — a role
+  // deleted after it was allowlisted leaves a stale id on the project, and the settings
+  // form resends it; silently pruning it is self-healing and keeps the stored list valid.
   const ids = [...new Set(input.timeVisibleRoleIds)];
+  let validIds = ids;
   if (ids.length > 0) {
     const known = await db
       .select({ id: teamRole.id })
       .from(teamRole)
       .where(and(eq(teamRole.teamId, teamId), inArray(teamRole.id, ids)));
-    if (known.length !== ids.length) {
-      throw new HttpError(400, 'A time-visible role is not a role of this team');
-    }
+    const knownIds = new Set(known.map((r) => r.id));
+    validIds = ids.filter((id) => knownIds.has(id));
   }
 
   const [row] = await db
@@ -667,7 +670,7 @@ export async function setEstimateSettings(
       timeLoggingEnabled: input.logging,
       timeGoalMinutes: input.timeGoalMinutes,
       timeGoalPeriod: input.timeGoalPeriod,
-      timeVisibleRoleIds: ids,
+      timeVisibleRoleIds: validIds,
     })
     .where(eq(project.id, projectId))
     .returning();

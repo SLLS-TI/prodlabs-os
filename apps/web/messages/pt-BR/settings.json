@@ -152,7 +152,8 @@
     "timeVisibility": "Visibilidade do controle de tempo",
     "timeVisibilityHint": "Escolha quais papéis podem ver o controle de tempo neste projeto. Owners sempre veem.",
     "timeVisibilityAll": "Todos os papéis",
-    "timeVisibilityRestricted": "Apenas papéis selecionados"
+    "timeVisibilityRestricted": "Apenas papéis selecionados",
+    "timeVisibilityNone": "Nenhum papel selecionado — todos podem ver o controle de tempo."
   },
   "states": {
     "addState": "Adicionar estado {type}",

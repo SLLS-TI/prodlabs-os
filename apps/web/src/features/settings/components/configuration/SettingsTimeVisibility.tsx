@@ -95,6 +95,9 @@ export default function SettingsTimeVisibility({ form }: { form: EstimatesForm }
               ))}
             </div>
           )}
+          {restricted && form.timeVisibleRoleIds.length === 0 && (
+            <p className="text-xs text-destructive">{t('timeVisibilityNone')}</p>
+          )}
         </div>
       }
     />

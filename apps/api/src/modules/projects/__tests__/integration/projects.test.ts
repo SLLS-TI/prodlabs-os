@@ -1262,18 +1262,23 @@ describe('projects', () => {
         });
       });
 
-      it('rejects a role id that is not a role of the team with 400', async () => {
+      it('drops a role id that is not a role of the team', async () => {
         const { api } = await signUpClient();
         await api.projects.post({ key: 'MKT', name: 'Marketing' });
+        const role = await createRole(api, 'MKT', {
+          name: 'Analyst',
+          permissions: { work_items: { read: true } },
+        });
 
         const res = await estimates(api).patch({
           points: false,
           time: false,
           logging: true,
           ...noGoal,
-          timeVisibleRoleIds: [999999],
+          timeVisibleRoleIds: [role.data!.id, 999999],
         });
-        expect(res.status).toBe(400);
+        expect(res.status).toBe(200);
+        expect(res.data).toMatchObject({ timeVisibleRoleIds: [role.data!.id] });
       });
 
       it('shows the owner canSeeTimeTracking true even when the allowlist excludes every role', async () => {
