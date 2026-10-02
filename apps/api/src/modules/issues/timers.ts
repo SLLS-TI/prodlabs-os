@@ -1,6 +1,7 @@
-import { db, issueTimerSession } from '@repo/db';
+import { db, issue, issueTimerSession, project as projectTable, team } from '@repo/db';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { HttpError, iso, pgErrorCode } from '#shared/lib';
+import { projectRef } from '#modules/teams/ref';
 import { createWorklog, type WorklogRow } from './worklogs';
 
 // A play/stop timer on an issue. A running session is a row with stopped_at IS NULL;
@@ -14,6 +15,17 @@ export interface TimerSessionRow {
   issueId: number;
   userId: string;
   startedAt: string;
+}
+
+// A running session enriched with its issue and project, so the sidebar can name and
+// link to the issue and stop the timer without a per-session fetch. identifier is the
+// human label ("MKT-42"); projectKey is the full ref ("<teamRef>.<key>"), which the
+// web passes to issuePath and useStopTimer.
+export interface RunningTimerRow extends TimerSessionRow {
+  title: string;
+  identifier: string;
+  sequenceNumber: number;
+  projectKey: string;
 }
 
 const timerColumns = {
@@ -32,15 +44,35 @@ function mapSession(row: {
   return { id: row.id, issueId: row.issueId, userId: row.userId, startedAt: iso(row.startedAt) };
 }
 
-// The caller's running sessions across the whole instance, newest first. Loaded once
-// on page init so every view can show which issues are ticking for this user.
-export async function listRunningTimers(userId: string): Promise<TimerSessionRow[]> {
+// The caller's running sessions across the whole instance, newest first, each enriched
+// with its issue and project. Loaded once on page init so every view can show which
+// issues are ticking for this user, and the sidebar can list and stop them.
+export async function listRunningTimers(userId: string): Promise<RunningTimerRow[]> {
   const rows = await db
-    .select(timerColumns)
+    .select({
+      id: issueTimerSession.id,
+      issueId: issueTimerSession.issueId,
+      userId: issueTimerSession.userId,
+      startedAt: issueTimerSession.startedAt,
+      title: issue.title,
+      sequenceNumber: issue.sequenceNumber,
+      projectKey: projectTable.key,
+      teamId: team.id,
+      teamSlug: team.slug,
+    })
     .from(issueTimerSession)
+    .innerJoin(issue, eq(issue.id, issueTimerSession.issueId))
+    .innerJoin(projectTable, eq(projectTable.id, issue.projectId))
+    .innerJoin(team, eq(team.id, projectTable.teamId))
     .where(and(eq(issueTimerSession.userId, userId), isNull(issueTimerSession.stoppedAt)))
     .orderBy(desc(issueTimerSession.startedAt));
-  return rows.map(mapSession);
+  return rows.map((row) => ({
+    ...mapSession(row),
+    title: row.title,
+    identifier: `${row.projectKey}-${row.sequenceNumber}`,
+    sequenceNumber: row.sequenceNumber,
+    projectKey: projectRef({ id: row.teamId, slug: row.teamSlug }, row.projectKey),
+  }));
 }
 
 async function findRunning(issueId: number, userId: string): Promise<TimerSessionRow | null> {

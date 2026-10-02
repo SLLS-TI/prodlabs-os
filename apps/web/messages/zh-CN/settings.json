@@ -148,7 +148,12 @@
     "completedIssues": "已完成的工作项",
     "canceledIssues": "已取消的工作项",
     "staleHint": "超过此天数无活动",
-    "days": "天"
+    "days": "天",
+    "timeVisibility": "时间跟踪可见性",
+    "timeVisibilityHint": "选择哪些角色可以查看此项目的时间跟踪。所有者始终可见。",
+    "timeVisibilityAll": "所有角色",
+    "timeVisibilityRestricted": "仅所选角色",
+    "timeVisibilityNone": "未选择任何角色 — 所有人都能查看时间跟踪。"
   },
   "states": {
     "addState": "添加{type}状态",

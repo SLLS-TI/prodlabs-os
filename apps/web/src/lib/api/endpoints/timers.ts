@@ -1,13 +1,24 @@
 import { request } from '@/lib/api/core/client';
 import type { Worklog } from '@/lib/api/endpoints/worklogs';
 
-// A member's running timer on an issue. Running while it is in the list the running
-// query returns; stopping it writes a worklog from the elapsed time.
+// A member's running timer on an issue, the bare session returned by start and inside
+// stop. Running while it is in the list the running query returns; stopping it writes a
+// worklog from the elapsed time.
 export interface TimerSession {
   id: number;
   issueId: number;
   userId: string;
   startedAt: string;
+}
+
+// A running session enriched with its issue and project, returned by
+// listRunningTimers. identifier is the human label ("MKT-42"); projectKey is the full
+// ref ("<teamRef>.<key>") that issuePath and useStopTimer take.
+export interface RunningTimer extends TimerSession {
+  title: string;
+  identifier: string;
+  sequenceNumber: number;
+  projectKey: string;
 }
 
 // The result of stopping a timer: the stopped session and the worklog it wrote, or
@@ -19,7 +30,7 @@ export interface StopTimerResult {
 
 // The caller's running timers across the whole instance, loaded once and shared by
 // every view so running state is resolved client-side by issue id.
-export const listRunningTimers = () => request<TimerSession[]>('/issues/timers/running');
+export const listRunningTimers = () => request<RunningTimer[]>('/issues/timers/running');
 
 export const startTimer = (issueId: number) =>
   request<TimerSession>(`/issues/${issueId}/timer/start`, { method: 'POST' });

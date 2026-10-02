@@ -8,6 +8,8 @@ import { requireUser } from '#shared/access';
 import { isMcpRequest } from '#shared/mcp-request';
 import { accessErrors, commonErrors, errors } from '#shared/responses';
 import { getMemberContext, listAssigneeCandidates } from '#modules/members/service';
+import { getDefaultRoleId } from '#modules/roles/service';
+import { canSeeTimeTracking } from './visibility';
 import { listColumns } from '#modules/columns/service';
 import { listIssueTypes } from '#modules/issue-types/service';
 import { listLabels, listLabelGroups } from '#modules/labels/service';
@@ -157,6 +159,7 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
       // The permission guard already asserted membership, so a context always
       // exists here; guard against a race (membership revoked mid-request).
       if (!viewer) throw new HttpError(403, 'You do not have access to this project');
+      const effectiveRoleId = viewer.roleId ?? (await getDefaultRoleId(project.teamId));
       return {
         project,
         columns,
@@ -168,6 +171,11 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
         issueTemplates,
         viewer: { role: viewer.role, teamRole },
         permissions: viewer.permissions,
+        canSeeTimeTracking: canSeeTimeTracking(
+          viewer.role,
+          effectiveRoleId,
+          project.timeVisibleRoleIds,
+        ),
       };
     },
     {

@@ -61,6 +61,7 @@ const projects: Project[] = Array.from({ length: 20 }, (_, index) => ({
   timeLoggingEnabled: false,
   timeGoalMinutes: null,
   timeGoalPeriod: null,
+  timeVisibleRoleIds: [],
   createdAt: '2026-01-01T00:00:00Z',
 }));
 

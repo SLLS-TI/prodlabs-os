@@ -24,6 +24,8 @@ export interface EstimatesForm {
   setTimeGoalPeriod: (v: TimeGoalPeriod | null) => void;
   timeGoalMinutes: number | null;
   setTimeGoalMinutes: (v: number | null) => void;
+  timeVisibleRoleIds: number[];
+  setTimeVisibleRoleIds: (v: number[]) => void;
 }
 
 export function useEstimatesForm(project: Project): EstimatesForm {
@@ -35,6 +37,7 @@ export function useEstimatesForm(project: Project): EstimatesForm {
   const [logging, setLogging] = useState(project.timeLoggingEnabled);
   const [timeGoalPeriod, setTimeGoalPeriod] = useState(project.timeGoalPeriod);
   const [timeGoalMinutes, setTimeGoalMinutes] = useState(project.timeGoalMinutes);
+  const [timeVisibleRoleIds, setTimeVisibleRoleIds] = useState(project.timeVisibleRoleIds);
 
   useEffect(() => {
     setPoints(project.pointsEstimateEnabled);
@@ -42,12 +45,14 @@ export function useEstimatesForm(project: Project): EstimatesForm {
     setLogging(project.timeLoggingEnabled);
     setTimeGoalPeriod(project.timeGoalPeriod);
     setTimeGoalMinutes(project.timeGoalMinutes);
+    setTimeVisibleRoleIds(project.timeVisibleRoleIds);
   }, [
     project.pointsEstimateEnabled,
     project.timeEstimateEnabled,
     project.timeLoggingEnabled,
     project.timeGoalPeriod,
     project.timeGoalMinutes,
+    project.timeVisibleRoleIds,
   ]);
 
   // A goal needs both a period and a value; a period without a value, or logging
@@ -61,6 +66,7 @@ export function useEstimatesForm(project: Project): EstimatesForm {
       logging,
       timeGoalMinutes: goalSet ? timeGoalMinutes : null,
       timeGoalPeriod: goalSet ? timeGoalPeriod : null,
+      timeVisibleRoleIds,
     });
   }
 
@@ -78,5 +84,7 @@ export function useEstimatesForm(project: Project): EstimatesForm {
     setTimeGoalPeriod,
     timeGoalMinutes,
     setTimeGoalMinutes,
+    timeVisibleRoleIds,
+    setTimeVisibleRoleIds,
   };
 }

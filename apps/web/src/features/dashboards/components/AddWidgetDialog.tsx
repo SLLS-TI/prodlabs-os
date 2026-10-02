@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import type { WidgetType } from '@/utils/dashboardWidgets';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   Dialog,
   DialogContent,
@@ -19,24 +20,28 @@ import { WIDGET_GROUPS, WIDGET_ICON } from '../utils/widgetCatalog';
 // description, matching the tool picker and GitHub skill import dialogs.
 export default function AddWidgetDialog({ onAdd }: { onAdd: (type: WidgetType) => void }) {
   const t = useTranslations('dashboards');
+  const { canSeeTime } = usePermissions();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
 
   // Each group's types narrowed to the ones matching the query; empty groups are
-  // dropped so only relevant sections render.
+  // dropped so only relevant sections render. The time group is dropped entirely for a
+  // viewer without time-tracking access.
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return WIDGET_GROUPS.map((g) => ({
-      key: g.key,
-      types: q
-        ? g.types.filter(
-            (type) =>
-              t(`widgets.${type}.label`).toLowerCase().includes(q) ||
-              t(`widgets.${type}.description`).toLowerCase().includes(q),
-          )
-        : g.types,
-    })).filter((g) => g.types.length > 0);
-  }, [query, t]);
+    return WIDGET_GROUPS.filter((g) => canSeeTime || g.key !== 'time')
+      .map((g) => ({
+        key: g.key,
+        types: q
+          ? g.types.filter(
+              (type) =>
+                t(`widgets.${type}.label`).toLowerCase().includes(q) ||
+                t(`widgets.${type}.description`).toLowerCase().includes(q),
+            )
+          : g.types,
+      }))
+      .filter((g) => g.types.length > 0);
+  }, [query, t, canSeeTime]);
 
   function add(type: WidgetType) {
     onAdd(type);

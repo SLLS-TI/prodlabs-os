@@ -5,6 +5,7 @@ import { resetDb } from '#tests/helpers/db';
 import { pulseRows } from '../../service';
 import { createAgent } from '#tests/helpers/agents';
 import { addProjectMember } from '#tests/helpers/members';
+import { createRole } from '#tests/helpers/roles';
 
 // Read-only project analytics. Every figure is derived from the issue /
 // project_column / issue_activity / issue_status tables, so the tests build state
@@ -780,6 +781,7 @@ describe('analytics', () => {
         logging: true,
         timeGoalMinutes,
         timeGoalPeriod,
+        timeVisibleRoleIds: [],
       });
     }
 
@@ -859,6 +861,54 @@ describe('analytics', () => {
           loggedMinutes: 75,
           status: 'under',
         });
+      });
+    });
+
+    describe('visibility gate', () => {
+      function restrictTo(client: Api, roleIds: number[]) {
+        return client.projects({ projectKey: 'MKT' }).settings.estimates.patch({
+          points: false,
+          time: false,
+          logging: true,
+          timeGoalMinutes: null,
+          timeGoalPeriod: null,
+          timeVisibleRoleIds: roleIds,
+        });
+      }
+
+      it('403s a member whose role is not on the allowlist and 200s owner + allowlisted', async () => {
+        const { asOwner } = await setupProject();
+        const allowed = await createRole(asOwner, 'MKT', {
+          name: 'Allowed',
+          permissions: { work_items: { read: true }, dashboards: { read: true } },
+        });
+        const other = await createRole(asOwner, 'MKT', {
+          name: 'Other',
+          permissions: { work_items: { read: true }, dashboards: { read: true } },
+        });
+        const allowedMember = await addProjectMember(asOwner, 'MKT', allowed.data!.id);
+        const otherMember = await addProjectMember(asOwner, 'MKT', other.data!.id);
+        await restrictTo(asOwner, [allowed.data!.id]);
+
+        expect((await byUser(otherMember)).status).toBe(403);
+        expect((await goal(otherMember)).status).toBe(403);
+        expect((await byUser(allowedMember)).status).toBe(200);
+        expect((await goal(allowedMember)).status).toBe(200);
+        expect((await byUser(asOwner)).status).toBe(200);
+        expect((await goal(asOwner)).status).toBe(200);
+      });
+
+      it('200s every member when the allowlist is empty', async () => {
+        const { asOwner } = await setupProject();
+        const other = await createRole(asOwner, 'MKT', {
+          name: 'Other',
+          permissions: { work_items: { read: true }, dashboards: { read: true } },
+        });
+        const otherMember = await addProjectMember(asOwner, 'MKT', other.data!.id);
+        await restrictTo(asOwner, []);
+
+        expect((await byUser(otherMember)).status).toBe(200);
+        expect((await goal(otherMember)).status).toBe(200);
       });
     });
   });

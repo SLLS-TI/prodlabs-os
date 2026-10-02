@@ -1,4 +1,6 @@
 {
+  "runningTimers": "Temporizadores en curso",
+  "stopTimer": "Detener el temporizador de {issue}",
   "inbox": "Bandeja de entrada",
   "dashboards": "Paneles",
   "workItems": "Elementos de trabajo",

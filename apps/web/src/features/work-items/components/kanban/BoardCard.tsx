@@ -39,11 +39,12 @@ export function BoardCard({
   // Drag is disabled on phones so a touch scrolls the board instead of picking
   // up a card (see the `sm:touch-none` on the card below), and without work_items
   // edit (moving a card is an issue edit).
-  const { can } = usePermissions();
+  const { can, canSeeTime } = usePermissions();
   const features = useProjectFeatures();
-  const timer = features.timeLogging
-    ? { projectKey: project.project.ref, canEdit: can('work_items', 'edit') }
-    : undefined;
+  const timer =
+    features.timeLogging && canSeeTime
+      ? { projectKey: project.project.ref, canEdit: can('work_items', 'edit') }
+      : undefined;
   const selection = useSelection();
   const selected = selection.isSelected(issue.id);
   const { setNodeRef, attributes, listeners } = useDraggable({

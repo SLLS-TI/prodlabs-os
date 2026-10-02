@@ -25,7 +25,7 @@ export function CalendarDayChip({
   // Drag is disabled on phones so a touch scrolls instead of picking up the issue
   // (see the `sm:touch-none` below), and without work_items edit (rescheduling a
   // issue is an issue edit).
-  const { can } = usePermissions();
+  const { can, canSeeTime } = usePermissions();
   const features = useProjectFeatures();
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: issue.id,
@@ -54,7 +54,7 @@ export function CalendarDayChip({
               style={{ backgroundColor: color }}
             />
             <span className="truncate text-foreground">{issue.title}</span>
-            {features.timeLogging && (
+            {features.timeLogging && canSeeTime && (
               <span className="ms-auto">
                 <IssueTimerButton
                   issueId={issue.id}

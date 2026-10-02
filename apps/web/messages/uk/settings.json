@@ -148,7 +148,12 @@
     "completedIssues": "Виконані задачі",
     "canceledIssues": "Скасовані задачі",
     "staleHint": "Архівувати після такої кількості днів без активності.",
-    "days": "днів"
+    "days": "днів",
+    "timeVisibility": "Видимість обліку часу",
+    "timeVisibilityHint": "Виберіть, які ролі можуть бачити облік часу в цьому проєкті. Власники бачать його завжди.",
+    "timeVisibilityAll": "Усі ролі",
+    "timeVisibilityRestricted": "Лише вибрані ролі",
+    "timeVisibilityNone": "Ролі не вибрано — облік часу бачать усі."
   },
   "states": {
     "addState": "Додати статус групи «{type}»",

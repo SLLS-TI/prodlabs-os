@@ -1,0 +1,1 @@
+ALTER TABLE "project" ADD COLUMN "time_visible_role_ids" jsonb DEFAULT '[]'::jsonb NOT NULL;

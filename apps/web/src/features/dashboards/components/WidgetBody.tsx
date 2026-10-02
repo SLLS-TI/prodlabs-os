@@ -1,5 +1,7 @@
+import { useTranslations } from 'next-intl';
 import type { ProjectDetail } from '@/lib/api/endpoints/projects';
 import type { WidgetInstance } from '@/utils/dashboardWidgets';
+import { usePermissions } from '@/hooks/usePermissions';
 import StatWidget from './widgets/StatWidget';
 import BreakdownWidget from './widgets/BreakdownWidget';
 import ThroughputWidget from './widgets/ThroughputWidget';
@@ -27,6 +29,15 @@ export default function WidgetBody({
   project: ProjectDetail;
 }) {
   const config = widget.config ?? {};
+  const t = useTranslations('dashboards');
+  const { canSeeTime } = usePermissions(project);
+
+  const isTimeWidget =
+    widget.type === 'time_by_user' || widget.type === 'time_goal' || widget.type === 'time_total';
+  if (isTimeWidget && !canSeeTime) {
+    return <p className="py-6 text-center text-sm text-muted-foreground">{t('timeNoAccess')}</p>;
+  }
+
   switch (widget.type) {
     case 'stat':
       return <StatWidget config={config} />;

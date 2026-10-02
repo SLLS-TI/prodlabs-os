@@ -1,4 +1,6 @@
 {
+  "runningTimers": "Timers em andamento",
+  "stopTimer": "Parar o timer de {issue}",
   "inbox": "Caixa de entrada",
   "dashboards": "Dashboards",
   "workItems": "Itens de trabalho",

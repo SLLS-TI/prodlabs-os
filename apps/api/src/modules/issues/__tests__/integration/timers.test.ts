@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'bun:test';
 import { authedApi, type Api } from '#tests/helpers/app';
 import { signUpTestUser } from '#tests/helpers/auth';
 import { addProjectMember } from '#tests/helpers/members';
+import { createRole } from '#tests/helpers/roles';
 import { resetDb } from '#tests/helpers/db';
 
 // The play/stop timer on an issue. Starting inserts a running session (stopped_at
@@ -162,6 +163,32 @@ describe('timers', () => {
       expect(memberList).toHaveLength(1);
       expect(memberList[0].id).not.toBe(ownerList[0].id);
     });
+
+    it('enriches each session with the issue title, identifier, number and project ref', async () => {
+      const { asOwner, columnId } = await setupProject();
+      const issue = (await createIssue(asOwner, columnId, 'Ship it')).data!;
+      const start201 = (await start(asOwner, issue.id)).data!;
+      // start returns the bare session shape (no enrichment).
+      expect(start201).not.toHaveProperty('title');
+
+      const list = await running(asOwner);
+      const session = list.find((s) => s.issueId === issue.id)!;
+      expect(session.title).toBe('Ship it');
+      expect(session.sequenceNumber).toBe(issue.sequenceNumber);
+      expect(session.identifier).toBe(`MKT-${issue.sequenceNumber}`);
+      // projectKey is the full ref "<teamRef>.<key>" (the team has no slug, so teamId).
+      const teamId = (await asOwner.projects.get()).data!.find((p) => p.key === 'MKT')!.teamId;
+      expect(session.projectKey).toBe(`${teamId}.MKT`);
+    });
+
+    it('returns the bare session shape on stop', async () => {
+      const { asOwner, columnId } = await setupProject();
+      const issue = (await createIssue(asOwner, columnId)).data!;
+      await start(asOwner, issue.id);
+      const stopped = (await stop(asOwner, issue.id)).data!;
+      expect(stopped.session).not.toHaveProperty('title');
+      expect(stopped.session).toMatchObject({ issueId: issue.id });
+    });
   });
 
   it('removes a running session with the issue', async () => {
@@ -172,5 +199,61 @@ describe('timers', () => {
     await asOwner.issues({ issueId: issue.id }).delete();
 
     expect(await running(asOwner)).toHaveLength(0);
+  });
+
+  describe('time-visibility gate', () => {
+    function restrictTo(client: Api, roleIds: number[]) {
+      return client.projects({ projectKey: 'MKT' }).settings.estimates.patch({
+        points: false,
+        time: false,
+        logging: true,
+        timeGoalMinutes: null,
+        timeGoalPeriod: null,
+        timeVisibleRoleIds: roleIds,
+      });
+    }
+
+    it('403s start and stop for a member whose role is not on the allowlist', async () => {
+      const { asOwner, columnId } = await setupProject();
+      const allowed = await createRole(asOwner, 'MKT', {
+        name: 'Allowed',
+        permissions: { work_items: { read: true, edit: true } },
+      });
+      const other = await createRole(asOwner, 'MKT', {
+        name: 'Other',
+        permissions: { work_items: { read: true, edit: true } },
+      });
+      const allowedMember = await addProjectMember(asOwner, 'MKT', allowed.data!.id);
+      const otherMember = await addProjectMember(asOwner, 'MKT', other.data!.id);
+      const issue = (await createIssue(asOwner, columnId)).data!;
+      await restrictTo(asOwner, [allowed.data!.id]);
+
+      expect((await start(otherMember, issue.id)).status).toBe(403);
+      expect((await stop(otherMember, issue.id)).status).toBe(403);
+
+      expect((await start(allowedMember, issue.id)).status).toBe(201);
+      expect((await stop(allowedMember, issue.id)).status).toBe(200);
+      expect((await start(asOwner, issue.id)).status).toBe(201);
+    });
+
+    it('keeps a members own running timer visible after their role loses visibility', async () => {
+      const { asOwner, columnId } = await setupProject();
+      const member = await addProjectMember(asOwner, 'MKT');
+      const other = await createRole(asOwner, 'MKT', {
+        name: 'Other',
+        permissions: { work_items: { read: true, edit: true } },
+      });
+      const issue = (await createIssue(asOwner, columnId)).data!;
+      await start(member, issue.id);
+
+      // Restrict visibility to a role the member is not on; their board scaffold loses
+      // canSeeTimeTracking, but the running-timers endpoint is not filtered.
+      await restrictTo(asOwner, [other.data!.id]);
+
+      expect((await member.projects({ projectKey: 'MKT' }).get()).data?.canSeeTimeTracking).toBe(
+        false,
+      );
+      expect(await running(member)).toHaveLength(1);
+    });
   });
 });

@@ -124,7 +124,11 @@ function feedFilterCondition(filter?: FeedFilter) {
 // pages. cursor_ts is created_at as full-precision text so the returned nextCursor
 // round-trips without the millisecond truncation iso() would apply. limit is clamped
 // to 1..100.
-export async function listFeed(issueId: number, opts: FeedPageOptions = {}): Promise<FeedPage> {
+export async function listFeed(
+  issueId: number,
+  opts: FeedPageOptions = {},
+  canSeeTime = true,
+): Promise<FeedPage> {
   const limit = Math.min(Math.max(opts.limit ?? 25, 1), 100);
   const cursor = opts.cursor ?? null;
   const ascending = opts.order === 'asc';
@@ -151,6 +155,9 @@ export async function listFeed(issueId: number, opts: FeedPageOptions = {}): Pro
         eq(issueActivity.issueId, issueId),
         isNull(issueActivity.replyToId),
         feedFilterCondition(opts.filter),
+        // A viewer without time-tracking access never sees worklog entries, which carry
+        // the minutes and the author that the analytics endpoints also hide.
+        canSeeTime ? undefined : sql`${issueActivity.action} is distinct from 'worklog'`,
         cursor
           ? sql`(${issueActivity.createdAt}, ${issueActivity.id}) ${pastCursor} (${cursor.ts}::timestamptz, ${cursor.id}::integer)`
           : undefined,
@@ -179,7 +186,7 @@ export interface FeedCounts {
   worklog: number;
 }
 
-export async function countFeed(issueId: number): Promise<FeedCounts> {
+export async function countFeed(issueId: number, canSeeTime = true): Promise<FeedCounts> {
   const [counts] = await db
     .select({
       comments: sql<number>`count(*) FILTER (WHERE ${issueActivity.kind} = 'comment')`.mapWith(
@@ -197,6 +204,7 @@ export async function countFeed(issueId: number): Promise<FeedCounts> {
     .from(issueActivity)
     .where(eq(issueActivity.issueId, issueId));
   const { comments, worklog, history } = counts;
+  if (!canSeeTime) return { all: comments + history, comments, history, worklog: 0 };
   return { all: comments + worklog + history, comments, history, worklog };
 }
 
@@ -273,8 +281,9 @@ export interface GroupedFeedPage {
 export async function listGroupedFeed(
   issueId: number,
   opts: FeedPageOptions = {},
+  canSeeTime = true,
 ): Promise<GroupedFeedPage> {
-  const page = await listFeed(issueId, opts);
+  const page = await listFeed(issueId, opts, canSeeTime);
   const timeline = page.items.length ? await listStatusTimeline(issueId) : [];
   if (timeline.length === 0) return { groups: [], nextCursor: page.nextCursor };
 

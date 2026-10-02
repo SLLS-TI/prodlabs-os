@@ -20,6 +20,8 @@ export interface EstimateSettings {
   // time ever logged ('total') or the current week's ('weekly'). Both null together.
   timeGoalMinutes: number | null;
   timeGoalPeriod: 'total' | 'weekly' | null;
+  // Which team roles may see the project's time tracking. Empty means every role.
+  timeVisibleRoleIds: number[];
 }
 
 // Per-project subtask automations, both off by default. completeParent closes a

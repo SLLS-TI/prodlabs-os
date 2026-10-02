@@ -220,7 +220,11 @@ function snapshot(row: IssueRow): IssueSnapshot {
   };
 }
 
-export async function listIssues(project: ProjectRow): Promise<IssueRow[]> {
+// canSeeTime gates the per-issue logged-time sum: a member whose role may not see the
+// project's time tracking gets loggedMinutes left at 0, so no total leaks through the
+// board payload even though the time UI is hidden. Defaults true for the callers that
+// do not surface time (agent tools, writes).
+export async function listIssues(project: ProjectRow, canSeeTime = true): Promise<IssueRow[]> {
   const rows = await db
     .select()
     .from(issue)
@@ -231,13 +235,16 @@ export async function listIssues(project: ProjectRow): Promise<IssueRow[]> {
   await attachFieldValues(issues);
   await attachStatusSince(issues);
   await attachGroupings(issues);
-  await attachLoggedMinutes(issues);
+  if (canSeeTime) await attachLoggedMinutes(issues);
   return issues;
 }
 
 // The project's archived issues, newest archived first. The archive view lists
 // these so an owner can restore one. Same per-issue enrichment as the board.
-export async function listArchivedIssues(project: ProjectRow): Promise<IssueRow[]> {
+export async function listArchivedIssues(
+  project: ProjectRow,
+  canSeeTime = true,
+): Promise<IssueRow[]> {
   const rows = await db
     .select()
     .from(issue)
@@ -248,7 +255,7 @@ export async function listArchivedIssues(project: ProjectRow): Promise<IssueRow[
   await attachFieldValues(issues);
   await attachStatusSince(issues);
   await attachGroupings(issues);
-  await attachLoggedMinutes(issues);
+  if (canSeeTime) await attachLoggedMinutes(issues);
   return issues;
 }
 
@@ -636,14 +643,15 @@ async function loadSnapshot(
   return row ? { ...row, estimatePoints: numOrNull(row.estimatePoints) } : null;
 }
 
-export async function getIssue(id: number): Promise<IssueRow | null> {
-  return (await getIssues([id]))[0] ?? null;
+export async function getIssue(id: number, canSeeTime = true): Promise<IssueRow | null> {
+  return (await getIssues([id], canSeeTime))[0] ?? null;
 }
 
 // Several issues at once, in no particular order. The per-issue enrichment is
 // batched, so this costs what a single getIssue does however many ids it is given
 // — which is what makes it worth using for the writes that touch two issues.
-export async function getIssues(ids: number[]): Promise<IssueRow[]> {
+// canSeeTime gates the logged-time sum (see listIssues).
+export async function getIssues(ids: number[], canSeeTime = true): Promise<IssueRow[]> {
   if (ids.length === 0) return [];
   const rows = await db
     .select({ issue, projectKey: projectTable.key })
@@ -654,7 +662,7 @@ export async function getIssues(ids: number[]): Promise<IssueRow[]> {
   await attachLabels(issues);
   await attachStatusSince(issues);
   await attachGroupings(issues);
-  await attachLoggedMinutes(issues);
+  if (canSeeTime) await attachLoggedMinutes(issues);
   return issues;
 }
 
@@ -664,6 +672,7 @@ export async function getIssues(ids: number[]): Promise<IssueRow[]> {
 export async function getIssueBySequence(
   projectId: number,
   sequenceNumber: number,
+  canSeeTime = true,
 ): Promise<IssueRow | null> {
   const rows = await db
     .select({ issue, projectKey: projectTable.key })
@@ -675,7 +684,7 @@ export async function getIssueBySequence(
   await attachLabels([mapped]);
   await attachStatusSince([mapped]);
   await attachGroupings([mapped]);
-  await attachLoggedMinutes([mapped]);
+  if (canSeeTime) await attachLoggedMinutes([mapped]);
   return mapped;
 }
 

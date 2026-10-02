@@ -1,4 +1,6 @@
 {
+  "runningTimers": "Running timers",
+  "stopTimer": "Stop timer for {issue}",
   "inbox": "Inbox",
   "dashboards": "Dashboards",
   "workItems": "Work items",

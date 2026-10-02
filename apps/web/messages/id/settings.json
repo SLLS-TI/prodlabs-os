@@ -148,7 +148,12 @@
     "completedIssues": "Issue selesai",
     "canceledIssues": "Issue dibatalkan",
     "staleHint": "Arsipkan setelah sekian hari tanpa aktivitas.",
-    "days": "hari"
+    "days": "hari",
+    "timeVisibility": "Visibilitas pelacakan waktu",
+    "timeVisibilityHint": "Pilih peran mana yang dapat melihat pelacakan waktu di proyek ini. Pemilik selalu melihatnya.",
+    "timeVisibilityAll": "Semua peran",
+    "timeVisibilityRestricted": "Hanya peran terpilih",
+    "timeVisibilityNone": "Tidak ada peran dipilih — semua orang dapat melihat pelacakan waktu."
   },
   "states": {
     "addState": "Tambah status {type}",

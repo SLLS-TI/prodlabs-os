@@ -79,6 +79,10 @@ export interface MemberCandidate {
 export interface MemberContext {
   role: MemberRole;
   permissions: Permissions;
+  // The member's assigned custom role, or null for an owner and for a member on the
+  // default role. Read by the per-project time-visibility gate, which falls back to
+  // the team's default role when this is null.
+  roleId: number | null;
 }
 
 // Where a membership came from, or null when the user is not a member. Read by the
@@ -103,13 +107,18 @@ export async function getMembership(projectId: number, userId: string): Promise<
   return rows[0] ? (rows[0].role as MemberRole) : null;
 }
 
-export function toMemberContext(role: MemberRole, rolePermissions: unknown): MemberContext {
-  if (role === 'owner') return { role, permissions: fullPermissions() };
+export function toMemberContext(
+  role: MemberRole,
+  rolePermissions: unknown,
+  roleId: number | null = null,
+): MemberContext {
+  if (role === 'owner') return { role, permissions: fullPermissions(), roleId: null };
   return {
     role,
     permissions: rolePermissions
       ? normalizePermissions(rolePermissions)
       : defaultMemberPermissions(),
+    roleId,
   };
 }
 
@@ -122,13 +131,14 @@ export async function getMemberContext(
   const rows = await db
     .select({
       role: projectMember.role,
+      roleId: projectMember.roleId,
       permissions: teamRole.permissions,
     })
     .from(projectMember)
     .leftJoin(teamRole, eq(teamRole.id, projectMember.roleId))
     .where(and(eq(projectMember.projectId, projectId), eq(projectMember.userId, userId)));
   const r = rows[0];
-  return r ? toMemberContext(r.role as MemberRole, r.permissions) : null;
+  return r ? toMemberContext(r.role as MemberRole, r.permissions, r.roleId) : null;
 }
 
 // The access a user has across a team: the permissions of their project memberships

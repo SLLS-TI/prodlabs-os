@@ -1,4 +1,5 @@
 {
+  "timeNoAccess": "You cannot view time tracking in this project.",
   "noAccess": "You do not have access to dashboards.",
   "defaultName": "Overview",
   "newDashboard": "New dashboard",

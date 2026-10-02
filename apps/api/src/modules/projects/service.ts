@@ -44,6 +44,7 @@ import { getLimits } from '#shared/limits';
 import { deleteThreadsWhere } from '#modules/agents/core/runtime/memory';
 import { getProjectDefaults } from '#modules/settings/service';
 import { getDefaultRoleId } from '#modules/roles/service';
+import { canSeeTimeTracking } from './visibility';
 import { dropUnusedTeamMembership } from '#modules/scim/reconcile';
 import { projectRef, teamRef } from '#modules/teams/ref';
 import { deleteObjects } from '@repo/storage';
@@ -82,6 +83,10 @@ export interface ProjectRow {
   timeLoggingEnabled: boolean;
   timeGoalMinutes: number | null;
   timeGoalPeriod: 'total' | 'weekly' | null;
+  // Which team roles may see this project's time tracking (teamRole ids). Empty means
+  // every role sees it. Editor-only config: it reaches the settings page, not the
+  // board scaffold, which carries the resolved canSeeTimeTracking boolean instead.
+  timeVisibleRoleIds: number[];
   // The sections this project may use at all. A section missing here is blocked for
   // the team that owns the project: its flag above reads as off and the settings page
   // does not offer it.
@@ -110,6 +115,10 @@ export interface ProjectListItem extends ProjectRow {
   lastActivityAt: string | null;
   isFavorite: boolean;
   isHidden: boolean;
+  // Whether the caller may see this project's time tracking (owner or on an allowed
+  // role). The sidebar's per-project time surfaces gate on it; the sidebar's own list
+  // of the caller's running timers ignores it (an own-timer escape hatch).
+  canSeeTimeTracking: boolean;
   // The caller's resolved permission matrix in this project. Present only when the
   // list is requested with permissions (opts.withPermissions); omitted otherwise.
   permissions?: Permissions;
@@ -159,6 +168,7 @@ export async function mapProject(row: ProjectWithTeam): Promise<ProjectRow> {
     timeLoggingEnabled: row.timeLoggingEnabled,
     timeGoalMinutes: row.timeGoalMinutes,
     timeGoalPeriod: row.timeGoalPeriod as 'total' | 'weekly' | null,
+    timeVisibleRoleIds: row.timeVisibleRoleIds,
     availableFeatures: PROJECT_FEATURES.filter((feature) => !blockedFeatures.includes(feature)),
     createdAt: iso(row.createdAt),
   };
@@ -218,6 +228,7 @@ export async function listProjects(
     .select({
       ...projectWithTeam,
       memberRole: projectMember.role,
+      memberRoleId: projectMember.roleId,
       rolePermissions: teamRole.permissions,
       lastActivityAt: latestActivity.createdAt,
       isFavorite: projectMember.isFavorite,
@@ -230,16 +241,37 @@ export async function listProjects(
     .leftJoin(latestActivity, eq(latestActivity.projectId, project.id))
     .where(where)
     .orderBy(...order, project.key, project.id);
+  // One default-role lookup per team across the whole list, so canSeeTimeTracking
+  // resolving the default-role fallback does not cost a query per project.
+  const defaultRoleIds = new Map<number, Promise<number | null>>();
+  const resolveDefaultRole = (teamId: number) => {
+    let pending = defaultRoleIds.get(teamId);
+    if (!pending) {
+      pending = getDefaultRoleId(teamId);
+      defaultRoleIds.set(teamId, pending);
+    }
+    return pending;
+  };
   return Promise.all(
     rows.map(
-      async ({ memberRole, rolePermissions, lastActivityAt, isFavorite, isHidden, ...row }) => {
+      async ({
+        memberRole,
+        memberRoleId,
+        rolePermissions,
+        lastActivityAt,
+        isFavorite,
+        isHidden,
+        ...row
+      }) => {
         const role = memberRole === 'owner' ? 'owner' : 'member';
+        const effectiveRoleId = memberRoleId ?? (await resolveDefaultRole(row.teamId));
         const item: ProjectListItem = {
           ...(await mapProject(row)),
           role,
           lastActivityAt: lastActivityAt ? iso(lastActivityAt) : null,
           isFavorite,
           isHidden,
+          canSeeTimeTracking: canSeeTimeTracking(role, effectiveRoleId, row.timeVisibleRoleIds),
         };
         if (opts.withPermissions) {
           if (role === 'owner') item.permissions = fullPermissions();
@@ -601,6 +633,8 @@ export interface EstimateSettings {
   // are null together; a goal needs a period.
   timeGoalMinutes: number | null;
   timeGoalPeriod: 'total' | 'weekly' | null;
+  // Which team roles may see the project's time tracking. Empty means every role.
+  timeVisibleRoleIds: number[];
 }
 
 // Turns them on or off. One turned off keeps what the issues already carry — the
@@ -613,6 +647,21 @@ export async function setEstimateSettings(
   if ((input.timeGoalMinutes === null) !== (input.timeGoalPeriod === null))
     throw new HttpError(400, 'A time goal needs both a value and a period');
 
+  const teamId = await getProjectTeamId(projectId);
+  // Keep only ids that are still roles of the team, dropping any that are not — a role
+  // deleted after it was allowlisted leaves a stale id on the project, and the settings
+  // form resends it; silently pruning it is self-healing and keeps the stored list valid.
+  const ids = [...new Set(input.timeVisibleRoleIds)];
+  let validIds = ids;
+  if (ids.length > 0) {
+    const known = await db
+      .select({ id: teamRole.id })
+      .from(teamRole)
+      .where(and(eq(teamRole.teamId, teamId), inArray(teamRole.id, ids)));
+    const knownIds = new Set(known.map((r) => r.id));
+    validIds = ids.filter((id) => knownIds.has(id));
+  }
+
   const [row] = await db
     .update(project)
     .set({
@@ -621,6 +670,7 @@ export async function setEstimateSettings(
       timeLoggingEnabled: input.logging,
       timeGoalMinutes: input.timeGoalMinutes,
       timeGoalPeriod: input.timeGoalPeriod,
+      timeVisibleRoleIds: validIds,
     })
     .where(eq(project.id, projectId))
     .returning();
@@ -631,6 +681,7 @@ export async function setEstimateSettings(
         logging: row.timeLoggingEnabled,
         timeGoalMinutes: row.timeGoalMinutes,
         timeGoalPeriod: row.timeGoalPeriod as 'total' | 'weekly' | null,
+        timeVisibleRoleIds: row.timeVisibleRoleIds,
       }
     : null;
 }

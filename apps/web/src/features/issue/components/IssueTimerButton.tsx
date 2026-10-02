@@ -5,14 +5,14 @@ import { Loader2, Play, Square } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { formatMinutes } from '@/utils/estimate';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useRunningTimers, useStartTimer, useStopTimer } from '../services/timers.service';
 
 // The running time as h:mm:ss. formatMinutes has no seconds, so the ticking readout
 // gets its own formatter; the logged totals and the stop toast use formatMinutes.
-function formatElapsed(ms: number): string {
+// Exported so the sidebar running-timers list renders the same readout.
+export function formatElapsed(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
@@ -63,24 +63,20 @@ export function IssueTimerButton({
   const elapsed = formatElapsed(elapsedMs);
   const pending = start.isPending || stop.isPending;
 
-  // A non-editor gets no control: a running indicator when one ticks, nothing when
-  // it does not.
+  const pill = (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-destructive/10 px-1.5 py-0.5 text-destructive">
+      <span className="size-1.5 animate-pulse rounded-full bg-destructive" aria-hidden />
+      <span className="text-xs tabular-nums">{elapsed}</span>
+    </span>
+  );
+
+  // A non-editor gets no control: the recording pill with the live counter when one
+  // ticks, nothing when it does not. The value, not a disabled stop button.
   if (!canEdit) {
     if (!isRunning) return null;
-    const indicator = (
-      <span
-        className={cn(
-          'inline-flex items-center gap-1 text-xs text-primary tabular-nums',
-          variant === 'icon' && 'shrink-0',
-        )}
-      >
-        <Square className="size-3 fill-current" />
-        {variant === 'inline' && <span>{elapsed}</span>}
-      </span>
-    );
     return (
       <Tooltip>
-        <TooltipTrigger asChild>{indicator}</TooltipTrigger>
+        <TooltipTrigger asChild>{pill}</TooltipTrigger>
         <TooltipContent>{t('running', { time: elapsed })}</TooltipContent>
       </Tooltip>
     );
@@ -112,27 +108,63 @@ export function IssueTimerButton({
     }
   };
 
-  const icon = pending ? (
-    <Loader2 className="size-3.5 animate-spin" />
-  ) : isRunning ? (
-    <Square className="size-3.5 fill-current" />
-  ) : (
-    <Play className="size-3.5" />
-  );
   const label = isRunning ? t('stop') : t('start');
 
+  // The stop control shared by both running states: a compact ghost button carrying
+  // the Square. Its onToggle stops propagation so a click never opens the row.
+  const stopButton = (
+    <Button
+      variant="ghost"
+      size="icon-xs"
+      className="shrink-0 text-destructive"
+      aria-label={label}
+      onClick={onToggle}
+      disabled={pending}
+    >
+      {pending ? (
+        <Loader2 className="size-3.5 animate-spin" />
+      ) : (
+        <Square className="size-3.5 fill-current" />
+      )}
+    </Button>
+  );
+
   if (variant === 'inline') {
+    if (isRunning) {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 py-0.5 ps-2 pe-0.5 text-destructive">
+          <span className="size-1.5 animate-pulse rounded-full bg-destructive" aria-hidden />
+          <span className="text-sm tabular-nums">{elapsed}</span>
+          {stopButton}
+        </span>
+      );
+    }
     return (
       <Button
-        variant={isRunning ? 'secondary' : 'ghost'}
+        variant="ghost"
         size="sm"
-        className={cn('h-7 gap-1.5', isRunning && 'text-primary')}
+        className="h-7 gap-1.5"
         onClick={onToggle}
         disabled={pending}
       >
-        {icon}
-        {isRunning ? <span className="tabular-nums">{elapsed}</span> : label}
+        {pending ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
+        {label}
       </Button>
+    );
+  }
+
+  if (isRunning) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-destructive/10 py-0.5 ps-1.5 text-destructive">
+            <span className="size-1.5 animate-pulse rounded-full bg-destructive" aria-hidden />
+            <span className="text-xs tabular-nums">{elapsed}</span>
+            {stopButton}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{t('running', { time: elapsed })}</TooltipContent>
+      </Tooltip>
     );
   }
 
@@ -142,15 +174,15 @@ export function IssueTimerButton({
         <Button
           variant="ghost"
           size="icon-xs"
-          className={cn('shrink-0', isRunning && 'text-primary')}
+          className="shrink-0"
           aria-label={label}
           onClick={onToggle}
           disabled={pending}
         >
-          {icon}
+          {pending ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
         </Button>
       </TooltipTrigger>
-      <TooltipContent>{isRunning ? t('running', { time: elapsed }) : label}</TooltipContent>
+      <TooltipContent>{label}</TooltipContent>
     </Tooltip>
   );
 }

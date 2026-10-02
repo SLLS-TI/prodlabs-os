@@ -424,6 +424,7 @@ describe('projects', () => {
         logging: true,
         timeGoalMinutes: 1200,
         timeGoalPeriod: 'weekly',
+        timeVisibleRoleIds: [],
       });
 
       await api.projects({ projectKey: 'SRC' }).copy.post({ key: 'DST', name: 'Destination' });
@@ -1060,7 +1061,15 @@ describe('projects', () => {
 
   describe('estimate settings', () => {
     const estimates = (client: Api) => client.projects({ projectKey: 'MKT' }).settings.estimates;
-    const noGoal = { timeGoalMinutes: null, timeGoalPeriod: null } as const;
+    const noGoal: {
+      timeGoalMinutes: number | null;
+      timeGoalPeriod: 'total' | 'weekly' | null;
+      timeVisibleRoleIds: number[];
+    } = {
+      timeGoalMinutes: null,
+      timeGoalPeriod: null,
+      timeVisibleRoleIds: [],
+    };
 
     it('defaults a new project to both kinds and time logging off', async () => {
       const { api } = await signUpClient();
@@ -1145,7 +1154,7 @@ describe('projects', () => {
       const withGoal = (over: {
         timeGoalMinutes: number | null;
         timeGoalPeriod: 'total' | 'weekly' | null;
-      }) => ({ points: false, time: false, logging: true, ...over });
+      }) => ({ points: false, time: false, logging: true, timeVisibleRoleIds: [], ...over });
 
       it('sets a total goal and carries it on the project payload', async () => {
         const { api } = await signUpClient();
@@ -1220,6 +1229,175 @@ describe('projects', () => {
             )
           ).status,
         ).toBe(400);
+      });
+    });
+
+    describe('time visibility', () => {
+      it('defaults a new project to all roles seeing time', async () => {
+        const { api } = await signUpClient();
+        const created = await api.projects.post({ key: 'MKT', name: 'Marketing' });
+        expect(created.data).toMatchObject({ timeVisibleRoleIds: [] });
+        expect((await viewOf(api, 'MKT')).data?.canSeeTimeTracking).toBe(true);
+      });
+
+      it('persists an allowlist and reads it back on the project payload', async () => {
+        const owner = await signUpClient();
+        await owner.api.projects.post({ key: 'MKT', name: 'Marketing' });
+        const role = await createRole(owner.api, 'MKT', {
+          name: 'Analyst',
+          permissions: { work_items: { read: true } },
+        });
+
+        const patch = await estimates(owner.api).patch({
+          points: false,
+          time: false,
+          logging: true,
+          ...noGoal,
+          timeVisibleRoleIds: [role.data!.id],
+        });
+        expect(patch.status).toBe(200);
+        expect(patch.data).toMatchObject({ timeVisibleRoleIds: [role.data!.id] });
+        expect((await viewOf(owner.api, 'MKT')).data?.project).toMatchObject({
+          timeVisibleRoleIds: [role.data!.id],
+        });
+      });
+
+      it('drops a role id that is not a role of the team', async () => {
+        const { api } = await signUpClient();
+        await api.projects.post({ key: 'MKT', name: 'Marketing' });
+        const role = await createRole(api, 'MKT', {
+          name: 'Analyst',
+          permissions: { work_items: { read: true } },
+        });
+
+        const res = await estimates(api).patch({
+          points: false,
+          time: false,
+          logging: true,
+          ...noGoal,
+          timeVisibleRoleIds: [role.data!.id, 999999],
+        });
+        expect(res.status).toBe(200);
+        expect(res.data).toMatchObject({ timeVisibleRoleIds: [role.data!.id] });
+      });
+
+      it('shows the owner canSeeTimeTracking true even when the allowlist excludes every role', async () => {
+        const owner = await signUpClient();
+        await owner.api.projects.post({ key: 'MKT', name: 'Marketing' });
+        const role = await createRole(owner.api, 'MKT', {
+          name: 'Analyst',
+          permissions: { work_items: { read: true } },
+        });
+        await estimates(owner.api).patch({
+          points: false,
+          time: false,
+          logging: true,
+          ...noGoal,
+          timeVisibleRoleIds: [role.data!.id],
+        });
+
+        expect((await viewOf(owner.api, 'MKT')).data?.canSeeTimeTracking).toBe(true);
+      });
+
+      it('grants an allowlisted member and denies one on another role', async () => {
+        const owner = await signUpClient();
+        await owner.api.projects.post({ key: 'MKT', name: 'Marketing' });
+        const allowed = await createRole(owner.api, 'MKT', {
+          name: 'Allowed',
+          permissions: { work_items: { read: true } },
+        });
+        const other = await createRole(owner.api, 'MKT', {
+          name: 'Other',
+          permissions: { work_items: { read: true } },
+        });
+        const allowedMember = await addProjectMember(owner.api, 'MKT', allowed.data!.id);
+        const otherMember = await addProjectMember(owner.api, 'MKT', other.data!.id);
+        await estimates(owner.api).patch({
+          points: false,
+          time: false,
+          logging: true,
+          ...noGoal,
+          timeVisibleRoleIds: [allowed.data!.id],
+        });
+
+        expect((await viewOf(allowedMember, 'MKT')).data?.canSeeTimeTracking).toBe(true);
+        expect((await viewOf(otherMember, 'MKT')).data?.canSeeTimeTracking).toBe(false);
+      });
+
+      it('resolves the default role for a member with no explicit role', async () => {
+        const owner = await signUpClient();
+        await owner.api.projects.post({ key: 'MKT', name: 'Marketing' });
+        const defaultMember = await addProjectMember(owner.api, 'MKT');
+        const roles = await listProjectRoles(owner.api, 'MKT');
+        const defaultRole = roles.data!.find((r) => r.isDefault)!;
+
+        await estimates(owner.api).patch({
+          points: false,
+          time: false,
+          logging: true,
+          ...noGoal,
+          timeVisibleRoleIds: [defaultRole.id],
+        });
+        expect((await viewOf(defaultMember, 'MKT')).data?.canSeeTimeTracking).toBe(true);
+
+        const other = await createRole(owner.api, 'MKT', {
+          name: 'Other',
+          permissions: { work_items: { read: true } },
+        });
+        await estimates(owner.api).patch({
+          points: false,
+          time: false,
+          logging: true,
+          ...noGoal,
+          timeVisibleRoleIds: [other.data!.id],
+        });
+        expect((await viewOf(defaultMember, 'MKT')).data?.canSeeTimeTracking).toBe(false);
+      });
+
+      it('redacts loggedMinutes on the board for a member who cannot see time', async () => {
+        const owner = await signUpClient();
+        await owner.api.projects.post({ key: 'MKT', name: 'Marketing' });
+        const view = await viewOf(owner.api, 'MKT');
+        const other = await createRole(owner.api, 'MKT', {
+          name: 'Other',
+          permissions: { work_items: { read: true, create: true, edit: true } },
+        });
+        const otherMember = await addProjectMember(owner.api, 'MKT', other.data!.id);
+        await estimates(owner.api).patch({
+          points: false,
+          time: false,
+          logging: true,
+          ...noGoal,
+          timeVisibleRoleIds: [],
+        });
+        const issue = await owner.api
+          .projects({ projectKey: 'MKT' })
+          .issues.post({ columnId: view.data!.columns[0].id, title: 'Timed' });
+        await owner.api
+          .issues({ issueId: issue.data!.id })
+          .worklogs.post({ minutes: 30, spentOn: '2025-01-01' });
+
+        const ownerBoard = await owner.api.projects({ projectKey: 'MKT' }).issues.board.get();
+        expect(ownerBoard.data?.issues.find((i) => i.id === issue.data!.id)?.loggedMinutes).toBe(
+          30,
+        );
+
+        const allowed = await createRole(owner.api, 'MKT', {
+          name: 'Allowed',
+          permissions: { work_items: { read: true } },
+        });
+        await estimates(owner.api).patch({
+          points: false,
+          time: false,
+          logging: true,
+          ...noGoal,
+          timeVisibleRoleIds: [allowed.data!.id],
+        });
+
+        const memberBoard = await otherMember.projects({ projectKey: 'MKT' }).issues.board.get();
+        expect(memberBoard.data?.issues.find((i) => i.id === issue.data!.id)?.loggedMinutes).toBe(
+          0,
+        );
       });
     });
   });

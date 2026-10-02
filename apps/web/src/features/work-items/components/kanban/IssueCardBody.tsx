@@ -230,7 +230,7 @@ export function IssueCardBody({
         </div>
       )}
 
-      <IssueCardSubtasks issueId={issue.id} maps={maps} onOpen={onOpen} />
+      <IssueCardSubtasks issueId={issue.id} maps={maps} onOpen={onOpen} timer={timer} />
       <IssueCardLinks links={issue.links} maps={maps} onOpen={onOpen} />
     </>
   );
