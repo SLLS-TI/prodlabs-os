@@ -1,4 +1,6 @@
 {
+  "runningTimers": "Активні таймери",
+  "stopTimer": "Зупинити таймер для {issue}",
   "inbox": "Вхідні",
   "dashboards": "Дашборди",
   "workItems": "Задачі",

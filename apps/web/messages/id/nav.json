@@ -1,4 +1,6 @@
 {
+  "runningTimers": "Timer berjalan",
+  "stopTimer": "Hentikan timer untuk {issue}",
   "inbox": "Kotak masuk",
   "dashboards": "Dasbor",
   "workItems": "Item pekerjaan",

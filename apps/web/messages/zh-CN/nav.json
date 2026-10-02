@@ -1,4 +1,6 @@
 {
+  "runningTimers": "运行中的计时器",
+  "stopTimer": "停止 {issue} 的计时器",
   "inbox": "收件箱",
   "dashboards": "仪表盘",
   "workItems": "工作项",

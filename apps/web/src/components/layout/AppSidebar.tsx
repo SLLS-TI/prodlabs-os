@@ -24,6 +24,7 @@ import SidebarNavItem from '@/components/layout/SidebarNavItem';
 import SidebarMainNav from '@/components/layout/SidebarMainNav';
 import SidebarSettingsNav from '@/components/layout/SidebarSettingsNav';
 import SidebarBrandFooter from '@/components/brand/SidebarBrandFooter';
+import SidebarRunningTimers from '@/features/issue/components/SidebarRunningTimers';
 
 // The app sidebar. It has two modes driven by the route: the main work
 // navigation, and the project settings navigation reached through the "Project
@@ -110,6 +111,8 @@ export default function AppSidebar({
                 />
               )}
             </SidebarMenu>
+
+            <SidebarRunningTimers />
 
             <SidebarSeparator />
           </>

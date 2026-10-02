@@ -1,4 +1,6 @@
 {
+  "runningTimers": "Minuteurs en cours",
+  "stopTimer": "Arrêter le minuteur de {issue}",
   "inbox": "Boîte de réception",
   "dashboards": "Tableaux de bord",
   "workItems": "Tickets",

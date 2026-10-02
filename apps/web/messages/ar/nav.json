@@ -1,4 +1,6 @@
 {
+  "runningTimers": "المؤقتات الجارية",
+  "stopTimer": "إيقاف مؤقت {issue}",
   "inbox": "صندوق الوارد",
   "dashboards": "لوحات المعلومات",
   "workItems": "عناصر العمل (work items)",
