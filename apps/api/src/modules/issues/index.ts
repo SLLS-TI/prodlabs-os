@@ -583,6 +583,7 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
         await setIssueLabels(projectId, issueId, labelIds, actorUserId);
         issue.labelIds = labelIds;
       }
+      if (!(await checkTimeVisible(projectId, user))) issue.loggedMinutes = 0;
       return issue;
     },
     {
@@ -801,6 +802,7 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
       );
       const issue = await archiveIssue(params.issueId, actorUserId);
       if (!issue) throw new HttpError(404, 'Issue not found');
+      if (!(await checkTimeVisible(projectId, user))) issue.loggedMinutes = 0;
       return issue;
     },
     {
@@ -821,11 +823,12 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   // with its archived subtasks.
   .post(
     '/issues/:issueId/restore',
-    async ({ params, user }) => {
+    async ({ params, user, projectId }) => {
       const actorUserId = requireUser(user).id;
       const issue = await restoreIssue(params.issueId, actorUserId);
       if (!issue) throw new HttpError(404, 'Issue not found');
       await restoreSubtasksOf(issue.id, actorUserId);
+      if (!(await checkTimeVisible(projectId, user))) issue.loggedMinutes = 0;
       return issue;
     },
     {
@@ -1303,8 +1306,12 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   // nextCursor is null on the last page.
   .get(
     '/issues/:issueId/feed',
-    async ({ params, query }) =>
-      listFeed(params.issueId, { ...query, cursor: feedCursor(query.cursor) }),
+    async ({ params, query, user, projectId }) =>
+      listFeed(
+        params.issueId,
+        { ...query, cursor: feedCursor(query.cursor) },
+        await checkTimeVisible(projectId, user),
+      ),
     {
       params: issueParams,
       query: feedPageQuery,
@@ -1325,8 +1332,12 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   // grouped shape of the activity log reads this instead of grouping client-side.
   .get(
     '/issues/:issueId/feed/grouped',
-    async ({ params, query }) =>
-      listGroupedFeed(params.issueId, { ...query, cursor: feedCursor(query.cursor) }),
+    async ({ params, query, user, projectId }) =>
+      listGroupedFeed(
+        params.issueId,
+        { ...query, cursor: feedCursor(query.cursor) },
+        await checkTimeVisible(projectId, user),
+      ),
     {
       params: issueParams,
       query: feedPageQuery,
@@ -1341,15 +1352,20 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   )
 
   // The number of entries behind each feed filter, for the tabs of the activity log.
-  .get('/issues/:issueId/feed/counts', async ({ params }) => countFeed(params.issueId), {
-    params: issueParams,
-    workItem: 'read',
-    response: { 200: FeedCountsResponse, ...commonErrors },
-    detail: {
-      summary: 'Count an issue feed',
-      description: "Count an issue's comments, change-log entries and time entries.",
+  .get(
+    '/issues/:issueId/feed/counts',
+    async ({ params, user, projectId }) =>
+      countFeed(params.issueId, await checkTimeVisible(projectId, user)),
+    {
+      params: issueParams,
+      workItem: 'read',
+      response: { 200: FeedCountsResponse, ...commonErrors },
+      detail: {
+        summary: 'Count an issue feed',
+        description: "Count an issue's comments, change-log entries and time entries.",
+      },
     },
-  })
+  )
 
   // The stretches the issue spent in one column, oldest first, with the duration of
   // each. Entry-free and unpaged: the change log holds a handful of status entries,
