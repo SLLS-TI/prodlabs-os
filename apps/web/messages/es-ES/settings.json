@@ -148,7 +148,11 @@
     "completedIssues": "Tickets completados",
     "canceledIssues": "Tickets cancelados",
     "staleHint": "Archivar tras estos días sin actividad.",
-    "days": "días"
+    "days": "días",
+    "timeVisibility": "Visibilidad del seguimiento de tiempo",
+    "timeVisibilityHint": "Elige qué roles pueden ver el seguimiento de tiempo en este proyecto. Los propietarios siempre lo ven.",
+    "timeVisibilityAll": "Todos los roles",
+    "timeVisibilityRestricted": "Solo roles seleccionados"
   },
   "states": {
     "addState": "Añadir un estado {type}",

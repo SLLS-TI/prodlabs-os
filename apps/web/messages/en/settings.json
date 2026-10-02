@@ -148,7 +148,11 @@
     "completedIssues": "Completed issues",
     "canceledIssues": "Canceled issues",
     "staleHint": "Archive after this many days without activity.",
-    "days": "days"
+    "days": "days",
+    "timeVisibility": "Time tracking visibility",
+    "timeVisibilityHint": "Choose which roles can see time tracking in this project. Owners always see it.",
+    "timeVisibilityAll": "All roles",
+    "timeVisibilityRestricted": "Only selected roles"
   },
   "states": {
     "addState": "Add {type} state",

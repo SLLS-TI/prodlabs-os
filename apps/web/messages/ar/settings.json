@@ -148,7 +148,11 @@
     "completedIssues": "المهام المكتملة",
     "canceledIssues": "المهام الملغاة",
     "staleHint": "بتتأرشف بعد عدد الأيام ده من غير أي نشاط عليها.",
-    "days": "أيام"
+    "days": "أيام",
+    "timeVisibility": "ظهور تتبع الوقت",
+    "timeVisibilityHint": "اختر الأدوار التي يمكنها رؤية تتبع الوقت في هذا المشروع. المالكون يرونه دائمًا.",
+    "timeVisibilityAll": "كل الأدوار",
+    "timeVisibilityRestricted": "الأدوار المحددة فقط"
   },
   "states": {
     "addState": "إضافة حالة {type}",

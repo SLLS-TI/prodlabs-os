@@ -5,6 +5,7 @@ import SettingsRow from '@/components/common/page/SettingsRow';
 import { Switch } from '@/components/ui/switch';
 import type { EstimatesForm } from '../../hooks/useEstimatesForm';
 import SettingsTimeGoal from './SettingsTimeGoal';
+import SettingsTimeVisibility from './SettingsTimeVisibility';
 
 // The Estimates block of the Configuration page: which kinds of estimate the
 // issues of this project carry, and whether its members log the time they spend.
@@ -46,6 +47,7 @@ export default function SettingsEstimates({ form }: { form: EstimatesForm }) {
           }
         />
         {form.logging && <SettingsTimeGoal form={form} />}
+        {form.logging && <SettingsTimeVisibility form={form} />}
       </SettingsCard>
     </SettingsSection>
   );
