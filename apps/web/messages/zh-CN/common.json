@@ -155,7 +155,12 @@
     "notes": "便签",
     "subtasks": "子任务",
     "checklists": "检查清单",
-    "issueStats": "工作项统计"
+    "issueStats": "工作项统计",
+    "aiTeam": "AI 团队",
+    "inbox": "收件箱",
+    "workItems": "工作项",
+    "members": "成员",
+    "notifications": "通知"
   },
   "featureOffTitle": "{feature}已停用",
   "toggleSidebar": "切换侧边栏",
