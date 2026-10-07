@@ -178,8 +178,6 @@ export default function Shell({
             hasProject={!!project}
             onOpenCommand={() => overlays.setShowCommand(true)}
             onNewIssue={openNewIssue}
-            chatActive={chatPanel.open}
-            onToggleChat={chatPanel.toggle}
           />
 
           {errorMsg && !forbidden && (
