@@ -145,6 +145,9 @@ export const project = pgTable(
     // An owner and an instance admin bypass the list. Operating the timer still also needs
     // work_items edit; this is the read gate.
     timeVisibleRoleIds: jsonb('time_visible_role_ids').$type<number[]>().notNull().default([]),
+    // An optional hex background tint for the whole project interface. Null = no tint,
+    // the neutral default.
+    color: text('color'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
