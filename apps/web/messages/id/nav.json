@@ -39,7 +39,8 @@
   "groups": {
     "project": "Proyek",
     "workflow": "Alur kerja",
-    "automation": "Otomatisasi"
+    "automation": "Otomatisasi",
+    "developer": "Pengembang"
   },
   "godModeOwnerOnly": "Mode God hanya terbuka untuk pemilik instance.",
   "project": "Proyek",

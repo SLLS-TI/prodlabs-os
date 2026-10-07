@@ -39,7 +39,8 @@
   "groups": {
     "project": "Project",
     "workflow": "Workflow",
-    "automation": "Automation"
+    "automation": "Automation",
+    "developer": "Developer"
   },
   "godModeOwnerOnly": "God mode is open to the instance owner only.",
   "project": "Project",
