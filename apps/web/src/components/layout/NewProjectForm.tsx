@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import NewProjectPreset from '@/components/layout/NewProjectPreset';
+import NewProjectLogoField from '@/components/layout/NewProjectLogoField';
 
 // The create-from-scratch form: the project fields on the left, the issue-type
 // preset picker on the right, where the two halves are of comparable size.
@@ -13,19 +14,23 @@ export default function NewProjectForm({
   projectKey,
   description,
   preset,
+  logoFile,
   onNameChange,
   onKeyChange,
   onDescriptionChange,
   onPresetChange,
+  onLogoChange,
 }: {
   name: string;
   projectKey: string;
   description: string;
   preset: PresetKey;
+  logoFile: File | null;
   onNameChange: (value: string) => void;
   onKeyChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onPresetChange: (value: PresetKey) => void;
+  onLogoChange: (file: File | null) => void;
 }) {
   const t = useTranslations('newProject');
 
@@ -34,6 +39,7 @@ export default function NewProjectForm({
       {/* The description field takes the leftover height so both columns end on
           the same line. */}
       <div className="flex flex-col gap-3">
+        <NewProjectLogoField name={name} file={logoFile} onFileChange={onLogoChange} />
         <div className="space-y-1.5">
           <Label>{t('name')}</Label>
           <Input autoFocus value={name} onChange={(e) => onNameChange(e.target.value)} />

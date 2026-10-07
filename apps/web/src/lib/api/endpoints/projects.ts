@@ -1,6 +1,6 @@
 import type { CycleOption } from '@/lib/api/endpoints/cycles';
 import type { BoardIssues } from '@/lib/api/endpoints/issues';
-import { request } from '@/lib/api/core/client';
+import { API_URL, apiFailure, request } from '@/lib/api/core/client';
 import type { Column } from '@/lib/api/endpoints/columns';
 import type { CustomField } from '@/lib/api/endpoints/customFields';
 import type { IssueTemplate } from '@/lib/api/endpoints/issueTemplates';
@@ -25,6 +25,8 @@ export interface Project {
   description: string;
   // The per-project background tint, a hex string, or null for no tint.
   color: string | null;
+  // Relative serve URL of the project's custom logo, or null to fall back to initials.
+  logoUrl: string | null;
   // Whether the team's MCP reach covers this project, and whether the team is
   // reachable over MCP at all. Both are set in the team's MCP section; a tool call
   // scoped to this project needs both.
@@ -162,3 +164,30 @@ export const getProject = (projectKey: string, signal?: AbortSignal) =>
 // The board's issues and their relations.
 export const getBoardIssues = (projectKey: string) =>
   request<BoardIssues>(`/projects/${projectKey}/issues/board`);
+
+// Uploads a custom logo for the project. The API stores the object, writes the new
+// serve URL to the project's logo_url column, and returns it. Multipart, so the
+// browser sets the boundary itself — no Content-Type header.
+export async function uploadProjectLogo(
+  projectKey: string,
+  file: File,
+): Promise<{ logoUrl: string }> {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${API_URL}/projects/${encodeURIComponent(projectKey)}/logo`, {
+    method: 'POST',
+    credentials: 'include',
+    body: form,
+  });
+  if (!res.ok) throw await apiFailure(res);
+  return res.json();
+}
+
+// Removes the stored logo object and clears the project's logo_url column.
+export async function removeProjectLogo(projectKey: string): Promise<void> {
+  const res = await fetch(`${API_URL}/projects/${encodeURIComponent(projectKey)}/logo`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  if (!res.ok) throw await apiFailure(res);
+}

@@ -6,14 +6,14 @@ import { auth, getSessionFromHeaders } from '@repo/auth';
 import { HttpError } from './lib';
 import { getMcpOAuthToken } from './mcp-request';
 
-// GET routes that need no session. The raw attachment and avatar bytes routes
-// must work in <img>/<video> and external fetches. The invite lookup
+// GET routes that need no session. The raw attachment, avatar, and project-logo
+// bytes routes must work in <img>/<video> and external fetches. The invite lookup
 // (`GET /invites/:token`) renders the accept screen for a logged-out invitee, who
 // signs up from there; only accept/reject (POST) require a session. Every `/share/`
 // GET renders a public read-only shared issue or view, keyed by an unguessable
 // token. All ids are unguessable.
 const PUBLIC_GET =
-  /^\/attachments\/[^/]+\/raw$|^\/chat-attachments\/[^/]+\/raw$|^\/initiative-attachments\/[^/]+\/raw$|^\/avatars\/[^/]+\/raw$|^\/invites\/[^/]+$|^\/share\//;
+  /^\/attachments\/[^/]+\/raw$|^\/chat-attachments\/[^/]+\/raw$|^\/initiative-attachments\/[^/]+\/raw$|^\/avatars\/[^/]+\/raw$|^\/project-logos\/\d+\/[^/]+\/raw$|^\/invites\/[^/]+$|^\/share\//;
 
 type SessionResult = NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>;
 

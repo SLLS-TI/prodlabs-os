@@ -216,5 +216,12 @@
     "page": "Halaman {number}",
     "perPage": "per halaman",
     "range": "{first}-{last} dari {total}"
-  }
+  },
+  "logo": "Logo",
+  "uploadLogo": "Unggah logo",
+  "changeLogo": "Ganti logo",
+  "uploadingLogo": "Mengunggah…",
+  "logoFormats": "PNG, JPEG, GIF, WebP, atau AVIF.",
+  "logoMaxSize": "Maksimal {mb} MB.",
+  "logoTooLarge": "Gambar melebihi batas {mb} MB."
 }

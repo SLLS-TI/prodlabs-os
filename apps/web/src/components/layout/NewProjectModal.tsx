@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCreateProject } from '@/services/projects.service';
 import { useTeamsQuery, useTeamProjectDefaultsQuery } from '@/services/teams.service';
 import { useAiAgentsQuery } from '@/services/aiAgents.service';
+import { uploadProjectLogo } from '@/lib/api/endpoints/projects';
+import { qk } from '@/services/queryKeys';
 import { normalizeKey, suggestKey } from '@/utils/projectKey';
 import type { PresetKey } from '@/utils/projectPresets';
 import Modal from '@/components/common/overlay/Modal';
@@ -41,7 +45,11 @@ export default function NewProjectModal({
   // Which issue types the new project starts with. A copy takes its types from the
   // source project, so the preset applies only when creating from scratch.
   const [preset, setPreset] = useState<PresetKey>('general');
+  // A logo chosen before the project exists. Uploaded to the project-scoped
+  // endpoint once creation succeeds. Only the create-from-scratch form offers it.
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const createProject = useCreateProject();
+  const qc = useQueryClient();
   // Names the team in the header, so the dialog says where the project lands.
   const teams = useTeamsQuery().data;
   const team = teams?.find((one) => one.id === teamId);
@@ -71,7 +79,23 @@ export default function NewProjectModal({
     };
     createProject.mutate(
       { teamId, copyFromId: copyFrom?.id, input },
-      { onSuccess: (project) => onCreated(project.ref) },
+      {
+        onSuccess: async (project) => {
+          // Create first, then upload the logo to the project-scoped endpoint. A
+          // failed upload must not block creation — the project already exists, so
+          // surface a non-blocking error and still navigate to it.
+          if (logoFile) {
+            try {
+              await uploadProjectLogo(project.ref, logoFile);
+              void qc.invalidateQueries({ queryKey: qk.projects });
+              void qc.invalidateQueries({ queryKey: qk.anyTeam });
+            } catch {
+              toast.error(t('logoUploadFailed'));
+            }
+          }
+          onCreated(project.ref);
+        },
+      },
     );
   }
 
@@ -111,10 +135,12 @@ export default function NewProjectModal({
               projectKey={key}
               description={description}
               preset={preset}
+              logoFile={logoFile}
               onNameChange={onNameChange}
               onKeyChange={onKeyChange}
               onDescriptionChange={setDescription}
               onPresetChange={setPreset}
+              onLogoChange={setLogoFile}
             />
           )}
           {!copyFrom && defaultAgentNames.length > 0 && (

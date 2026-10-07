@@ -216,5 +216,12 @@
     "page": "Страница {number}",
     "perPage": "на странице",
     "range": "{first}-{last} из {total}"
-  }
+  },
+  "logo": "Логотип",
+  "uploadLogo": "Загрузить логотип",
+  "changeLogo": "Изменить логотип",
+  "uploadingLogo": "Загрузка…",
+  "logoFormats": "PNG, JPEG, GIF, WebP или AVIF.",
+  "logoMaxSize": "До {mb} МБ.",
+  "logoTooLarge": "Изображение превышает лимит {mb} МБ."
 }
