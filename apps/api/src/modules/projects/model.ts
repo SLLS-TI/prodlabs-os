@@ -112,6 +112,8 @@ export const ProjectResponse = t.Object({
   description: t.String(),
   // An optional hex background tint for the whole project interface; null = no tint.
   color: t.Nullable(t.String()),
+  // Relative serve URL of the project's custom logo, or null to fall back to initials.
+  logoUrl: t.Nullable(t.String()),
   mcpEnabled: t.Boolean(),
   teamMcpEnabled: t.Boolean(),
   // The optional sections, toggled in Settings -> General. All on by default; a
