@@ -185,6 +185,8 @@ services:
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
       S3_REGION: ${S3_REGION:-us-east-1}
       S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-}
+      # IANA zone the daily Slack task digests fire in (07:00 and 17:00 local).
+      DIGEST_TIMEZONE: ${DIGEST_TIMEZONE:-UTC}
       # Optional tuning lives in apps/worker/src/config.ts.
 
   # Telegram bot: long polling for the instance bot, completing the account links
