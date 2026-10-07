@@ -78,7 +78,7 @@
      color-mix of the base and the project's color, so the tint applies only inside a
      project. A composed value here would resolve against :root and not pick up a
      color set lower in the tree. .dark overrides only the base tokens. */
-  --project-tint-strength: 15%;
+  --project-tint-strength: 25%;
   --base-background: oklch(0.985 0 0);
   --base-sidebar: oklch(0.972 0 0);
   --background: var(--base-background);
