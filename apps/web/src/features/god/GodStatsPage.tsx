@@ -6,6 +6,7 @@ import SettingsSection from '@/components/common/page/SettingsSection';
 import SettingsCard from '@/components/common/page/SettingsCard';
 import GodSectionPage from './components/GodSectionPage';
 import GodStatsSummary from './components/stats/GodStatsSummary';
+import GodStatsWeekCommitmentChart from './components/stats/GodStatsWeekCommitmentChart';
 import GodStatsHoursChart from './components/stats/GodStatsHoursChart';
 import GodStatsOverdueChart from './components/stats/GodStatsOverdueChart';
 import GodStatsHealthTable from './components/stats/GodStatsHealthTable';
@@ -40,6 +41,12 @@ export default function GodStatsPage() {
     <GodSectionPage slug="stats" widthClassName="max-w-none">
       <div className="space-y-8">
         <GodStatsSummary global={global} />
+
+        <SettingsSection title={t('week.title')}>
+          <SettingsCard className="p-4">
+            <GodStatsWeekCommitmentChart global={global} />
+          </SettingsCard>
+        </SettingsSection>
 
         <div className="grid gap-8 lg:grid-cols-2">
           <SettingsSection title={t('hours.title')} description={t('hours.subtitle')}>
