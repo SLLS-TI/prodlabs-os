@@ -1454,4 +1454,105 @@ describe('projects', () => {
       ).toBe(403);
     });
   });
+
+  describe('health weights — GET/PATCH /projects/:projectKey/settings/health-weights', () => {
+    const DEFAULTS = { schedule: 30, budget: 25, velocity: 20, load: 15, freshness: 10 };
+    const weights = (client: Api) =>
+      client.projects({ projectKey: 'MKT' }).settings['health-weights'];
+
+    it('defaults a new project to the standard weights', async () => {
+      const { api } = await signUpClient();
+      await api.projects.post({ key: 'MKT', name: 'Marketing' });
+
+      const res = await weights(api).get();
+      expect(res.status).toBe(200);
+      expect(res.data).toEqual(DEFAULTS);
+    });
+
+    it('round-trips an owner update and merges over the defaults', async () => {
+      const { api } = await signUpClient();
+      await api.projects.post({ key: 'MKT', name: 'Marketing' });
+
+      const patch = await weights(api).patch({
+        schedule: 40,
+        budget: 10,
+        velocity: 10,
+        load: 20,
+        freshness: 20,
+      });
+      expect(patch.status).toBe(200);
+      expect(patch.data).toEqual({
+        schedule: 40,
+        budget: 10,
+        velocity: 10,
+        load: 20,
+        freshness: 20,
+      });
+
+      const read = await weights(api).get();
+      expect(read.data).toEqual({
+        schedule: 40,
+        budget: 10,
+        velocity: 10,
+        load: 20,
+        freshness: 20,
+      });
+    });
+
+    it('rejects a negative weight', async () => {
+      const { api } = await signUpClient();
+      await api.projects.post({ key: 'MKT', name: 'Marketing' });
+
+      const res = await weights(api).patch({
+        schedule: -1,
+        budget: 25,
+        velocity: 20,
+        load: 15,
+        freshness: 10,
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('refuses a non-member on both routes', async () => {
+      const owner = await signUpClient();
+      await owner.api.projects.post({ key: 'MKT', name: 'Marketing' });
+      const outsider = await signUpClient();
+
+      expect((await weights(outsider.api).get()).status).toBe(403);
+      expect(
+        (
+          await weights(outsider.api).patch({
+            schedule: 1,
+            budget: 1,
+            velocity: 1,
+            load: 1,
+            freshness: 1,
+          })
+        ).status,
+      ).toBe(403);
+    });
+
+    it('lets a reader read but not write', async () => {
+      const owner = await signUpClient();
+      await owner.api.projects.post({ key: 'MKT', name: 'Marketing' });
+      const role = await createRole(owner.api, 'MKT', {
+        name: 'Reader',
+        permissions: { workflow_config: { read: true } },
+      });
+      const member = await addProjectMember(owner.api, 'MKT', role.data!.id);
+
+      expect((await weights(member).get()).status).toBe(200);
+      expect(
+        (
+          await weights(member).patch({
+            schedule: 1,
+            budget: 1,
+            velocity: 1,
+            load: 1,
+            freshness: 1,
+          })
+        ).status,
+      ).toBe(403);
+    });
+  });
 });
