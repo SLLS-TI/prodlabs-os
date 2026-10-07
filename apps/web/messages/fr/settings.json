@@ -117,7 +117,12 @@
       "subtasks": "Des tickets découpés en sous-tâches sous un parent.",
       "checklists": "Des listes d'étapes suivies au sein d'un ticket.",
       "issueStats": "Le temps passé par un ticket dans chaque état.",
-      "documents": "Documentation partagée du projet, organisée en pages."
+      "documents": "Documentation partagée du projet, organisée en pages.",
+      "aiTeam": "La section Équipe IA : planifications et agents.",
+      "inbox": "La boîte de réception du projet et l'activité non lue.",
+      "workItems": "Le tableau des tickets et les vues enregistrées.",
+      "members": "La liste des membres du projet.",
+      "notifications": "Vos préférences de notification pour ce projet."
     },
     "featureOn": "Section {feature} activée",
     "featureOff": "Section {feature} désactivée"

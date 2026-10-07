@@ -40,6 +40,11 @@ export interface Project {
   subtasksEnabled: boolean;
   checklistsEnabled: boolean;
   issueStatsEnabled: boolean;
+  aiTeamEnabled: boolean;
+  inboxEnabled: boolean;
+  workItemsEnabled: boolean;
+  membersEnabled: boolean;
+  notificationsEnabled: boolean;
   // The sections this project may use at all. One missing here is not available to
   // the team: its flag above always reads false and the settings page does not offer
   // it. Everything is available on a self-hosted instance.

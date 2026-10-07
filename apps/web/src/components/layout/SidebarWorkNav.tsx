@@ -84,14 +84,16 @@ export default function SidebarWorkNav({
     <SidebarGroup>
       <SidebarGroupContent>
         <SidebarMenu>
-          <SidebarNavItem
-            href={projectKey ? inboxPath(projectKey) : '#'}
-            icon={Inbox}
-            label={t('inbox')}
-            active={pathname.endsWith('/inbox')}
-            disabled={disabled}
-            badge={inboxUnread}
-          />
+          {features.inbox && (
+            <SidebarNavItem
+              href={projectKey ? inboxPath(projectKey) : '#'}
+              icon={Inbox}
+              label={t('inbox')}
+              active={pathname.endsWith('/inbox')}
+              disabled={disabled}
+              badge={inboxUnread}
+            />
+          )}
           {features.dashboards && can('dashboards', 'read') && (
             <SidebarNavItem
               href={projectKey ? dashboardsPath(projectKey) : '#'}
@@ -101,21 +103,22 @@ export default function SidebarWorkNav({
               disabled={disabled}
             />
           )}
-          {workItemsSubmenu ? (
-            <SidebarNavSubmenu
-              icon={SquareKanban}
-              label={t('workItems')}
-              items={workItemsSubmenu}
-            />
-          ) : (
-            <SidebarNavItem
-              href={projectKey ? projectPath(projectKey) : '#'}
-              icon={SquareKanban}
-              label={t('workItems')}
-              active={onWorkItems}
-              disabled={disabled}
-            />
-          )}
+          {features.workItems &&
+            (workItemsSubmenu ? (
+              <SidebarNavSubmenu
+                icon={SquareKanban}
+                label={t('workItems')}
+                items={workItemsSubmenu}
+              />
+            ) : (
+              <SidebarNavItem
+                href={projectKey ? projectPath(projectKey) : '#'}
+                icon={SquareKanban}
+                label={t('workItems')}
+                active={onWorkItems}
+                disabled={disabled}
+              />
+            ))}
           {features.initiatives && can('initiatives', 'read') && (
             <SidebarNavItem
               href={projectKey ? initiativesPath(projectKey) : '#'}

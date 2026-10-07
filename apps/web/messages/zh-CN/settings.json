@@ -117,7 +117,12 @@
       "subtasks": "将工作项拆分为父工作项下的子任务。",
       "checklists": "在工作项中跟踪简单步骤。",
       "issueStats": "统计工作项在各状态中停留的时间。",
-      "documents": "组织和共享项目文档。"
+      "documents": "组织和共享项目文档。",
+      "aiTeam": "AI 团队部分：计划和智能体。",
+      "inbox": "项目收件箱和未读动态。",
+      "workItems": "工作项看板和已保存的视图。",
+      "members": "项目成员列表。",
+      "notifications": "此项目的通知偏好设置。"
     },
     "featureOn": "已启用{feature}",
     "featureOff": "已停用{feature}"

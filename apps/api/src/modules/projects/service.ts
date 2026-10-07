@@ -80,6 +80,11 @@ export interface ProjectRow {
   subtasksEnabled: boolean;
   checklistsEnabled: boolean;
   issueStatsEnabled: boolean;
+  aiTeamEnabled: boolean;
+  inboxEnabled: boolean;
+  workItemsEnabled: boolean;
+  membersEnabled: boolean;
+  notificationsEnabled: boolean;
   pointsEstimateEnabled: boolean;
   timeEstimateEnabled: boolean;
   timeLoggingEnabled: boolean;
@@ -97,7 +102,9 @@ export interface ProjectRow {
 }
 
 // The optional sections an owner can turn off per project (Settings -> General).
-// A disabled section is hidden in the web app; its rows are kept.
+// A disabled section is hidden in the web app; its rows are kept. The aiTeam..
+// notifications flags are navigation-only: they hide a sidebar entry and are never
+// blockable by a hosted plan, so they are not part of PROJECT_FEATURES.
 export interface ProjectFeatures {
   initiatives: boolean;
   dashboards: boolean;
@@ -107,6 +114,11 @@ export interface ProjectFeatures {
   subtasks: boolean;
   checklists: boolean;
   issueStats: boolean;
+  aiTeam: boolean;
+  inbox: boolean;
+  workItems: boolean;
+  members: boolean;
+  notifications: boolean;
 }
 
 // A project in the caller's list, carrying the caller's own role in it. The list
@@ -166,6 +178,11 @@ export async function mapProject(row: ProjectWithTeam): Promise<ProjectRow> {
     subtasksEnabled: on('subtasks', row.subtasksEnabled),
     checklistsEnabled: on('checklists', row.checklistsEnabled),
     issueStatsEnabled: on('issueStats', row.issueStatsEnabled),
+    aiTeamEnabled: row.aiTeamEnabled,
+    inboxEnabled: row.inboxEnabled,
+    workItemsEnabled: row.workItemsEnabled,
+    membersEnabled: row.membersEnabled,
+    notificationsEnabled: row.notificationsEnabled,
     pointsEstimateEnabled: row.pointsEstimateEnabled,
     timeEstimateEnabled: row.timeEstimateEnabled,
     timeLoggingEnabled: row.timeLoggingEnabled,
@@ -595,6 +612,11 @@ export function projectFeatures(row: ProjectRow): ProjectFeatures {
     subtasks: row.subtasksEnabled,
     checklists: row.checklistsEnabled,
     issueStats: row.issueStatsEnabled,
+    aiTeam: row.aiTeamEnabled,
+    inbox: row.inboxEnabled,
+    workItems: row.workItemsEnabled,
+    members: row.membersEnabled,
+    notifications: row.notificationsEnabled,
   };
 }
 
@@ -618,6 +640,11 @@ export async function setProjectFeatures(
   if (patch.subtasks !== undefined) values.subtasksEnabled = patch.subtasks;
   if (patch.checklists !== undefined) values.checklistsEnabled = patch.checklists;
   if (patch.issueStats !== undefined) values.issueStatsEnabled = patch.issueStats;
+  if (patch.aiTeam !== undefined) values.aiTeamEnabled = patch.aiTeam;
+  if (patch.inbox !== undefined) values.inboxEnabled = patch.inbox;
+  if (patch.workItems !== undefined) values.workItemsEnabled = patch.workItems;
+  if (patch.members !== undefined) values.membersEnabled = patch.members;
+  if (patch.notifications !== undefined) values.notificationsEnabled = patch.notifications;
   if (Object.keys(values).length === 0) return getProjectById(projectId);
   await db.update(project).set(values).where(eq(project.id, projectId));
   return getProjectById(projectId);

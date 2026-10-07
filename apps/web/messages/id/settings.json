@@ -117,7 +117,12 @@
       "subtasks": "Issue yang dipecah menjadi subtugas di bawah induk.",
       "checklists": "Daftar langkah yang dipantau di dalam issue.",
       "issueStats": "Berapa lama suatu issue berada di setiap status.",
-      "documents": "Dokumentasi proyek bersama yang diorganisasikan ke dalam halaman."
+      "documents": "Dokumentasi proyek bersama yang diorganisasikan ke dalam halaman.",
+      "aiTeam": "Bagian Tim AI: jadwal dan agen.",
+      "inbox": "Kotak masuk proyek dan aktivitas yang belum dibaca.",
+      "workItems": "Papan item pekerjaan dan tampilan tersimpan.",
+      "members": "Daftar anggota proyek.",
+      "notifications": "Preferensi notifikasi Anda untuk proyek ini."
     },
     "featureOn": "{feature} diaktifkan",
     "featureOff": "{feature} dinonaktifkan"

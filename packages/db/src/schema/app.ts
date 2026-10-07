@@ -117,7 +117,9 @@ export const project = pgTable(
     mcpEnabled: boolean('mcp_enabled').notNull().default(false),
     // Optional sections of the app, toggled per project in Settings -> Features. All
     // on by default. Turning one off only hides its UI; the rows it owns stay and
-    // come back with it.
+    // come back with it. The ai_team..notifications flags are navigation-only: they
+    // hide a sidebar entry, are never blockable by a hosted plan, and never hide the
+    // rows behind the section.
     initiativesEnabled: boolean('initiatives_enabled').notNull().default(true),
     dashboardsEnabled: boolean('dashboards_enabled').notNull().default(true),
     documentsEnabled: boolean('documents_enabled').notNull().default(true),
@@ -126,6 +128,11 @@ export const project = pgTable(
     subtasksEnabled: boolean('subtasks_enabled').notNull().default(true),
     checklistsEnabled: boolean('checklists_enabled').notNull().default(true),
     issueStatsEnabled: boolean('issue_stats_enabled').notNull().default(true),
+    aiTeamEnabled: boolean('ai_team_enabled').notNull().default(true),
+    inboxEnabled: boolean('inbox_enabled').notNull().default(true),
+    workItemsEnabled: boolean('work_items_enabled').notNull().default(true),
+    membersEnabled: boolean('members_enabled').notNull().default(true),
+    notificationsEnabled: boolean('notifications_enabled').notNull().default(true),
     // Which kinds of estimate the issues of this project carry, set in Settings ->
     // Configuration. Both off by default; turning one off hides its UI and keeps the
     // values, which show again when it is turned back on.

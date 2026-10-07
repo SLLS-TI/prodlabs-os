@@ -1,7 +1,7 @@
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { type LucideIcon } from 'lucide-react';
-import { settingsPath } from '@/utils/paths';
+import { Braces, Server, type LucideIcon } from 'lucide-react';
+import { apiDocsPath, mcpServerPath, settingsPath } from '@/utils/paths';
 import {
   AUTOMATION_SECTIONS,
   CONFIGURATION_SECTIONS,
@@ -62,10 +62,33 @@ export function useSettingsNavGroups(
   const workflowItems = toItems(CONFIGURATION_SECTIONS);
   const automationItems = toItems(AUTOMATION_SECTIONS);
 
+  // The API docs and MCP pages live outside /settings and are not role-gated; their
+  // links sit here so they share the settings sidebar. Appended last so `firstHref`
+  // stays on General.
+  const developerItems: SettingsNavItem[] = projectKey
+    ? [
+        {
+          key: 'api',
+          href: apiDocsPath(projectKey),
+          icon: Braces,
+          label: t('apiDocs'),
+          active: pathname.endsWith('/api'),
+        },
+        {
+          key: 'mcp',
+          href: mcpServerPath(projectKey),
+          icon: Server,
+          label: t('mcpServer'),
+          active: pathname.endsWith('/mcp'),
+        },
+      ]
+    : [];
+
   const groups: SettingsNavGroup[] = [
     { key: 'general', label: t('groups.project'), items: generalItems },
     { key: 'workflow', label: t('groups.workflow'), items: workflowItems },
     { key: 'automation', label: t('groups.automation'), items: automationItems },
+    { key: 'developer', label: t('groups.developer'), items: developerItems },
   ].filter((g) => g.items.length > 0);
 
   const firstHref = groups[0]?.items[0]?.href ?? null;

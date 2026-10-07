@@ -155,7 +155,12 @@
     "notes": "Notes",
     "subtasks": "Subtasks",
     "checklists": "Checklists",
-    "issueStats": "Issue stats"
+    "issueStats": "Issue stats",
+    "aiTeam": "AI Team",
+    "inbox": "Inbox",
+    "workItems": "Work items",
+    "members": "Members",
+    "notifications": "Notifications"
   },
   "featureOffTitle": "{feature} are turned off",
   "toggleSidebar": "Toggle sidebar",
