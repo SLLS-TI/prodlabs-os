@@ -155,7 +155,12 @@
     "notes": "Заметки",
     "subtasks": "Подзадачи",
     "checklists": "Чек-листы",
-    "issueStats": "Статистика задач"
+    "issueStats": "Статистика задач",
+    "aiTeam": "AI-команда",
+    "inbox": "Входящие",
+    "workItems": "Задачи",
+    "members": "Участники",
+    "notifications": "Уведомления"
   },
   "featureOffTitle": "Раздел «{feature}» выключен",
   "toggleSidebar": "Показать или скрыть боковую панель",

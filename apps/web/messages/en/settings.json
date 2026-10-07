@@ -114,7 +114,12 @@
       "subtasks": "Issues broken down into subtasks under a parent.",
       "checklists": "Lists of steps tracked inside an issue.",
       "issueStats": "How long an issue spent in each state.",
-      "documents": "Shared project documentation organized into pages."
+      "documents": "Shared project documentation organized into pages.",
+      "aiTeam": "The AI Team section: schedules and agents.",
+      "inbox": "Your project inbox and unread activity.",
+      "workItems": "The work items board and saved views.",
+      "members": "The project member list.",
+      "notifications": "Your notification preferences for this project."
     },
     "featureOn": "{feature} turned on",
     "featureOff": "{feature} turned off"

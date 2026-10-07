@@ -155,7 +155,12 @@
     "notes": "Notas",
     "subtasks": "Subtarefas",
     "checklists": "Checklists",
-    "issueStats": "Estatísticas de issue"
+    "issueStats": "Estatísticas de issue",
+    "aiTeam": "Time de IA",
+    "inbox": "Caixa de entrada",
+    "workItems": "Itens de trabalho",
+    "members": "Membros",
+    "notifications": "Notificações"
   },
   "featureOffTitle": "{feature} estão desativados",
   "toggleSidebar": "Alternar barra lateral",

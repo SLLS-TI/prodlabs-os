@@ -44,6 +44,11 @@ export interface ProjectFeatures {
   subtasks: boolean;
   checklists: boolean;
   issueStats: boolean;
+  aiTeam: boolean;
+  inbox: boolean;
+  workItems: boolean;
+  members: boolean;
+  notifications: boolean;
 }
 
 // A project's settings: MCP reachability, which is read-only here, and the enabled

@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogOut } from 'lucide-react';
+import { LogOut, Shield } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { signOut, useSession } from '@/lib/auth-client';
 import { ACCOUNT_SECTIONS, accountPath } from '@/utils/accountSections';
+import { GOD_SECTIONS } from '@/utils/godSections';
+import { godPath } from '@/utils/paths';
 import { useAccountSectionLabel } from '@/hooks/useSectionLabels';
 import Avatar from '@/components/common/Avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -43,6 +45,7 @@ export default function UserMenu() {
 
   const { user } = session;
   const role = (user as { role?: string }).role ?? 'user';
+  const isGod = role === 'god';
   const image = (user as { image?: string | null }).image ?? null;
 
   async function onSignOut() {
@@ -77,6 +80,17 @@ export default function UserMenu() {
             </Link>
           </DropdownMenuItem>
         ))}
+        {isGod && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href={godPath(GOD_SECTIONS[0]!.slug)}>
+                <Shield />
+                {t('godMode')}
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onSignOut}>
           <LogOut />
