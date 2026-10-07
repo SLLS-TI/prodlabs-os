@@ -13,6 +13,7 @@ export interface GeneralForm {
   description: string;
   // The per-project background tint, a hex string, or null for no tint.
   color: string | null;
+  logoUrl: string | null;
   setName: (v: string) => void;
   setDescription: (v: string) => void;
   setColor: (v: string | null) => void;
@@ -34,6 +35,7 @@ export function useGeneralForm(project: ProjectDetail): GeneralForm {
     name: savedName,
     description: savedDescription,
     color: savedColor,
+    logoUrl,
   } = project.project;
   const updateProject = useUpdateProject();
 
@@ -59,6 +61,7 @@ export function useGeneralForm(project: ProjectDetail): GeneralForm {
     name,
     description,
     color,
+    logoUrl,
     setName,
     setDescription,
     setColor,

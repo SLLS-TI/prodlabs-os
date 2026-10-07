@@ -46,6 +46,7 @@ const projects: Project[] = Array.from({ length: 20 }, (_, index) => ({
   name: `Project ${index + 1}`,
   description: '',
   color: null,
+  logoUrl: null,
   mcpEnabled: true,
   teamMcpEnabled: true,
   initiativesEnabled: true,

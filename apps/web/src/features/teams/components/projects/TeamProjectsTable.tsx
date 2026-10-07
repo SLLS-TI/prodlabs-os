@@ -7,6 +7,7 @@ import type { TeamProject } from '@/lib/api/endpoints/teams';
 import { formatDate } from '@/utils/dates';
 import { projectPath } from '@/utils/paths';
 import Avatar from '@/components/common/Avatar';
+import ProjectLogo from '@/components/common/ProjectLogo';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -68,6 +69,11 @@ export default function TeamProjectsTable({
             >
               <TableCell className="px-3 py-3">
                 <div className="flex min-w-0 items-start gap-2.5">
+                  <ProjectLogo
+                    name={project.name}
+                    logoUrl={project.logoUrl}
+                    className="size-7 self-start text-[11px]"
+                  />
                   <Badge
                     variant="outline"
                     className="min-w-12 shrink-0 justify-center rounded px-1 py-0 font-mono text-[10px] text-muted-foreground"

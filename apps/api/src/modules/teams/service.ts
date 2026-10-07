@@ -101,6 +101,8 @@ export interface TeamProjectRow {
   ref: string;
   name: string;
   description: string;
+  // Relative serve URL of the project's custom logo, or null to fall back to initials.
+  logoUrl: string | null;
   // Whether the team's MCP reach covers this project. Only counts while the team's
   // own switch is on.
   mcpEnabled: boolean;
@@ -539,6 +541,7 @@ export async function listTeamProjects(
         ref: projectRefSql,
         name: project.name,
         description: project.description,
+        logoUrl: project.logoUrl,
         mcpEnabled: project.mcpEnabled,
         createdAt: project.createdAt,
         memberCount: sql<number>`count(${projectMember.userId})::int`,
@@ -594,6 +597,7 @@ export async function listTeamProjects(
       ref: p.ref,
       name: p.name,
       description: p.description,
+      logoUrl: p.logoUrl,
       mcpEnabled: p.mcpEnabled,
       memberCount: p.memberCount,
       owners: ownersByProject.get(p.id) ?? [],

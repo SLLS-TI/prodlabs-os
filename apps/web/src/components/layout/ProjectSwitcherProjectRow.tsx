@@ -2,6 +2,7 @@ import { useTranslations } from 'next-intl';
 import type { Project } from '@/lib/api/endpoints/projects';
 import { cn } from '@/lib/utils';
 import { useRelativeTime } from '@/context/relativeTimeContext';
+import ProjectLogo from '@/components/common/ProjectLogo';
 import { CommandItem } from '@/components/ui/command';
 import ProjectSwitcherHideButton from './ProjectSwitcherHideButton';
 import ProjectSwitcherStarButton from './ProjectSwitcherStarButton';
@@ -30,6 +31,11 @@ export default function ProjectSwitcherProjectRow({
         aria-current={current || undefined}
         className="min-w-0 flex-1 gap-2.5 p-2 data-[selected=true]:bg-transparent"
       >
+        <ProjectLogo
+          name={project.name}
+          logoUrl={project.logoUrl}
+          className="size-7 self-start text-[11px]"
+        />
         <div className="min-w-0 flex-1">
           <span
             className={cn(

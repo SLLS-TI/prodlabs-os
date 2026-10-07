@@ -47,5 +47,6 @@
   "create": "Create project",
   "copyAction": "Copy project",
   "defaultAgents": "Agents joining this project: {names}",
-  "copyName": "{name} copy"
+  "copyName": "{name} copy",
+  "logoUploadFailed": "Project created, but the logo upload failed."
 }

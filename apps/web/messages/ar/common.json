@@ -216,5 +216,12 @@
     "page": "الصفحة {number}",
     "perPage": "لكل صفحة",
     "range": "{first}-{last} من {total}"
-  }
+  },
+  "logo": "الشعار",
+  "uploadLogo": "رفع الشعار",
+  "changeLogo": "تغيير الشعار",
+  "uploadingLogo": "جارٍ الرفع…",
+  "logoFormats": "PNG أو JPEG أو GIF أو WebP أو AVIF.",
+  "logoMaxSize": "حتى {mb} ميجابايت.",
+  "logoTooLarge": "تتجاوز الصورة حد {mb} ميجابايت."
 }

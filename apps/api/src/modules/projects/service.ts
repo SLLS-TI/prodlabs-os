@@ -68,6 +68,8 @@ export interface ProjectRow {
   description: string;
   // An optional hex background tint for the whole project interface; null = no tint.
   color: string | null;
+  // Relative serve URL of the project's custom logo, or null to fall back to initials.
+  logoUrl: string | null;
   mcpEnabled: boolean;
   // The team's own MCP switch, carried here because every MCP gate is a project
   // gate: a project is reachable only while both flags are on.
@@ -168,6 +170,7 @@ export async function mapProject(row: ProjectWithTeam): Promise<ProjectRow> {
     name: row.name,
     description: row.description,
     color: row.color,
+    logoUrl: row.logoUrl,
     mcpEnabled: row.mcpEnabled,
     teamMcpEnabled: row.teamMcpEnabled,
     initiativesEnabled: on('initiatives', row.initiativesEnabled),

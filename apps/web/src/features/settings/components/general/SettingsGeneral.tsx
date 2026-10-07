@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import SettingsCard from '@/components/common/page/SettingsCard';
 import SettingsSection from '@/components/common/page/SettingsSection';
 import SettingsColorField from '../crud/SettingsColorField';
+import ProjectLogoUpload from './ProjectLogoUpload';
 import type { GeneralForm } from '../../hooks/useGeneralForm';
 
 // The Project block of the General page. The key is shown read-only: it prefixes
@@ -18,6 +19,12 @@ export default function SettingsGeneral({ form }: { form: GeneralForm }) {
   return (
     <SettingsSection title={t('project')} description={t('projectHint')}>
       <SettingsCard className="space-y-4 p-4">
+        <ProjectLogoUpload
+          projectKey={form.key}
+          name={form.name}
+          logoUrl={form.logoUrl}
+          editable={form.editable}
+        />
         <div className="space-y-1.5">
           <Label htmlFor="project-key">{t('key')}</Label>
           <Input id="project-key" value={form.key} disabled readOnly />
