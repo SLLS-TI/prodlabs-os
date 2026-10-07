@@ -928,9 +928,10 @@ export const userTelegramAccount = pgTable(
 // apps/api/src/modules/notifications/outbound.ts) and drained by the worker
 // following the same claim/retry pattern as webhook_delivery. The message text is
 // composed at enqueue time and stored in `payload`; the channel credentials are read
-// from team_notification_setting at send time. channel is 'email' | 'telegram'
-// ('email' picks SMTP or Resend from the team config). recipient is the member's
-// email address for email rows, or their Telegram chat id for telegram rows.
+// from team_notification_setting at send time. channel is 'email' | 'telegram' |
+// 'slack' ('email' picks SMTP or Resend from the team config). recipient is the
+// member's email address for email rows, their Telegram chat id for telegram rows,
+// or the project's Slack channel for slack rows.
 // The stored message on a notification_delivery row, composed at enqueue time by the
 // api and read by the worker that sends it. `subject`/`html` are channel-specific:
 // email uses `subject` and builds its own HTML from `text`; Telegram sends `html`
@@ -966,7 +967,10 @@ export const notificationDelivery = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    check('notification_delivery_channel_check', sql`${t.channel} IN ('email', 'telegram')`),
+    check(
+      'notification_delivery_channel_check',
+      sql`${t.channel} IN ('email', 'telegram', 'slack')`,
+    ),
     // Backs the worker's claim query: due pending rows ordered by next_attempt_at.
     index('notification_delivery_due_idx')
       .on(t.nextAttemptAt)

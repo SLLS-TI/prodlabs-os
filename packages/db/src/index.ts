@@ -10,6 +10,12 @@ export {
   type InstanceBotConfig,
 } from './domains/telegram-bot';
 export {
+  SLACK_BOT_SECRET_KEY,
+  getInstanceSlackConfig,
+  isInstanceSlackUsable,
+  type InstanceSlackConfig,
+} from './domains/slack-bot';
+export {
   INSTANCE_EMAIL_SECRET_KEY,
   defaultInstanceEmailConfig,
   getInstanceEmailConfig,

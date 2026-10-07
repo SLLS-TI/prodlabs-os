@@ -15,6 +15,11 @@ interface TelegramConfig {
   botToken: string; // secret
 }
 
+interface SlackConfig {
+  enabled: boolean;
+  botToken: string; // secret, a per-team override of the instance Slack bot
+}
+
 // The stored, decrypted config. Secret fields carry the plaintext value; read only
 // by the sender, never returned over HTTP.
 export interface NotificationConfig {
@@ -25,6 +30,7 @@ export interface NotificationConfig {
   smtp: SmtpConfig;
   resend: ResendConfig;
   telegram: TelegramConfig;
+  slack: SlackConfig;
 }
 
 export function defaultNotificationConfig(): NotificationConfig {
@@ -43,6 +49,7 @@ export function defaultNotificationConfig(): NotificationConfig {
     },
     resend: { enabled: false, apiKey: '' },
     telegram: { enabled: false, botToken: '' },
+    slack: { enabled: false, botToken: '' },
   };
 }
 
