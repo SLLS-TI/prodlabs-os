@@ -80,4 +80,50 @@ describe('notification settings', () => {
     expect(res.status).toBe(200);
     expect(res.data?.smtp).toMatchObject({ enabled: true, host: 'smtp.example.com' });
   });
+
+  it('stores the slack bot token and reports it as present without echoing it', async () => {
+    const { api, teamId } = await ownedTeam();
+
+    const res = await api.teams({ teamId })['notification-settings'].put({
+      slack: { enabled: true, botToken: 'xoxb-test-token' },
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.data?.slack).toMatchObject({ enabled: true, hasBotToken: true });
+    expect(JSON.stringify(res.data)).not.toContain('xoxb-test-token');
+  });
+
+  it('keeps the stored slack token when botToken is omitted', async () => {
+    const { api, teamId } = await ownedTeam();
+
+    await api.teams({ teamId })['notification-settings'].put({
+      slack: { enabled: true, botToken: 'xoxb-stored' },
+    });
+
+    const again = await api.teams({ teamId })['notification-settings'].put({
+      slack: { enabled: false },
+    });
+
+    expect(again.status).toBe(200);
+    expect(again.data?.slack).toMatchObject({ enabled: false, hasBotToken: true });
+  });
+
+  it('rejects a non-owner team member trying to change slack settings', async () => {
+    const { api, teamId } = await ownedTeam();
+    const member = await signUpTestUser({ email: 'member@example.com' });
+    const memberApi = authedApi(member.cookie);
+
+    // Invite the member into the team so the route resolves it, then assert 403.
+    const invite = await api.teams({ teamId }).invites.post({
+      email: 'member@example.com',
+      role: 'member',
+    });
+    await memberApi.invites({ token: invite.data!.token }).accept.post();
+
+    const res = await memberApi.teams({ teamId })['notification-settings'].put({
+      slack: { enabled: true, botToken: 'xoxb-test' },
+    });
+
+    expect(res.status).toBe(403);
+  });
 });
