@@ -155,7 +155,12 @@
     "notes": "Catatan",
     "subtasks": "Subtugas",
     "checklists": "Daftar periksa",
-    "issueStats": "Statistik issue"
+    "issueStats": "Statistik issue",
+    "aiTeam": "Tim AI",
+    "inbox": "Kotak masuk",
+    "workItems": "Item pekerjaan",
+    "members": "Anggota",
+    "notifications": "Notifikasi"
   },
   "featureOffTitle": "{feature} dinonaktifkan",
   "toggleSidebar": "Tampilkan atau sembunyikan bilah sisi",
@@ -211,5 +216,12 @@
     "page": "Halaman {number}",
     "perPage": "per halaman",
     "range": "{first}-{last} dari {total}"
-  }
+  },
+  "logo": "Logo",
+  "uploadLogo": "Unggah logo",
+  "changeLogo": "Ganti logo",
+  "uploadingLogo": "Mengunggah…",
+  "logoFormats": "PNG, JPEG, GIF, WebP, atau AVIF.",
+  "logoMaxSize": "Maksimal {mb} MB.",
+  "logoTooLarge": "Gambar melebihi batas {mb} MB."
 }

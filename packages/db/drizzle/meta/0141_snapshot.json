@@ -1,6 +1,6 @@
 {
-  "id": "5c3ebefd-53b8-4bff-bd47-2841211fb7af",
-  "prevId": "597453a9-58d1-4c95-b4e9-1bb2c02e422b",
+  "id": "ed5ca195-1919-41e7-9331-41b1d4f2dde8",
+  "prevId": "07b525de-7431-446d-a0fa-49d1c2b73601",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -7936,6 +7936,12 @@
           "notNull": true,
           "default": "''"
         },
+        "logo_url": {
+          "name": "logo_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "next_sequence": {
           "name": "next_sequence",
           "type": "integer",
@@ -8080,6 +8086,18 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'[]'::jsonb"
+        },
+        "health_weights": {
+          "name": "health_weights",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",

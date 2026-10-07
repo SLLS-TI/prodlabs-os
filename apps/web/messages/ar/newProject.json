@@ -47,5 +47,6 @@
   "create": "إنشاء مشروع",
   "copyAction": "نسخ المشروع",
   "defaultAgents": "الوكلاء الذين سينضمون إلى هذا المشروع: {names}",
-  "copyName": "نسخة {name}"
+  "copyName": "نسخة {name}",
+  "logoUploadFailed": "تم إنشاء المشروع، لكن تعذّر رفع الشعار."
 }

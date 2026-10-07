@@ -103,6 +103,9 @@
     "saved": "El proyecto se ha actualizado",
     "project": "Proyecto",
     "projectHint": "La clave que prefija cada ticket y no puede cambiar.",
+    "themeColor": "Color del tema",
+    "themeColorHint": "Tiñe toda la interfaz de este proyecto. Déjalo vacío para no aplicar tinte.",
+    "themeColorNone": "Sin color",
     "key": "Clave",
     "features": "Características",
     "featuresHint": "Las secciones que este proyecto muestra. Apagar una la oculta y conserva su contenido.",
@@ -114,7 +117,12 @@
       "subtasks": "Tickets descompuestos en subtareas bajo un padre.",
       "checklists": "Listas de pasos seguidas dentro de un ticket.",
       "issueStats": "Cuánto tiempo ha pasado un ticket en cada estado.",
-      "documents": "Documentación del proyecto compartida, organizada en páginas."
+      "documents": "Documentación del proyecto compartida, organizada en páginas.",
+      "aiTeam": "La sección Equipo de IA: programaciones y agentes.",
+      "inbox": "La bandeja de entrada del proyecto y la actividad no leída.",
+      "workItems": "El tablero de elementos de trabajo y las vistas guardadas.",
+      "members": "La lista de miembros del proyecto.",
+      "notifications": "Tus preferencias de notificación para este proyecto."
     },
     "featureOn": "{feature} se ha activado",
     "featureOff": "{feature} se ha desactivado"

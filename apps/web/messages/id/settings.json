@@ -103,6 +103,9 @@
     "saved": "Proyek diperbarui",
     "project": "Proyek",
     "projectHint": "Kunci menjadi awalan setiap issue dan tidak dapat diubah.",
+    "themeColor": "Warna tema",
+    "themeColorHint": "Memberi warna pada seluruh antarmuka proyek ini. Kosongkan untuk tanpa warna.",
+    "themeColorNone": "Tanpa warna",
     "key": "Kunci",
     "features": "Fitur",
     "featuresHint": "Bagian yang ditampilkan proyek ini. Menonaktifkannya akan menyembunyikan bagian tersebut tanpa menghapus isinya.",
@@ -114,7 +117,12 @@
       "subtasks": "Issue yang dipecah menjadi subtugas di bawah induk.",
       "checklists": "Daftar langkah yang dipantau di dalam issue.",
       "issueStats": "Berapa lama suatu issue berada di setiap status.",
-      "documents": "Dokumentasi proyek bersama yang diorganisasikan ke dalam halaman."
+      "documents": "Dokumentasi proyek bersama yang diorganisasikan ke dalam halaman.",
+      "aiTeam": "Bagian Tim AI: jadwal dan agen.",
+      "inbox": "Kotak masuk proyek dan aktivitas yang belum dibaca.",
+      "workItems": "Papan item pekerjaan dan tampilan tersimpan.",
+      "members": "Daftar anggota proyek.",
+      "notifications": "Preferensi notifikasi Anda untuk proyek ini."
     },
     "featureOn": "{feature} diaktifkan",
     "featureOff": "{feature} dinonaktifkan"

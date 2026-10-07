@@ -155,7 +155,12 @@
     "notes": "Notes",
     "subtasks": "Sous-tâches",
     "checklists": "Checklists",
-    "issueStats": "Statistiques de tickets"
+    "issueStats": "Statistiques de tickets",
+    "aiTeam": "Équipe IA",
+    "inbox": "Boîte de réception",
+    "workItems": "Tickets",
+    "members": "Membres",
+    "notifications": "Notifications"
   },
   "featureOffTitle": "La section {feature} est désactivée",
   "toggleSidebar": "Afficher ou masquer la barre latérale",
@@ -211,5 +216,12 @@
     "page": "Page {number}",
     "perPage": "par page",
     "range": "{first}-{last} sur {total}"
-  }
+  },
+  "logo": "Logo",
+  "uploadLogo": "Importer un logo",
+  "changeLogo": "Changer de logo",
+  "uploadingLogo": "Importation…",
+  "logoFormats": "PNG, JPEG, GIF, WebP ou AVIF.",
+  "logoMaxSize": "Jusqu'à {mb} Mo.",
+  "logoTooLarge": "L'image dépasse la limite de {mb} Mo."
 }

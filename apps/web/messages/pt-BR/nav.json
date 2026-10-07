@@ -39,7 +39,8 @@
   "groups": {
     "project": "Projeto",
     "workflow": "Fluxo de trabalho",
-    "automation": "Automação"
+    "automation": "Automação",
+    "developer": "Desenvolvedor"
   },
   "godModeOwnerOnly": "O modo god está aberto apenas ao dono da instância.",
   "project": "Projeto",

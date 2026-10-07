@@ -47,5 +47,6 @@
   "create": "新建项目",
   "copyAction": "复制项目",
   "defaultAgents": "将加入此项目的代理：{names}",
-  "copyName": "{name} 副本"
+  "copyName": "{name} 副本",
+  "logoUploadFailed": "项目已创建，但标志上传失败。"
 }

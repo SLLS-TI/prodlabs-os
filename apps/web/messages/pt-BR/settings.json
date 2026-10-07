@@ -103,6 +103,9 @@
     "saved": "Projeto atualizado",
     "project": "Projeto",
     "projectHint": "A chave prefixa cada issue e não pode mudar.",
+    "themeColor": "Cor do tema",
+    "themeColorHint": "Tinge toda a interface deste projeto. Deixe vazio para não aplicar cor.",
+    "themeColorNone": "Sem cor",
     "key": "Chave",
     "features": "Recursos",
     "featuresHint": "Seções que este projeto mostra. Desativar uma a oculta e mantém seu conteúdo.",
@@ -114,7 +117,12 @@
       "subtasks": "Issues detalhadas em subtarefas sob um pai.",
       "checklists": "Listas de passos acompanhados dentro de uma issue.",
       "issueStats": "Quanto tempo uma issue passou em cada estado.",
-      "documents": "Documentação compartilhada do projeto organizada em páginas."
+      "documents": "Documentação compartilhada do projeto organizada em páginas.",
+      "aiTeam": "A seção Time de IA: agendamentos e agentes.",
+      "inbox": "A caixa de entrada do projeto e a atividade não lida.",
+      "workItems": "O quadro de itens de trabalho e as visualizações salvas.",
+      "members": "A lista de membros do projeto.",
+      "notifications": "Suas preferências de notificação para este projeto."
     },
     "featureOn": "{feature} ativado",
     "featureOff": "{feature} desativado"

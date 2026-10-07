@@ -155,7 +155,12 @@
     "notes": "الملاحظات",
     "subtasks": "المهام الفرعية",
     "checklists": "قوائم التحقّق (قائمة الحاجات اللي لازم تتراجع)",
-    "issueStats": "إحصاءات المهام"
+    "issueStats": "إحصاءات المهام",
+    "aiTeam": "فريق الذكاء الاصطناعي",
+    "inbox": "صندوق الوارد",
+    "workItems": "عناصر العمل",
+    "members": "الأعضاء",
+    "notifications": "الإشعارات"
   },
   "featureOffTitle": "{feature} مُعطّلة",
   "toggleSidebar": "تبديل الشريط الجانبي",
@@ -211,5 +216,12 @@
     "page": "الصفحة {number}",
     "perPage": "لكل صفحة",
     "range": "{first}-{last} من {total}"
-  }
+  },
+  "logo": "الشعار",
+  "uploadLogo": "رفع الشعار",
+  "changeLogo": "تغيير الشعار",
+  "uploadingLogo": "جارٍ الرفع…",
+  "logoFormats": "PNG أو JPEG أو GIF أو WebP أو AVIF.",
+  "logoMaxSize": "حتى {mb} ميجابايت.",
+  "logoTooLarge": "تتجاوز الصورة حد {mb} ميجابايت."
 }
