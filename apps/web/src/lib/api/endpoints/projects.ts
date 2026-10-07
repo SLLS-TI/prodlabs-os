@@ -66,6 +66,9 @@ export interface Project {
   // Which team roles may see the project's time tracking. Empty means every role.
   // Editor-only config, read by the Configuration settings page.
   timeVisibleRoleIds: number[];
+  // The member a client-role viewer sees every team-member action attributed to, or
+  // null to fall back to the oldest owner. Owner-only config, read by the settings page.
+  faceUserId: string | null;
   createdAt: string;
   // Latest work-item activity or comment, present on the project list response.
   lastActivityAt?: string | null;

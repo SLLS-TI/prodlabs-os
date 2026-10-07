@@ -6,11 +6,18 @@ import {
   type ProjectRow,
 } from '#modules/projects/service';
 import { featureLabel, type ProjectFeature } from './features';
-import { getMembership, getMemberContext, getTeamPermissions } from '#modules/members/service';
+import {
+  getMembership,
+  getMemberContext,
+  getTeamPermissions,
+  clientMemberIds,
+  clientMemberHandles,
+} from '#modules/members/service';
 import { getTeamMembership, runsTeam, type TeamStanding } from '#modules/teams/service';
 import { getDefaultRoleId } from '#modules/roles/service';
-import { canSeeTimeTracking } from '#modules/projects/visibility';
+import { canSeeTimeTracking, resolveFaceIdentity } from '#modules/projects/visibility';
 import { hasPermission, type PermissionAction, type PermissionResource } from './permissions';
+import type { FaceIdentity } from '@repo/db';
 
 // The authenticated user carried on the request context. Populated by the
 // session guard in planner.ts from the better-auth session. Access checks only
@@ -250,6 +257,64 @@ export async function checkTimeVisible(
   if (!project) return false;
   const effectiveRoleId = ctx.roleId ?? (await getDefaultRoleId(project.teamId));
   return canSeeTimeTracking(ctx.role, effectiveRoleId, project.timeVisibleRoleIds);
+}
+
+// Whether this viewer's view of the project must have team-member attribution masked:
+// true only when they are a client of the project. Owners and members never mask. Used
+// to decide, per read, whether to rewrite actor identities to the face. Returns false
+// for a non-member (already refused upstream).
+export async function checkMaskViewer(
+  projectId: number,
+  user: AuthUser | null | undefined,
+): Promise<boolean> {
+  if (!user) return false;
+  const ctx = await getMemberContext(projectId, user.id);
+  return ctx?.role === 'client';
+}
+
+// What a client read needs to rewrite team-member attribution to the face: the face
+// identity, the ids of the current client members (the allowlist the mask fails closed
+// against), and their @handles. The mask fails closed: every non-null actor that is NOT
+// a current client is rewritten to the face — team members, removed/former members whose
+// historical rows still name them, deleted-but-named actors, and agents. A client's own
+// actions and other current clients' actions stay attributed to them. Passed into the
+// feed/document serializers the same way canSeeTime is.
+export interface MaskContext {
+  // The client who is reading. A list of other people (assignee candidates, watchers)
+  // is collapsed to the face plus this viewer, so a client cannot enumerate the agency's
+  // team or its other clients.
+  viewerId: string;
+  face: FaceIdentity | null;
+  clientMemberIds: Set<string>;
+  clientMemberHandles: Set<string>;
+}
+
+// Whether this actor must be rewritten to the face for the client viewer: any non-null
+// actor that is not a current client member. A null actor (a system write) is never
+// masked.
+export function isMaskableActor(mask: MaskContext, actorUserId: string | null): boolean {
+  return actorUserId != null && !mask.clientMemberIds.has(actorUserId);
+}
+
+// The mask context for a viewer's read of a project, or null when nothing is masked
+// (owner/member/non-member). A null return is the hot path: every team/owner read does
+// one membership lookup and no extra work.
+export async function resolveMaskContext(
+  projectId: number,
+  user: AuthUser | null | undefined,
+): Promise<MaskContext | null> {
+  if (!user || !(await checkMaskViewer(projectId, user))) return null;
+  const [face, clientIds, clientHandles] = await Promise.all([
+    resolveFaceIdentity(projectId),
+    clientMemberIds(projectId),
+    clientMemberHandles(projectId),
+  ]);
+  return {
+    viewerId: user.id,
+    face,
+    clientMemberIds: clientIds,
+    clientMemberHandles: clientHandles,
+  };
 }
 
 // Asserts the user is an owner of the project, addressed by id — the parallel of

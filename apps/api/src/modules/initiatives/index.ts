@@ -3,7 +3,7 @@ import { mcpImageTool, mcpTool } from '#mcp/generate';
 import { noContent } from '#shared/http';
 import { guards, entityGuard } from '#shared/guards';
 import { authContext } from '#shared/auth-context';
-import { requireUser } from '#shared/access';
+import { requireUser, resolveMaskContext } from '#shared/access';
 import { HttpError } from '#shared/lib';
 import { commonErrors, errors } from '#shared/responses';
 import { paginate } from '#shared/pagination';
@@ -245,7 +245,7 @@ export const initiativeRoutes = new Elysia({
 
   .get(
     '/initiatives/:initiativeId/feed',
-    async ({ params, query }) => {
+    async ({ params, query, user, projectId }) => {
       const limit = query.limit != null ? Number(query.limit) : undefined;
       let before = null;
       if (query.cursor) {
@@ -255,7 +255,11 @@ export const initiativeRoutes = new Elysia({
           // Ignore a malformed cursor and serve the first page.
         }
       }
-      return listFeed(params.initiativeId, { before, limit });
+      return listFeed(
+        params.initiativeId,
+        { before, limit },
+        await resolveMaskContext(projectId, user),
+      );
     },
     {
       params: initiativeParams,

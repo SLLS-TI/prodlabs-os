@@ -166,7 +166,7 @@ function slackPayload(
 // is separate — see enqueueChannelPost.
 export async function enqueueOutbound(
   notifications: NewNotificationRow[],
-  actorName: string | null,
+  nameFor: (userId: string) => string | null,
 ): Promise<void> {
   if (notifications.length === 0) return;
   const projectId = notifications[0].projectId;
@@ -210,7 +210,6 @@ export async function enqueueOutbound(
     projectRow.key,
     issueRow.seq,
   );
-  const actor = actorName ?? 'Someone';
   // One issue event, so every 'state_changed' row points at the same activity row.
   const statusActivityId =
     notifications.find((n) => n.type === 'state_changed')?.sourceActivityId ?? null;
@@ -228,6 +227,10 @@ export async function enqueueOutbound(
   for (const n of notifications) {
     const prefs = prefsByUser.get(n.userId);
     if (!prefs) continue; // member has not opted in
+
+    // The actor name this recipient reads: the face when they are a client of a
+    // maskable actor's event, the real name otherwise (decided per recipient upstream).
+    const actor = nameFor(n.userId) ?? 'Someone';
 
     if (emailEnabled && prefs.emailEvents[n.type]) {
       const email = emailById.get(n.userId);

@@ -153,6 +153,18 @@ export const updateEstimates = (projectKey: string, input: EstimateSettings) =>
     body: JSON.stringify(input),
   });
 
+// The client-facing face user: the member a client-role viewer sees every team-member
+// action attributed to, or null to fall back to the oldest owner. Owner-only.
+export interface MaskingSettings {
+  faceUserId: string | null;
+}
+
+export const updateMasking = (projectKey: string, input: MaskingSettings) =>
+  request<MaskingSettings>(`/projects/${projectKey}/settings/masking`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+
 // The project's Slack channel (projectOwner only).
 export const getSlackProjectSettings = (projectKey: string) =>
   request<SlackProjectSettings>(`/projects/${projectKey}/settings/slack`);

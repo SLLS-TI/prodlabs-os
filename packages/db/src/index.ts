@@ -1,6 +1,7 @@
 export { db, type DbExecutor } from './client';
 export * from './schema';
 export * from './permissions';
+export { maskActor, type FaceIdentity, type MaskableActor } from './masking';
 export { getSetting, getOrCreateSetting, setSetting } from './settings';
 export { readSecret, writeSecret } from './secrets';
 export {

@@ -41,11 +41,15 @@ async function assertNotProvisioned(projectId: number, userId: string): Promise<
   }
 }
 
-// An owner bypasses the permission matrix, so the standing is kept for people: an
-// agent works under a role, which is what caps what its key and its tools may do.
+// An owner bypasses the permission matrix and a client resolves its own restricted
+// one, so both standings are kept for people: an agent works under a team role, which
+// is what caps what its key and its tools may do.
 async function assertAgentNotOwner(userId: string, role: string): Promise<void> {
   if (role === 'owner' && (await isAgentUser(userId))) {
     throw new HttpError(400, 'An AI agent cannot be a project owner');
+  }
+  if (role === 'client' && (await isAgentUser(userId))) {
+    throw new HttpError(400, 'An AI agent cannot be a project client');
   }
 }
 
@@ -170,8 +174,13 @@ export const memberRoutes = new Elysia({ name: 'members', detail: { tags: ['Memb
       await assertMayGrantOwner(project, body.role, user);
       await assertAgentNotOwner(params.userId, body.role);
 
-      if (body.role === 'owner') {
-        await setMembership(project.id, params.userId, 'owner', null);
+      // Demoting the last owner to anything else must keep one owner on the project.
+      if (target === 'owner' && body.role !== 'owner' && (await countOwners(project.id)) === 1) {
+        throw new HttpError(400, 'A project must have at least one owner');
+      }
+      // Owner and client both carry no team role.
+      if (body.role === 'owner' || body.role === 'client') {
+        await setMembership(project.id, params.userId, body.role, null);
         return noContent();
       }
 
@@ -179,10 +188,6 @@ export const memberRoutes = new Elysia({ name: 'members', detail: { tags: ['Memb
       if (roleId != null) {
         const role = await getRole(project.teamId, roleId);
         if (!role) throw new HttpError(400, "roleId does not belong to this project's team");
-      }
-      // Demoting an owner to a member must keep at least one owner on the project.
-      if (target === 'owner' && (await countOwners(project.id)) === 1) {
-        throw new HttpError(400, 'A project must have at least one owner');
       }
       await setMembership(project.id, params.userId, 'member', roleId);
       return noContent();

@@ -32,12 +32,8 @@ import {
 } from 'drizzle-orm';
 import { HttpError, iso } from '#shared/lib';
 import { PROJECT_KEY_PATTERN } from './key';
-import {
-  defaultMemberPermissions,
-  fullPermissions,
-  normalizePermissions,
-  type Permissions,
-} from '#shared/permissions';
+import { type Permissions } from '#shared/permissions';
+import { toMemberContext, type MemberRole } from '#modules/members/service';
 import { getProjectSetting, setProjectSetting } from '#shared/project-settings';
 import { DEFAULT_HEALTH_WEIGHTS, type HealthWeights } from '#modules/god/health';
 import { PROJECT_FEATURES, featureLabel, type ProjectFeature } from '#shared/features';
@@ -97,6 +93,9 @@ export interface ProjectRow {
   // every role sees it. Editor-only config: it reaches the settings page, not the
   // board scaffold, which carries the resolved canSeeTimeTracking boolean instead.
   timeVisibleRoleIds: number[];
+  // The member a client viewer sees every team-member action attributed to, or null to
+  // fall back to the oldest owner. Owner-only config, set on the masking settings page.
+  faceUserId: string | null;
   // Per-project weights for the cross-project health score (god stats), or null when never
   // configured. The health-weights settings route reads them; the board scaffold does not
   // carry them.
@@ -132,7 +131,7 @@ export interface ProjectFeatures {
 // UI (project switcher, manage-projects page) uses `role` to gate owner-only
 // actions like deletion; the API still enforces the permission on every request.
 export interface ProjectListItem extends ProjectRow {
-  role: 'owner' | 'member';
+  role: MemberRole;
   lastActivityAt: string | null;
   isFavorite: boolean;
   isHidden: boolean;
@@ -197,6 +196,7 @@ export async function mapProject(row: ProjectWithTeam): Promise<ProjectRow> {
     timeGoalMinutes: row.timeGoalMinutes,
     timeGoalPeriod: row.timeGoalPeriod as 'total' | 'weekly' | null,
     timeVisibleRoleIds: row.timeVisibleRoleIds,
+    faceUserId: row.faceUserId,
     healthWeights: row.healthWeights,
     availableFeatures: PROJECT_FEATURES.filter((feature) => !blockedFeatures.includes(feature)),
     createdAt: iso(row.createdAt),
@@ -292,8 +292,9 @@ export async function listProjects(
         isHidden,
         ...row
       }) => {
-        const role = memberRole === 'owner' ? 'owner' : 'member';
-        const effectiveRoleId = memberRoleId ?? (await resolveDefaultRole(row.teamId));
+        const context = toMemberContext(memberRole as MemberRole, rolePermissions, memberRoleId);
+        const role = context.role;
+        const effectiveRoleId = context.roleId ?? (await resolveDefaultRole(row.teamId));
         const item: ProjectListItem = {
           ...(await mapProject(row)),
           role,
@@ -302,11 +303,7 @@ export async function listProjects(
           isHidden,
           canSeeTimeTracking: canSeeTimeTracking(role, effectiveRoleId, row.timeVisibleRoleIds),
         };
-        if (opts.withPermissions) {
-          if (role === 'owner') item.permissions = fullPermissions();
-          else if (rolePermissions) item.permissions = normalizePermissions(rolePermissions);
-          else item.permissions = defaultMemberPermissions();
-        }
+        if (opts.withPermissions) item.permissions = context.permissions;
         return item;
       },
     ),
@@ -724,6 +721,36 @@ export async function setEstimateSettings(
         timeVisibleRoleIds: row.timeVisibleRoleIds,
       }
     : null;
+}
+
+export interface MaskingSettings {
+  faceUserId: string | null;
+}
+
+// Sets the project's client-facing face user (owner-only route). A non-null id must be
+// a member of the project; one that is not is rejected rather than stored, so the
+// resolver always finds the face or falls back to the oldest owner. null clears it.
+// Returns null when the project does not exist.
+export async function setMaskingSettings(
+  projectId: number,
+  input: MaskingSettings,
+): Promise<MaskingSettings | null> {
+  if (input.faceUserId != null) {
+    const [member] = await db
+      .select({ userId: projectMember.userId })
+      .from(projectMember)
+      .where(
+        and(eq(projectMember.projectId, projectId), eq(projectMember.userId, input.faceUserId)),
+      )
+      .limit(1);
+    if (!member) throw new HttpError(400, 'The face user must be a member of the project');
+  }
+  const [row] = await db
+    .update(project)
+    .set({ faceUserId: input.faceUserId })
+    .where(eq(project.id, projectId))
+    .returning({ faceUserId: project.faceUserId });
+  return row ? { faceUserId: row.faceUserId } : null;
 }
 
 // The health-score weights, always filled with the defaults merged over the stored partial

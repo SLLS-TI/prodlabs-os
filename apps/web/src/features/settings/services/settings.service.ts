@@ -11,6 +11,7 @@ import {
   type AutoArchiveSettings,
   type EstimateSettings,
   type HealthWeights,
+  type MaskingSettings,
   type ProjectFeatures,
   type SlackProjectSettings,
   type SubtaskAutomationSettings,
@@ -21,6 +22,7 @@ import {
   getSlackProjectSettings,
   updateSlackProjectSettings,
   updateEstimates,
+  updateMasking,
   getHealthWeights,
   updateHealthWeights,
   updateProjectSettings,
@@ -225,6 +227,14 @@ export function useUpdateSlackChannel(projectKey: string) {
 export function useUpdateEstimates(projectKey: string) {
   return useProjectMutation(projectKey, (input: EstimateSettings) =>
     updateEstimates(projectKey, input),
+  );
+}
+
+// The client-facing face user lives on the project row too, so the write invalidates
+// the project detail the same way.
+export function useUpdateMasking(projectKey: string) {
+  return useProjectMutation(projectKey, (input: MaskingSettings) =>
+    updateMasking(projectKey, input),
   );
 }
 

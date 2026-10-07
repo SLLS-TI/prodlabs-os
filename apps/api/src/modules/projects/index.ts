@@ -4,10 +4,14 @@ import { noContent } from '#shared/http';
 import { HttpError } from '#shared/lib';
 import { authContext } from '#shared/auth-context';
 import { guards } from '#shared/guards';
-import { requireUser } from '#shared/access';
+import { isMaskableActor, requireUser, resolveMaskContext, type MaskContext } from '#shared/access';
 import { isMcpRequest } from '#shared/mcp-request';
 import { accessErrors, commonErrors, errors } from '#shared/responses';
-import { getMemberContext, listAssigneeCandidates } from '#modules/members/service';
+import {
+  getMemberContext,
+  listAssigneeCandidates,
+  type AssigneeCandidate,
+} from '#modules/members/service';
 import { getDefaultRoleId } from '#modules/roles/service';
 import { canSeeTimeTracking } from './visibility';
 import { listColumns } from '#modules/columns/service';
@@ -20,6 +24,7 @@ import {
   AutoArchiveResponse,
   EstimatesResponse,
   HealthWeightsResponse,
+  MaskingResponse,
   PROJECT_DESCRIPTION_LIMIT,
   ProjectBoardResponse,
   ProjectListResponse,
@@ -35,6 +40,7 @@ import {
   updateAutoArchiveBody,
   updateEstimatesBody,
   updateHealthWeightsBody,
+  updateMaskingBody,
   updateProjectBody,
   updateProjectSettingsBody,
   updateSlackProjectBody,
@@ -55,12 +61,44 @@ import {
   getSlackProjectSettings,
   setSlackProjectSettings,
   setEstimateSettings,
+  setMaskingSettings,
   getHealthWeights,
   setHealthWeights,
 } from './service';
 import { copyProject } from './copy';
 import { projectPreferences } from './preferences';
 import { replaceProjectLogo, clearProjectLogo, readProjectLogo } from './logo';
+
+// For a client viewer, reduces the assignee-candidate list to the viewing client plus a
+// single face entry standing for the team, so the web resolves a masked assignee's chip
+// to the face and a client can never read a team identity or enumerate the agency's
+// other clients out of the scaffold. No email is carried for anyone but the viewer. A
+// null mask (team/owner) returns the list unchanged.
+function collapseAssignees(
+  assignees: AssigneeCandidate[],
+  mask: MaskContext | null,
+): AssigneeCandidate[] {
+  if (!mask) return assignees;
+  const kept = assignees.filter((a) => a.userId === mask.viewerId);
+  const hadMaskable = assignees.some((a) => isMaskableActor(mask, a.userId));
+  if (!hadMaskable || !mask.face) return kept;
+  const face = mask.face;
+  if (kept.some((a) => a.userId === face.userId)) return kept;
+  const faceEntry: AssigneeCandidate = {
+    userId: face.userId,
+    name: face.name ?? '',
+    email: '',
+    username: face.username,
+    image: face.image,
+    kind: 'member',
+    agentKind: null,
+    role: null,
+    description: null,
+    restrictedToUserId: null,
+    canReadWorkItems: true,
+  };
+  return [faceEntry, ...kept];
+}
 
 export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Projects'] } })
   .use(authContext)
@@ -172,13 +210,14 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
       // exists here; guard against a race (membership revoked mid-request).
       if (!viewer) throw new HttpError(403, 'You do not have access to this project');
       const effectiveRoleId = viewer.roleId ?? (await getDefaultRoleId(project.teamId));
+      const mask = await resolveMaskContext(project.id, user);
       return {
         project,
         columns,
         issueTypes,
         labels,
         labelGroups,
-        assignees,
+        assignees: collapseAssignees(assignees, mask),
         customFields,
         issueTemplates,
         viewer: { role: viewer.role, teamRole },
@@ -389,6 +428,25 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
       permission: ['workflow_config', 'edit'],
       response: { 200: EstimatesResponse, ...commonErrors },
       detail: { summary: "Update a project's estimate kinds and time logging" },
+    },
+  )
+
+  // Sets the client-facing face user: who a client-role member sees every team-member
+  // action attributed to. Owner-only — the face user is security-sensitive, so it is
+  // not folded into the editor-level estimates settings. The current value comes with
+  // the project payload, so only the write lives here.
+  .patch(
+    '/projects/:projectKey/settings/masking',
+    async ({ project, body }) => {
+      const updated = await setMaskingSettings(project.id, body);
+      if (!updated) throw new HttpError(404, 'Project not found');
+      return updated;
+    },
+    {
+      body: updateMaskingBody,
+      projectOwner: true,
+      response: { 200: MaskingResponse, ...commonErrors },
+      detail: { summary: "Set a project's client-facing face user" },
     },
   )
 

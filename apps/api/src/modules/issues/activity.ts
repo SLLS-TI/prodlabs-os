@@ -8,13 +8,20 @@ import {
   label,
   initiative,
   cycle,
+  maskActor,
   type ActivityPayload,
   type ActivitySide,
 } from '@repo/db';
 import { and, asc, desc, eq, gte, inArray, isNull, lt, ne, sql } from 'drizzle-orm';
 import { HttpError, iso } from '#shared/lib';
+import { isMaskableActor, type MaskContext } from '#shared/access';
 import { emitCommentEvent } from './webhook-payload';
-import { addedMentionHandles, parseMentionHandles, resolveMentionHandles } from '#shared/mentions';
+import {
+  addedMentionHandles,
+  maskMentionsInBody,
+  parseMentionHandles,
+  resolveMentionHandles,
+} from '#shared/mentions';
 import { isAgentUser, listMentionTriggerAgents } from '#modules/agents/core/service';
 import { enqueueAgentRun } from '#modules/agents/core/run-queue';
 import {
@@ -92,6 +99,65 @@ function mapFeedItem(row: {
   };
 }
 
+// Rewrites a feed item to the face for a client viewer: the actor (id + name), the
+// body's mentions of team members, the user-named sides of an assignee or delegate
+// change (so "assigned to Jane" does not reveal Jane is on the team), and the mentions
+// inside a title or description change's prose. A null mask means team/owner read — the
+// row is returned unchanged. Masking never touches stored data; it shapes the response
+// only.
+function maskFeedItem(item: FeedItemRow, mask: MaskContext | null): FeedItemRow {
+  if (!mask) return item;
+  const masked = maskActor(item, mask.face, isMaskableActor(mask, item.actorUserId));
+  const faceUsername = mask.face?.username ?? null;
+  const body =
+    masked.body != null
+      ? maskMentionsInBody(masked.body, mask.clientMemberHandles, faceUsername)
+      : masked.body;
+  let payload = masked.payload;
+  if (masked.action === 'assignee' || masked.action === 'delegate')
+    payload = maskUserSides(payload, mask);
+  else if (masked.action === 'title' || masked.action === 'description')
+    payload = maskPayloadProse(payload, mask);
+  return body === masked.body && payload === masked.payload ? masked : { ...masked, body, payload };
+}
+
+// Rewrites team-member mentions inside a title or description change's free-text sides,
+// so a client cannot read a team handle out of "changed title to @teammate's idea" or a
+// masked description. Shared with the initiative feed.
+export function maskPayloadProse(payload: ActivityPayload, mask: MaskContext): ActivityPayload {
+  const faceUsername = mask.face?.username ?? null;
+  const from = maskProseSide(payload.from, mask.clientMemberHandles, faceUsername);
+  const to = maskProseSide(payload.to, mask.clientMemberHandles, faceUsername);
+  if (from === payload.from && to === payload.to) return payload;
+  return { ...payload, from, to };
+}
+
+function maskProseSide(
+  side: ActivitySide | undefined,
+  clientMemberHandles: Set<string>,
+  faceUsername: string | null,
+): ActivitySide | undefined {
+  if (!side || typeof side.value !== 'string') return side;
+  const value = maskMentionsInBody(side.value, clientMemberHandles, faceUsername);
+  return value === side.value ? side : { ...side, value };
+}
+
+// Swaps a payload side that names a team member (its id is maskable) to the face's id
+// and name, so a client reads the face on both sides of an owner/assignee/delegate
+// change. Shared with the initiative feed.
+export function maskUserSides(payload: ActivityPayload, mask: MaskContext): ActivityPayload {
+  const from = maskUserSide(payload.from, mask);
+  const to = maskUserSide(payload.to, mask);
+  if (from === payload.from && to === payload.to) return payload;
+  return { ...payload, from, to };
+}
+
+function maskUserSide(side: ActivitySide | undefined, mask: MaskContext): ActivitySide | undefined {
+  if (!side || typeof side.id !== 'string' || !isMaskableActor(mask, side.id)) return side;
+  if (!mask.face) return { ...side, value: null, id: null };
+  return { ...side, value: mask.face.name, id: mask.face.userId };
+}
+
 export type FeedFilter = 'comments' | 'history' | 'worklog';
 export type FeedOrder = 'asc' | 'desc';
 
@@ -128,6 +194,7 @@ export async function listFeed(
   issueId: number,
   opts: FeedPageOptions = {},
   canSeeTime = true,
+  mask: MaskContext | null = null,
 ): Promise<FeedPage> {
   const limit = Math.min(Math.max(opts.limit ?? 25, 1), 100);
   const cursor = opts.cursor ?? null;
@@ -169,8 +236,11 @@ export async function listFeed(
   const hasMore = rows.length > limit;
   const page = hasMore ? rows.slice(0, limit) : rows;
   const last = page[page.length - 1];
-  const items = page.map(mapFeedItem);
-  const replies = await listReplies(items.map((item) => item.id));
+  const items = page.map((row) => maskFeedItem(mapFeedItem(row), mask));
+  const replies = await listReplies(
+    items.map((item) => item.id),
+    mask,
+  );
   return {
     items: [...items, ...replies],
     nextCursor: hasMore && last ? { ts: last.cursorTs, id: last.id } : null,
@@ -211,7 +281,10 @@ export async function countFeed(issueId: number, canSeeTime = true): Promise<Fee
 // Every reply under the given entries, oldest first, read one level at a time until
 // a level has none. A thread is a handful of comments deep, so the loop is short and
 // each level is one query.
-async function listReplies(parentIds: number[]): Promise<FeedItemRow[]> {
+async function listReplies(
+  parentIds: number[],
+  mask: MaskContext | null = null,
+): Promise<FeedItemRow[]> {
   const replies: FeedItemRow[] = [];
   let level = parentIds;
   while (level.length > 0) {
@@ -220,7 +293,7 @@ async function listReplies(parentIds: number[]): Promise<FeedItemRow[]> {
       .from(issueActivity)
       .where(inArray(issueActivity.replyToId, level))
       .orderBy(issueActivity.createdAt, issueActivity.id);
-    replies.push(...rows.map(mapFeedItem));
+    replies.push(...rows.map((row) => maskFeedItem(mapFeedItem(row), mask)));
     level = rows.map((row) => row.id);
   }
   return replies;
@@ -236,6 +309,7 @@ export async function listFeedRange(
   issueId: number,
   from: string,
   to?: string | null,
+  mask: MaskContext | null = null,
 ): Promise<FeedItemRow[]> {
   const fromDate = new Date(from);
   const toDate = to ? new Date(to) : null;
@@ -253,7 +327,7 @@ export async function listFeedRange(
       ),
     )
     .orderBy(issueActivity.createdAt, issueActivity.id);
-  return rows.map(mapFeedItem);
+  return rows.map((row) => maskFeedItem(mapFeedItem(row), mask));
 }
 
 // One stretch of the grouped feed: the status the issue was in, and the entries of
@@ -282,8 +356,9 @@ export async function listGroupedFeed(
   issueId: number,
   opts: FeedPageOptions = {},
   canSeeTime = true,
+  mask: MaskContext | null = null,
 ): Promise<GroupedFeedPage> {
-  const page = await listFeed(issueId, opts, canSeeTime);
+  const page = await listFeed(issueId, opts, canSeeTime, mask);
   const timeline = page.items.length ? await listStatusTimeline(issueId) : [];
   if (timeline.length === 0) return { groups: [], nextCursor: page.nextCursor };
 

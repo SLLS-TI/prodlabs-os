@@ -13,6 +13,7 @@ import { and, desc, eq, ilike, isNotNull, isNull, notExists, or, sql } from 'dri
 import { iso } from '#shared/lib';
 import { DEFAULT_TIMEZONE } from '#modules/user-preferences/service';
 import {
+  clientPermissions,
   defaultMemberPermissions,
   emptyPermissions,
   fullPermissions,
@@ -24,10 +25,11 @@ import {
 } from '#shared/permissions';
 
 // Data access for project membership: which users can reach a project and their
-// role in it ("owner" or "member"). Access checks resolve the owning project of
-// any entity and look for the current user here.
+// role in it ("owner", "member" or "client"). Access checks resolve the owning
+// project of any entity and look for the current user here. A client is a restricted
+// read-oriented role whose view has team-member attribution masked (see masking.ts).
 
-export type MemberRole = 'owner' | 'member';
+export type MemberRole = 'owner' | 'member' | 'client';
 
 // How a membership came about. 'scim' rows are owned by the group reconciliation,
 // which rewrites them on every sync, so they are not editable by hand.
@@ -113,6 +115,9 @@ export function toMemberContext(
   roleId: number | null = null,
 ): MemberContext {
   if (role === 'owner') return { role, permissions: fullPermissions(), roleId: null };
+  // A client, like an owner, resolves its matrix in code and uses no team role, so its
+  // roleId is null.
+  if (role === 'client') return { role, permissions: clientPermissions(), roleId: null };
   return {
     role,
     permissions: rolePermissions
@@ -180,6 +185,37 @@ export async function listMemberContexts(projectId: number): Promise<Map<string,
     .leftJoin(teamRole, eq(teamRole.id, projectMember.roleId))
     .where(eq(projectMember.projectId, projectId));
   return new Map(rows.map((r) => [r.userId, toMemberContext(r.role as MemberRole, r.permissions)]));
+}
+
+// The user ids of the project's current client-role members. A client viewer masks
+// every non-null actor that is NOT in this set: team members, removed/former members
+// whose historical rows still name them, deleted-but-named actors, and agents' bot
+// users. A client's own id and other clients' ids are here, so their actions stay
+// attributed to them. The set is the allowlist the mask fails closed against.
+export async function clientMemberIds(projectId: number): Promise<Set<string>> {
+  const rows = await db
+    .select({ userId: projectMember.userId })
+    .from(projectMember)
+    .where(and(eq(projectMember.projectId, projectId), eq(projectMember.role, 'client')));
+  return new Set(rows.map((r) => r.userId));
+}
+
+// The lowercased @handles of the current client members, so a mention of a client is
+// left as-is and every other @handle is rewritten to the face handle on the read path.
+// Keyed case-insensitively, matching how handles are issued.
+export async function clientMemberHandles(projectId: number): Promise<Set<string>> {
+  const rows = await db
+    .select({ username: user.username, agentUsername: aiAgent.username })
+    .from(projectMember)
+    .innerJoin(user, eq(user.id, projectMember.userId))
+    .leftJoin(aiAgent, eq(aiAgent.userId, projectMember.userId))
+    .where(and(eq(projectMember.projectId, projectId), eq(projectMember.role, 'client')));
+  const handles = new Set<string>();
+  for (const r of rows) {
+    const handle = r.username ?? r.agentUsername;
+    if (handle) handles.add(handle.toLowerCase());
+  }
+  return handles;
 }
 
 // A candidate an issue can be assigned to: a project member (a real user) or an

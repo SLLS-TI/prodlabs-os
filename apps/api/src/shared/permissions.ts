@@ -8,6 +8,7 @@ export {
   emptyPermissions,
   fullPermissions,
   defaultMemberPermissions,
+  clientPermissions,
   normalizePermissions,
   hasPermission,
   resourceActions,

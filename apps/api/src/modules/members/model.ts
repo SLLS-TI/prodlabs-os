@@ -1,7 +1,7 @@
 import { t } from 'elysia';
 import { pageQueryFields, pageResponse } from '#shared/pagination';
 
-const memberRole = t.Union([t.Literal('owner'), t.Literal('member')]);
+const memberRole = t.Union([t.Literal('owner'), t.Literal('member'), t.Literal('client')]);
 
 export const memberParams = t.Object({ projectKey: t.String(), userId: t.String() });
 

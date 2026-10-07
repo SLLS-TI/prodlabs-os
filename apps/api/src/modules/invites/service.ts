@@ -2,7 +2,7 @@ import { db, teamInvite, teamMember, projectMember, teamRole, team, project, use
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { HttpError, iso, pgErrorCode } from '#shared/lib';
 import { teamRef } from '#modules/teams/ref';
-import { getMembership, type MemberRole } from '#modules/members/service';
+import { getMembership } from '#modules/members/service';
 import {
   assertTeamSeatFree,
   getTeamMembership,
@@ -20,6 +20,10 @@ export type InviteStatus = 'pending' | 'accepted' | 'rejected';
 
 // The rank an invite puts its invitee on in the team.
 export type InviteTeamRole = TeamRole;
+
+// The project standing an invite grants. The client role is assigned on the members
+// page, never through an invite, so an invite only ever names owner or member.
+export type InviteProjectRole = 'owner' | 'member';
 
 // The standings a team rank outranks. An invite never lowers a rank, so accepting one
 // only rewrites a membership below the rank it grants.
@@ -41,7 +45,7 @@ export interface InviteRow {
   projectKey: string | null;
   projectName: string | null;
   // The role in that project. Null when the invite names no project.
-  role: MemberRole | null;
+  role: InviteProjectRole | null;
   // The custom role a project member joins on. roleId is null when the invite falls
   // back to the team's default role; roleName resolves it for display. A project
   // owner has both null.
@@ -65,7 +69,7 @@ export interface InviteView {
   projectName: string | null;
   email: string;
   teamRole: InviteTeamRole;
-  role: MemberRole | null;
+  role: InviteProjectRole | null;
   roleId: number | null;
   roleName: string | null;
   status: InviteStatus;
@@ -82,7 +86,7 @@ export interface AcceptedInvite {
   teamRef: string;
   projectKey: string | null;
   projectName: string | null;
-  role: MemberRole | null;
+  role: InviteProjectRole | null;
 }
 
 export interface NewInvite {
@@ -91,7 +95,7 @@ export interface NewInvite {
   email: string;
   teamRole: InviteTeamRole;
   // The role in the project, for an invite that names one.
-  projectRole: MemberRole | null;
+  projectRole: InviteProjectRole | null;
   roleId: number | null;
   invitedByUserId: string;
 }
@@ -134,7 +138,7 @@ function toRow(r: InviteSelection): InviteRow {
     teamRole: r.teamRole as InviteTeamRole,
     projectKey: r.projectKey,
     projectName: r.projectName,
-    role: r.role as MemberRole | null,
+    role: r.role as InviteProjectRole | null,
     roleId: r.roleId,
     roleName: r.roleName,
     status: r.status as InviteStatus,
@@ -318,7 +322,7 @@ export async function getInviteByToken(token: string): Promise<InviteView | null
     projectName: r.projectName,
     email: r.email,
     teamRole: r.teamRole as InviteTeamRole,
-    role: r.role as MemberRole | null,
+    role: r.role as InviteProjectRole | null,
     roleId: r.roleId,
     roleName: r.roleName,
     status: r.status as InviteStatus,
@@ -407,12 +411,12 @@ export async function acceptInvite(
         .values({
           projectId: invite.projectId,
           userId,
-          role: invite.projectRole as MemberRole,
+          role: invite.projectRole as InviteProjectRole,
           roleId,
         })
         .onConflictDoUpdate({
           target: [projectMember.projectId, projectMember.userId],
-          set: { role: invite.projectRole as MemberRole, roleId },
+          set: { role: invite.projectRole as InviteProjectRole, roleId },
         });
     }
 
@@ -436,7 +440,7 @@ export async function acceptInvite(
       teamRef: teamRef(joinedTeam),
       projectKey: joinedProject?.key ?? null,
       projectName: joinedProject?.name ?? null,
-      role: invite.projectRole as MemberRole | null,
+      role: invite.projectRole as InviteProjectRole | null,
     };
   });
 }

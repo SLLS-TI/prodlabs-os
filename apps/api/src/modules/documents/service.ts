@@ -3,6 +3,7 @@ import {
   documentAsset,
   documentCollaboration,
   documentComment,
+  maskActor,
   project,
   projectDocument,
   projectDocumentPreference,
@@ -23,6 +24,7 @@ import {
   sql,
 } from 'drizzle-orm';
 import { HttpError, iso } from '#shared/lib';
+import { isMaskableActor, type MaskContext } from '#shared/access';
 import {
   assertAttachmentStorageCapacity,
   assertAttachmentFileAllowed,
@@ -31,6 +33,53 @@ import {
   deleteAttachmentObject,
   lockAttachmentStorage,
 } from '#modules/attachments/storage';
+
+// Rewrites a user id to the face id when it names a maskable actor (anyone who is not a
+// current client), for the document-authorship fields a client reads. A non-maskable id
+// (a current client) and a null id (a system/absent author) pass through. Fails closed:
+// with no face, a maskable id is suppressed to null rather than left real.
+function maskUserId(id: string | null, mask: MaskContext): string | null {
+  if (!isMaskableActor(mask, id)) return id;
+  return mask.face?.userId ?? null;
+}
+
+// Masks the created_by/updated_by/owner of a document for a client viewer. A null mask
+// (team/owner read) returns the document unchanged. Display-only shaping; the stored
+// rows keep the real authors.
+export function maskDocument<T extends DocumentSummaryRow>(doc: T, mask: MaskContext | null): T {
+  if (!mask) return doc;
+  return {
+    ...doc,
+    ownerUserId: maskUserId(doc.ownerUserId, mask),
+    createdByUserId: maskUserId(doc.createdByUserId, mask),
+    updatedByUserId: maskUserId(doc.updatedByUserId, mask),
+  };
+}
+
+export function maskDocuments<T extends DocumentSummaryRow>(
+  docs: T[],
+  mask: MaskContext | null,
+): T[] {
+  return mask ? docs.map((d) => maskDocument(d, mask)) : docs;
+}
+
+// Masks a document comment's author (id and name snapshot) for a client viewer. Fails
+// closed through maskActor: a maskable author with no face is suppressed, not revealed.
+export function maskDocumentComments<
+  T extends { authorId: string | null; authorName: string | null },
+>(comments: T[], mask: MaskContext | null): T[] {
+  if (!mask) return comments;
+  return comments.map((c) => {
+    const masked = maskActor(
+      { actorUserId: c.authorId, actorName: c.authorName },
+      mask.face,
+      isMaskableActor(mask, c.authorId),
+    );
+    return masked.actorUserId === c.authorId && masked.actorName === c.authorName
+      ? c
+      : { ...c, authorId: masked.actorUserId, authorName: masked.actorName };
+  });
+}
 
 type Executor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 
