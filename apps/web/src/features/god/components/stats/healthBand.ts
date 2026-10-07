@@ -8,8 +8,8 @@ export function bandFor(score: number): HealthBand {
   return 'red';
 }
 
-// Token-based text and background classes for a health band. Reused by the summary
-// score card, the table band pill, and the chart color accents.
+// Token-based classes for a health band: BAND_TEXT colors the summary score, BAND_PILL
+// the table's score pill.
 export const BAND_TEXT: Record<HealthBand, string> = {
   green: 'text-green-600 dark:text-green-500',
   yellow: 'text-amber-600 dark:text-amber-500',

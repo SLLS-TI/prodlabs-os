@@ -129,21 +129,10 @@ export async function getGodStats() {
     };
   });
 
-  const projects: ProjectStatsRow[] = raws.map((r) => {
-    const health = computeHealth(r, r.weights ?? undefined);
+  const projects: ProjectStatsRow[] = raws.map(({ weights, ...metrics }) => {
+    const health = computeHealth(metrics, weights ?? undefined);
     return {
-      projectId: r.projectId,
-      projectKey: r.projectKey,
-      name: r.name,
-      teamId: r.teamId,
-      workedMinutes: r.workedMinutes,
-      estimatedMinutes: r.estimatedMinutes,
-      open: r.open,
-      inProgress: r.inProgress,
-      overdue: r.overdue,
-      unassigned: r.unassigned,
-      closedLast7d: r.closedLast7d,
-      freshnessDays: r.freshnessDays,
+      ...metrics,
       healthScore: health.score,
       healthBand: health.band,
       subScores: health.subScores,
@@ -163,12 +152,14 @@ export async function getGodStats() {
   // Size-weighted by open-issue count, so projects with more work at stake count for
   // more. A portfolio of only empty projects (no open work) falls back to a plain mean.
   const sizeWeight = totals.openIssues;
-  const globalScore =
-    projects.length === 0
-      ? 100
-      : sizeWeight > 0
-        ? Math.round(sum(projects, (p) => p.healthScore * p.open) / sizeWeight)
-        : Math.round(sum(projects, (p) => p.healthScore) / projects.length);
+  let globalScore: number;
+  if (projects.length === 0) {
+    globalScore = 100;
+  } else if (sizeWeight > 0) {
+    globalScore = Math.round(sum(projects, (p) => p.healthScore * p.open) / sizeWeight);
+  } else {
+    globalScore = Math.round(sum(projects, (p) => p.healthScore) / projects.length);
+  }
 
   const overduePct =
     totals.openIssues > 0 ? round1((totals.overdueIssues / totals.openIssues) * 100) : 0;
