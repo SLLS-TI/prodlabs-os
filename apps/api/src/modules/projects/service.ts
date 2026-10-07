@@ -66,6 +66,8 @@ export interface ProjectRow {
   ref: string;
   name: string;
   description: string;
+  // An optional hex background tint for the whole project interface; null = no tint.
+  color: string | null;
   mcpEnabled: boolean;
   // The team's own MCP switch, carried here because every MCP gate is a project
   // gate: a project is reachable only while both flags are on.
@@ -153,6 +155,7 @@ export async function mapProject(row: ProjectWithTeam): Promise<ProjectRow> {
     ref: projectRef({ id: row.teamId, slug: row.teamSlug }, row.key),
     name: row.name,
     description: row.description,
+    color: row.color,
     mcpEnabled: row.mcpEnabled,
     teamMcpEnabled: row.teamMcpEnabled,
     initiativesEnabled: on('initiatives', row.initiativesEnabled),
@@ -560,7 +563,7 @@ export async function createProject(
 // identifier, so it may be replaced once. A valid key does not change.
 export async function updateProject(
   projectId: number,
-  patch: { key?: string; name?: string; description?: string },
+  patch: { key?: string; name?: string; description?: string; color?: string | null },
 ): Promise<ProjectRow | null> {
   const values: Partial<typeof project.$inferInsert> = {};
   if (patch.key !== undefined) {
@@ -575,6 +578,7 @@ export async function updateProject(
   }
   if (patch.name !== undefined) values.name = patch.name;
   if (patch.description !== undefined) values.description = patch.description;
+  if (patch.color !== undefined) values.color = patch.color;
   if (Object.keys(values).length === 0) return getProjectById(projectId);
   await db.update(project).set(values).where(eq(project.id, projectId));
   return getProjectById(projectId);

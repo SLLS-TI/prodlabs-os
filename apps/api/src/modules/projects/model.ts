@@ -57,6 +57,7 @@ export const updateProjectBody = t.Object({
   key: t.Optional(projectKey),
   name: t.Optional(t.String({ minLength: 1 })),
   description: t.Optional(t.String({ maxLength: PROJECT_DESCRIPTION_LIMIT })),
+  color: t.Optional(t.Nullable(t.String())),
 });
 
 export const ProjectPreferencesResponse = t.Object({
@@ -109,6 +110,8 @@ export const ProjectResponse = t.Object({
   }),
   name: t.String(),
   description: t.String(),
+  // An optional hex background tint for the whole project interface; null = no tint.
+  color: t.Nullable(t.String()),
   mcpEnabled: t.Boolean(),
   teamMcpEnabled: t.Boolean(),
   // The optional sections, toggled in Settings -> General. All on by default; a
