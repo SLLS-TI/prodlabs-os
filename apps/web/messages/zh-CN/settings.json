@@ -153,7 +153,23 @@
     "timeVisibilityHint": "选择哪些角色可以查看此项目的时间跟踪。所有者始终可见。",
     "timeVisibilityAll": "所有角色",
     "timeVisibilityRestricted": "仅所选角色",
-    "timeVisibilityNone": "未选择任何角色 — 所有人都能查看时间跟踪。"
+    "timeVisibilityNone": "未选择任何角色 — 所有人都能查看时间跟踪。",
+    "healthWeight": {
+      "title": "Health score weights",
+      "hint": "How much each dimension counts toward this project's score in the cross-project statistics.",
+      "weights": "Weights",
+      "weightsHint": "A larger weight makes that dimension matter more.",
+      "dimensions": {
+        "schedule": "Schedule",
+        "budget": "Budget",
+        "velocity": "Velocity",
+        "load": "Load",
+        "freshness": "Freshness"
+      },
+      "total": "Total: {total}",
+      "totalHint": "Total: {total}. Weights need not sum to 100 — the score uses them in proportion.",
+      "reset": "Reset to defaults"
+    }
   },
   "states": {
     "addState": "添加{type}状态",

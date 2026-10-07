@@ -153,7 +153,23 @@
     "timeVisibilityHint": "Выберите, какие роли могут видеть учёт времени в этом проекте. Владельцы видят его всегда.",
     "timeVisibilityAll": "Все роли",
     "timeVisibilityRestricted": "Только выбранные роли",
-    "timeVisibilityNone": "Роли не выбраны — учёт времени видят все."
+    "timeVisibilityNone": "Роли не выбраны — учёт времени видят все.",
+    "healthWeight": {
+      "title": "Health score weights",
+      "hint": "How much each dimension counts toward this project's score in the cross-project statistics.",
+      "weights": "Weights",
+      "weightsHint": "A larger weight makes that dimension matter more.",
+      "dimensions": {
+        "schedule": "Schedule",
+        "budget": "Budget",
+        "velocity": "Velocity",
+        "load": "Load",
+        "freshness": "Freshness"
+      },
+      "total": "Total: {total}",
+      "totalHint": "Total: {total}. Weights need not sum to 100 — the score uses them in proportion.",
+      "reset": "Reset to defaults"
+    }
   },
   "states": {
     "addState": "Добавить статус группы «{type}»",

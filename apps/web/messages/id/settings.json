@@ -153,7 +153,23 @@
     "timeVisibilityHint": "Pilih peran mana yang dapat melihat pelacakan waktu di proyek ini. Pemilik selalu melihatnya.",
     "timeVisibilityAll": "Semua peran",
     "timeVisibilityRestricted": "Hanya peran terpilih",
-    "timeVisibilityNone": "Tidak ada peran dipilih — semua orang dapat melihat pelacakan waktu."
+    "timeVisibilityNone": "Tidak ada peran dipilih — semua orang dapat melihat pelacakan waktu.",
+    "healthWeight": {
+      "title": "Health score weights",
+      "hint": "How much each dimension counts toward this project's score in the cross-project statistics.",
+      "weights": "Weights",
+      "weightsHint": "A larger weight makes that dimension matter more.",
+      "dimensions": {
+        "schedule": "Schedule",
+        "budget": "Budget",
+        "velocity": "Velocity",
+        "load": "Load",
+        "freshness": "Freshness"
+      },
+      "total": "Total: {total}",
+      "totalHint": "Total: {total}. Weights need not sum to 100 — the score uses them in proportion.",
+      "reset": "Reset to defaults"
+    }
   },
   "states": {
     "addState": "Tambah status {type}",

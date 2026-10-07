@@ -153,7 +153,23 @@
     "timeVisibilityHint": "اختر الأدوار التي يمكنها رؤية تتبع الوقت في هذا المشروع. المالكون يرونه دائمًا.",
     "timeVisibilityAll": "كل الأدوار",
     "timeVisibilityRestricted": "الأدوار المحددة فقط",
-    "timeVisibilityNone": "لم يتم تحديد أي دور — يمكن للجميع رؤية تتبع الوقت."
+    "timeVisibilityNone": "لم يتم تحديد أي دور — يمكن للجميع رؤية تتبع الوقت.",
+    "healthWeight": {
+      "title": "Health score weights",
+      "hint": "How much each dimension counts toward this project's score in the cross-project statistics.",
+      "weights": "Weights",
+      "weightsHint": "A larger weight makes that dimension matter more.",
+      "dimensions": {
+        "schedule": "Schedule",
+        "budget": "Budget",
+        "velocity": "Velocity",
+        "load": "Load",
+        "freshness": "Freshness"
+      },
+      "total": "Total: {total}",
+      "totalHint": "Total: {total}. Weights need not sum to 100 — the score uses them in proportion.",
+      "reset": "Reset to defaults"
+    }
   },
   "states": {
     "addState": "إضافة حالة {type}",

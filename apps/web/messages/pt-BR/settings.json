@@ -153,7 +153,23 @@
     "timeVisibilityHint": "Escolha quais papéis podem ver o controle de tempo neste projeto. Owners sempre veem.",
     "timeVisibilityAll": "Todos os papéis",
     "timeVisibilityRestricted": "Apenas papéis selecionados",
-    "timeVisibilityNone": "Nenhum papel selecionado — todos podem ver o controle de tempo."
+    "timeVisibilityNone": "Nenhum papel selecionado — todos podem ver o controle de tempo.",
+    "healthWeight": {
+      "title": "Pesos do índice de saúde",
+      "hint": "Quanto cada dimensão conta para o índice deste projeto nas estatísticas entre projetos.",
+      "weights": "Pesos",
+      "weightsHint": "Um peso maior faz a dimensão pesar mais.",
+      "dimensions": {
+        "schedule": "Prazo",
+        "budget": "Orçamento",
+        "velocity": "Velocidade",
+        "load": "Carga",
+        "freshness": "Frescor"
+      },
+      "total": "Total: {total}",
+      "totalHint": "Total: {total}. Os pesos não precisam somar 100 — o índice os usa em proporção.",
+      "reset": "Restaurar padrões"
+    }
   },
   "states": {
     "addState": "Adicionar estado {type}",

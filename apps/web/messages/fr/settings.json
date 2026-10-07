@@ -153,7 +153,23 @@
     "timeVisibilityHint": "Choisissez les rôles qui peuvent voir le suivi du temps dans ce projet. Les propriétaires le voient toujours.",
     "timeVisibilityAll": "Tous les rôles",
     "timeVisibilityRestricted": "Seulement les rôles sélectionnés",
-    "timeVisibilityNone": "Aucun rôle sélectionné — tout le monde voit le suivi du temps."
+    "timeVisibilityNone": "Aucun rôle sélectionné — tout le monde voit le suivi du temps.",
+    "healthWeight": {
+      "title": "Health score weights",
+      "hint": "How much each dimension counts toward this project's score in the cross-project statistics.",
+      "weights": "Weights",
+      "weightsHint": "A larger weight makes that dimension matter more.",
+      "dimensions": {
+        "schedule": "Schedule",
+        "budget": "Budget",
+        "velocity": "Velocity",
+        "load": "Load",
+        "freshness": "Freshness"
+      },
+      "total": "Total: {total}",
+      "totalHint": "Total: {total}. Weights need not sum to 100 — the score uses them in proportion.",
+      "reset": "Reset to defaults"
+    }
   },
   "states": {
     "addState": "Ajouter un état {type}",
