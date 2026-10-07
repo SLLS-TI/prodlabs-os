@@ -25,6 +25,8 @@ export interface Project {
   description: string;
   // The per-project background tint, a hex string, or null for no tint.
   color: string | null;
+  // Relative serve URL of the project's custom logo, or null to fall back to initials.
+  logoUrl: string | null;
   // Whether the team's MCP reach covers this project, and whether the team is
   // reachable over MCP at all. Both are set in the team's MCP section; a tool call
   // scoped to this project needs both.

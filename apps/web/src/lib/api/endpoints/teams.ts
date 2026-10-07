@@ -70,6 +70,8 @@ export interface TeamProject {
   ref: string;
   name: string;
   description: string;
+  // Relative serve URL of the project's custom logo, or null to fall back to initials.
+  logoUrl: string | null;
   // Whether the team's MCP reach covers this project. Only counts while the team's
   // own switch is on.
   mcpEnabled: boolean;
