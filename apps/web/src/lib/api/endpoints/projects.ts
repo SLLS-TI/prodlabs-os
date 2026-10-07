@@ -23,6 +23,8 @@ export interface Project {
   ref: string;
   name: string;
   description: string;
+  // The per-project background tint, a hex string, or null for no tint.
+  color: string | null;
   // Whether the team's MCP reach covers this project, and whether the team is
   // reachable over MCP at all. Both are set in the team's MCP section; a tool call
   // scoped to this project needs both.
@@ -147,9 +149,11 @@ export const updateProjectPreferences = (projectKey: string, patch: ProjectPrefe
     body: JSON.stringify(patch),
   });
 
-// Update a project's name/description. The key is immutable, so it is not sent.
-export const updateProject = (projectKey: string, patch: { name?: string; description?: string }) =>
-  request<Project>(`/projects/${projectKey}`, { method: 'PATCH', body: JSON.stringify(patch) });
+// Update a project's name/description/color. The key is immutable, so it is not sent.
+export const updateProject = (
+  projectKey: string,
+  patch: { name?: string; description?: string; color?: string | null },
+) => request<Project>(`/projects/${projectKey}`, { method: 'PATCH', body: JSON.stringify(patch) });
 
 // The board scaffold (no issues). The issues come from getBoardIssues.
 export const getProject = (projectKey: string, signal?: AbortSignal) =>

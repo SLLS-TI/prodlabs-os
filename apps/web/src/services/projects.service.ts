@@ -120,17 +120,19 @@ export function useUpdateProject() {
       patch,
     }: {
       projectKey: string;
-      patch: { name?: string; description?: string };
+      patch: { name?: string; description?: string; color?: string | null };
     }) => updateProject(projectKey, patch),
     onSuccess: (updated, { projectKey }) => {
-      // Reflect the new name/description in the cached list immediately, then
+      // Reflect the new name/description/color in the cached list immediately, then
       // refetch the list and the project detail (its header and switcher read
       // the name) to reconcile.
       // Merge only the edited fields — the update response carries no `role`, so
       // spreading the whole object would wipe the caller's role in the list item.
       qc.setQueryData<Project[]>(qk.projects, (prev) =>
         prev?.map((p) =>
-          p.ref === projectKey ? { ...p, name: updated.name, description: updated.description } : p,
+          p.ref === projectKey
+            ? { ...p, name: updated.name, description: updated.description, color: updated.color }
+            : p,
         ),
       );
       void qc.invalidateQueries({ queryKey: qk.projects });

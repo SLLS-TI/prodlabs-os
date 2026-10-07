@@ -14,6 +14,7 @@ function project(overrides: Partial<Project> = {}): Project {
     ref: 'eng.API',
     name: 'API platform',
     description: '',
+    color: null,
     mcpEnabled: true,
     teamMcpEnabled: true,
     initiativesEnabled: true,

@@ -11,8 +11,11 @@ export interface GeneralForm {
   key: string;
   name: string;
   description: string;
+  // The per-project background tint, a hex string, or null for no tint.
+  color: string | null;
   setName: (v: string) => void;
   setDescription: (v: string) => void;
+  setColor: (v: string | null) => void;
   // Only an owner may edit; others see the current values read-only.
   editable: boolean;
   saving: boolean;
@@ -26,20 +29,27 @@ export interface GeneralForm {
 export function useGeneralForm(project: ProjectDetail): GeneralForm {
   const t = useTranslations('settings.general');
   const { isOwner } = usePermissions();
-  const { key, name: savedName, description: savedDescription } = project.project;
+  const {
+    key,
+    name: savedName,
+    description: savedDescription,
+    color: savedColor,
+  } = project.project;
   const updateProject = useUpdateProject();
 
   const [name, setName] = useState(savedName);
   const [description, setDescription] = useState(savedDescription);
+  const [color, setColor] = useState<string | null>(savedColor);
 
   const trimmedName = name.trim();
-  const dirty = trimmedName !== savedName || description !== savedDescription;
+  const dirty =
+    trimmedName !== savedName || description !== savedDescription || color !== savedColor;
   const canSave = isOwner && trimmedName.length > 0 && dirty && !updateProject.isPending;
 
   async function save() {
     await updateProject.mutateAsync({
       projectKey: key,
-      patch: { name: trimmedName, description },
+      patch: { name: trimmedName, description, color },
     });
     toast.success(t('saved'));
   }
@@ -48,8 +58,10 @@ export function useGeneralForm(project: ProjectDetail): GeneralForm {
     key,
     name,
     description,
+    color,
     setName,
     setDescription,
+    setColor,
     editable: isOwner,
     saving: updateProject.isPending,
     canSave,

@@ -45,6 +45,7 @@ const projects: Project[] = Array.from({ length: 20 }, (_, index) => ({
   ref: `eng.P${String(index + 1).padStart(2, '0')}`,
   name: `Project ${index + 1}`,
   description: '',
+  color: null,
   mcpEnabled: true,
   teamMcpEnabled: true,
   initiativesEnabled: true,
