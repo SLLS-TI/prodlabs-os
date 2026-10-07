@@ -44,7 +44,7 @@ export function useSettingsNavGroups(
   const t = useTranslations('nav');
   const sectionText = useSettingsSectionText();
   const pathname = usePathname();
-  const { can } = usePermissions(project);
+  const { can, role } = usePermissions(project);
 
   // The readable sections of one group as nav items.
   const toItems = (sections: SettingsSection[]): SettingsNavItem[] =>
@@ -62,27 +62,30 @@ export function useSettingsNavGroups(
   const workflowItems = toItems(CONFIGURATION_SECTIONS);
   const automationItems = toItems(AUTOMATION_SECTIONS);
 
-  // The API docs and MCP pages live outside /settings and are not role-gated; their
-  // links sit here so they share the settings sidebar. Appended last so `firstHref`
-  // stays on General.
-  const developerItems: SettingsNavItem[] = projectKey
-    ? [
-        {
-          key: 'api',
-          href: apiDocsPath(projectKey),
-          icon: Braces,
-          label: t('apiDocs'),
-          active: pathname.endsWith('/api'),
-        },
-        {
-          key: 'mcp',
-          href: mcpServerPath(projectKey),
-          icon: Server,
-          label: t('mcpServer'),
-          active: pathname.endsWith('/mcp'),
-        },
-      ]
-    : [];
+  // The API docs and MCP pages live outside /settings and share the settings sidebar.
+  // A client must not reach either (the API docs expose every endpoint and the key
+  // auth flow; the MCP page exposes the team leads' identities), so they get no
+  // developer items — which also leaves their `firstHref` null and drops the whole
+  // "Project settings" entry. Appended last so `firstHref` stays on General otherwise.
+  const developerItems: SettingsNavItem[] =
+    projectKey && role !== 'client'
+      ? [
+          {
+            key: 'api',
+            href: apiDocsPath(projectKey),
+            icon: Braces,
+            label: t('apiDocs'),
+            active: pathname.endsWith('/api'),
+          },
+          {
+            key: 'mcp',
+            href: mcpServerPath(projectKey),
+            icon: Server,
+            label: t('mcpServer'),
+            active: pathname.endsWith('/mcp'),
+          },
+        ]
+      : [];
 
   const groups: SettingsNavGroup[] = [
     { key: 'general', label: t('groups.project'), items: generalItems },

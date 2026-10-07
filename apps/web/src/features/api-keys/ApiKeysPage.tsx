@@ -1,47 +1,24 @@
 'use client';
 
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
-import { useSession } from '@/lib/auth-client';
-import { qk } from '@/services/queryKeys';
-import FullPageView from '@/components/common/page/FullPageView';
-import { useApiKeysQuery, type ApiKeyRow } from './services/apiKeys.service';
-import ApiKeysCreateSection from './components/ApiKeysCreateSection';
-import ApiKeysList from './components/ApiKeysList';
-import ApiKeysDeleteDialog from './components/ApiKeysDeleteDialog';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useGlobalExternalClient } from '@/services/teams.service';
+import ApiKeysContent from './components/ApiKeysContent';
 
-// Personal API keys for the signed-in account. Owns the key list query and the
-// delete target; the child components refresh the list through the callbacks
-// after a change.
+// A key resolves to the owner's full account, so an external client — a user whose only
+// standing anywhere is client-role project memberships — may not hold one. The page is
+// outside the project shell, so the external-client signal comes from the team list.
+// Sent to the app root while external; nothing renders, so the key list query never
+// runs for them (the API refuses it too). Fails closed: renders nothing until the
+// signal resolves.
 export default function ApiKeysPage() {
-  const t = useTranslations('apiKeys');
-  const { data: session } = useSession();
-  const queryClient = useQueryClient();
-  const [deleting, setDeleting] = useState<ApiKeyRow | null>(null);
+  const router = useRouter();
+  const isExternalClient = useGlobalExternalClient();
 
-  const { data: apiKeys, isPending } = useApiKeysQuery();
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: qk.apiKeys });
+  useEffect(() => {
+    if (isExternalClient === true) router.replace('/');
+  }, [isExternalClient, router]);
 
-  return (
-    <FullPageView
-      label={t('label')}
-      title={t('title')}
-      description={t('description', { email: session?.user.email ?? '' })}
-    >
-      <ApiKeysCreateSection onCreated={invalidate} />
-      <ApiKeysList apiKeys={apiKeys ?? []} isPending={isPending} onDelete={setDeleting} />
-
-      {deleting && (
-        <ApiKeysDeleteDialog
-          apiKey={deleting}
-          onClose={() => setDeleting(null)}
-          onDeleted={async () => {
-            setDeleting(null);
-            await invalidate();
-          }}
-        />
-      )}
-    </FullPageView>
-  );
+  if (isExternalClient !== false) return null;
+  return <ApiKeysContent />;
 }

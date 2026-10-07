@@ -52,6 +52,17 @@ export function useTeam(teamId: number): Team | null {
   return data?.find((team) => team.id === teamId) ?? null;
 }
 
+// Whether the account is an external client everywhere: it belongs to at least one team
+// and is an external client of every one of them. Account-scoped surfaces with no team
+// context (the API keys page, the user menu) read it. Undefined until the team list
+// loads, so a caller gates on `=== true` and shows nothing until then. No request of its
+// own — it reads the list the switcher already loads.
+export function useGlobalExternalClient(): boolean | undefined {
+  const { data } = useTeamsQuery();
+  if (!data) return undefined;
+  return data.length > 0 && data.every((team) => team.isExternalClient);
+}
+
 // What the caller may do with the resources the team holds. Read on its own because
 // resolving it for a plain member costs a query per team, which the list avoids.
 export function useTeamQuery(teamId: number) {

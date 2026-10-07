@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'bun:test';
 import { auth, API_KEY_DEFAULT_EXPIRES_IN_SEC } from '@repo/auth';
 import { apikey, db } from '@repo/db';
 import { eq } from 'drizzle-orm';
-import { apiKeyApi, app } from '#tests/helpers/app';
+import { apiKeyApi, app, authedApi } from '#tests/helpers/app';
 import { signUpTestUser } from '#tests/helpers/auth';
 import { resetDb } from '#tests/helpers/db';
 
@@ -139,5 +139,49 @@ describe('api keys', () => {
     const body = (await res.json()) as { apiKeys: Array<{ expiresAt: string | null }> };
     expect(body.apiKeys).toHaveLength(1);
     expectSecondsFromNow(body.apiKeys[0].expiresAt, API_KEY_DEFAULT_EXPIRES_IN_SEC);
+  });
+
+  // A key resolves to the owner's full account on every request, so an external client —
+  // a user whose only standing anywhere is client-role project memberships — must not
+  // hold one. The guard lives in @repo/auth's hooks.before, since these endpoints are
+  // behind the better-auth catch-all, not the planner.
+  it('refuses an external client both creating and listing keys', async () => {
+    // The first user is god; it owns the team and the project.
+    const owner = await signUpTestUser();
+    const ownerApi = authedApi(owner.cookie);
+    const teamId = (await ownerApi.teams.get()).data![0].id;
+    await ownerApi.projects.post({ key: 'MKT', name: 'Marketing' });
+
+    // A second user with no team of their own, added to the project as a client, is a
+    // global external client: their only standing anywhere is the client membership.
+    const client = await signUpTestUser({ team: false });
+    const invite = await ownerApi
+      .teams({ teamId })
+      .invites.post({ email: client.email, role: 'member' });
+    const clientApi = authedApi(client.cookie);
+    await clientApi.invites({ token: invite.data!.token }).accept.post();
+    await ownerApi
+      .projects({ projectKey: 'MKT' })
+      .members.post({ userId: client.userId, role: 'member' });
+    const patched = await ownerApi
+      .projects({ projectKey: 'MKT' })
+      .members({ userId: client.userId })
+      .patch({ role: 'client' });
+    expect(patched.status).toBe(204);
+
+    const create = await authRequest('create', { cookie: client.cookie }, { name: 'nope' });
+    expect(create.status).toBe(403);
+    expect(await db.$count(apikey, eq(apikey.referenceId, client.userId))).toBe(0);
+
+    const list = await app.handle(
+      new Request('http://localhost/api/auth/api-key/list', {
+        headers: { cookie: client.cookie, origin },
+      }),
+    );
+    expect(list.status).toBe(403);
+
+    // The owner is unaffected.
+    const ownerCreate = await authRequest('create', { cookie: owner.cookie }, { name: 'ci' });
+    expect(ownerCreate.status).toBe(200);
   });
 });

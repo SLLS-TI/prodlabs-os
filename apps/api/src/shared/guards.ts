@@ -19,6 +19,7 @@ import {
 import type { ProjectFeature } from './features';
 import { getProjectById } from '#modules/projects/service';
 import { runsTeam, teamMcpEnabled } from '#modules/teams/service';
+import { isExternalTeamClient } from '#modules/members/service';
 import { isMcpRequest } from './mcp-request';
 import { HttpError } from './lib';
 import type { PermissionResource, PermissionAction } from './permissions';
@@ -258,6 +259,24 @@ export const guards = new Elysia({ name: 'guards' }).use(authContext).macro({
     return {
       async resolve({ params, user, request }) {
         const membership = await resolveTeam(params, user);
+        await assertTeamMcpAllowed(params, request.headers);
+        return { membership };
+      },
+    };
+  },
+
+  // A team member, but not an external client of the team. For the team-settings reads
+  // open to any member that still expose team configuration — the roles and their
+  // matrices, the integration catalog and credential options, the default agents. A
+  // client is a team member before joining a project, so teamMember alone lets them in;
+  // this refuses them, matching the explicit check on the team member list.
+  teamMemberNotClient(_enabled: boolean) {
+    return {
+      async resolve({ params, user, request }) {
+        const membership = await resolveTeam(params, user);
+        if (await isExternalTeamClient(membership.teamId, membership.userId, membership.role)) {
+          throw new HttpError(403, 'You do not have access to this team setting');
+        }
         await assertTeamMcpAllowed(params, request.headers);
         return { membership };
       },

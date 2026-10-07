@@ -1,8 +1,8 @@
 import { randomInt } from 'node:crypto';
-import { db } from '@repo/db';
+import { db, isGlobalExternalClient } from '@repo/db';
 import { eq, sql, type SQL } from 'drizzle-orm';
 import { betterAuth } from 'better-auth';
-import { createAuthMiddleware, APIError } from 'better-auth/api';
+import { createAuthMiddleware, getSessionFromCtx, APIError } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { passkey } from '@better-auth/passkey';
 import { apiKey } from '@better-auth/api-key';
@@ -173,6 +173,17 @@ const PASSWORD_PATHS = new Set([
   '/reset-password',
   '/sign-in/magic-link',
   '/magic-link/verify',
+]);
+
+// The apiKey plugin's personal-key endpoints, gated against an external client in
+// hooks.before. Listing is blocked too: its own keys are the only identity it would
+// expose, and a client holding none has nothing to list.
+const API_KEY_PATHS = new Set([
+  '/api-key/create',
+  '/api-key/list',
+  '/api-key/get',
+  '/api-key/update',
+  '/api-key/delete',
 ]);
 
 // The registration gate: who may create an account. Both sign-up paths run it — the
@@ -474,6 +485,21 @@ export const auth = betterAuth({
         if (body && body.expiresIn !== undefined) {
           throw new APIError('FORBIDDEN', {
             message: 'The expiry of an API key cannot be changed. Create a new key instead.',
+          });
+        }
+      }
+
+      // A key resolves to the owner's full account on every request, so an external
+      // client — a user whose only standing anywhere is client-role project memberships
+      // — must not hold one. The plugin's endpoints are account-scoped and carry no
+      // project role, so this is the only place the client restriction reaches them.
+      // Only an interactive request is gated (ctx.request present): the server-side
+      // auth.api call that issues an agent's key carries none and is unaffected.
+      if (API_KEY_PATHS.has(ctx.path) && ctx.request) {
+        const session = await getSessionFromCtx(ctx);
+        if (session?.user && (await isGlobalExternalClient(session.user.id))) {
+          throw new APIError('FORBIDDEN', {
+            message: 'Your access does not include API keys.',
           });
         }
       }

@@ -34,6 +34,7 @@ import { GOD_SECTIONS } from '@/utils/godSections';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useProjectFeatures } from '@/hooks/useProjectFeatures';
 import { useSettingsNavGroups } from '@/hooks/useSettingsNavGroups';
+import { useGlobalExternalClient } from '@/services/teams.service';
 import {
   useAccountSectionLabel,
   useGodSectionText,
@@ -53,11 +54,13 @@ export function useNavigationCommands(projectKey: string | null): CommandSection
   const godText = useGodSectionText();
   const accountLabel = useAccountSectionLabel();
   const router = useRouter();
-  const { can } = usePermissions();
+  const { can, role } = usePermissions();
   const features = useProjectFeatures();
   const { data: session } = useSession();
   const { groups } = useSettingsNavGroups(projectKey);
   const isGod = session?.user.role === 'god';
+  // Account-scoped: hide team management and API keys from a global external client.
+  const isExternalClient = useGlobalExternalClient() === true;
 
   const items: Command[] = [];
 
@@ -128,18 +131,27 @@ export function useNavigationCommands(projectKey: string | null): CommandSection
         });
       }
     }
-    add('nav.api', t('apiDocs'), <Braces />, apiDocsPath(key), 'rest openapi');
-    add('nav.mcp', t('mcpServer'), <Server />, mcpServerPath(key), 'model context protocol');
+    // The API docs and MCP pages are closed to a client (see useSettingsNavGroups), so
+    // their palette commands are gated the same way.
+    if (role !== 'client') {
+      add('nav.api', t('apiDocs'), <Braces />, apiDocsPath(key), 'rest openapi');
+      add('nav.mcp', t('mcpServer'), <Server />, mcpServerPath(key), 'model context protocol');
+    }
   }
 
-  add(
-    'nav.manage-teams',
-    t('manageTeams'),
-    <Users />,
-    manageTeamsPath(),
-    'account rename leave projects delete copy',
-  );
+  // "Manage teams" opens the team-management area, which an external client may not
+  // reach; the account sections list the API keys page, also closed to them.
+  if (!isExternalClient) {
+    add(
+      'nav.manage-teams',
+      t('manageTeams'),
+      <Users />,
+      manageTeamsPath(),
+      'account rename leave projects delete copy',
+    );
+  }
   for (const s of ACCOUNT_SECTIONS) {
+    if (isExternalClient && s.slug === 'api-keys') continue;
     add(`nav.account.${s.slug}`, accountLabel(s.slug), <s.icon />, accountPath(s.slug), 'account');
   }
 
