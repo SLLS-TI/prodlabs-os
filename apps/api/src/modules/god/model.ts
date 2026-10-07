@@ -190,6 +190,19 @@ export const TelegramSettingsBody = t.Object({
   botToken: t.Optional(t.String()),
 });
 
+export const SlackSettingsResponse = t.Object({
+  enabled: t.Boolean(),
+  // Resolved from Slack when the token is saved. Shown so the administrator can
+  // confirm which workspace the token belongs to.
+  teamName: t.String(),
+  hasBotToken: t.Boolean(),
+});
+
+export const SlackSettingsBody = t.Object({
+  enabled: t.Optional(t.Boolean()),
+  botToken: t.Optional(t.String()),
+});
+
 const InstanceUserResponse = t.Object({
   id: t.String(),
   name: t.String(),
