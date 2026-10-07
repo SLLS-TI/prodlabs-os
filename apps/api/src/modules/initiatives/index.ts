@@ -100,21 +100,26 @@ export const initiativeRoutes = new Elysia({
 
   .get(
     '/projects/:projectKey/initiatives',
-    ({ project, query }) => {
+    async ({ project, query, user }) => {
       const statuses = query.status
         ? query.status
             .split(',')
             .map((s) => s.trim())
             .filter(Boolean)
         : undefined;
+      const mask = await resolveMaskContext(project.id, user);
       return paginate(query, (window) =>
-        listInitiatives(project.id, {
-          statuses,
-          search: query.search,
-          sort: query.sort,
-          dir: query.dir,
-          ...window,
-        }),
+        listInitiatives(
+          project.id,
+          {
+            statuses,
+            search: query.search,
+            sort: query.sort,
+            dir: query.dir,
+            ...window,
+          },
+          mask,
+        ),
       );
     },
     {
@@ -182,8 +187,11 @@ export const initiativeRoutes = new Elysia({
 
   .get(
     '/initiatives/:initiativeId',
-    async ({ params }) => {
-      const found = await getInitiative(params.initiativeId);
+    async ({ params, user, projectId }) => {
+      const found = await getInitiative(
+        params.initiativeId,
+        await resolveMaskContext(projectId, user),
+      );
       if (!found) throw new HttpError(404, 'Initiative not found');
       return found;
     },

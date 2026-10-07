@@ -1238,4 +1238,68 @@ describe('teams', () => {
       expect(members.data?.items.some((one) => one.role === 'agent')).toBe(true);
     });
   });
+
+  // A client of a project is a team member before joining, so the teamMember guard lets
+  // them reach the team-scoped member and project routes. These confirm a client sees
+  // no other member's identity through any of them.
+  describe('client visibility', () => {
+    // An owner, their team, a project, and a client-role member of that project.
+    async function setupWithClient() {
+      const owner = await signUpClient();
+      const teamId = (await owner.api.teams.get()).data![0].id;
+      await owner.api.projects.post({ key: 'MKT', name: 'Marketing' });
+      const projectId = (await owner.api.projects({ projectKey: 'MKT' }).get()).data!.project.id;
+      const member = await addTeamMember(owner, teamId);
+      await owner.api
+        .projects({ projectKey: 'MKT' })
+        .members.post({ userId: member.user.userId, role: 'member' });
+      const clientMember = await addTeamMember(owner, teamId);
+      await owner.api
+        .projects({ projectKey: 'MKT' })
+        .members.post({ userId: clientMember.user.userId, role: 'member' });
+      const patched = await owner.api
+        .projects({ projectKey: 'MKT' })
+        .members({ userId: clientMember.user.userId })
+        .patch({ role: 'client' });
+      expect(patched.status).toBe(204);
+      return { owner, teamId, projectId, member, client: clientMember };
+    }
+
+    it('refuses a client the team member list', async () => {
+      const { teamId, client } = await setupWithClient();
+      const res = await client.api.teams({ teamId }).members.get();
+      expect(res.status).toBe(403);
+    });
+
+    it('refuses a client the team-scoped project member list', async () => {
+      const { teamId, projectId, client } = await setupWithClient();
+      const res = await client.api.teams({ teamId }).projects({ projectId }).members.get();
+      expect(res.status).toBe(403);
+    });
+
+    it('still lets an owner read both member lists', async () => {
+      const { owner, teamId, projectId } = await setupWithClient();
+      expect((await owner.api.teams({ teamId }).members.get()).status).toBe(200);
+      expect((await owner.api.teams({ teamId }).projects({ projectId }).members.get()).status).toBe(
+        200,
+      );
+    });
+
+    it('returns the team project list to a client with no owner identities', async () => {
+      const { teamId, client } = await setupWithClient();
+      const res = await client.api.teams({ teamId }).projects.get({ query: {} });
+      expect(res.status).toBe(200);
+      const mkt = res.data!.items.find((p) => p.key === 'MKT')!;
+      expect(mkt.owners).toEqual([]);
+    });
+
+    it('still shows owner identities in the team project list to an owner', async () => {
+      const { owner, teamId } = await setupWithClient();
+      const res = await owner.api.teams({ teamId }).projects.get({ query: {} });
+      expect(res.status).toBe(200);
+      const mkt = res.data!.items.find((p) => p.key === 'MKT')!;
+      expect(mkt.owners.length).toBeGreaterThan(0);
+      expect(mkt.owners[0].userId).toBe(owner.user.userId);
+    });
+  });
 });

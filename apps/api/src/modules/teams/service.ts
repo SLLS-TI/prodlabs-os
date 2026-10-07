@@ -530,7 +530,7 @@ export async function listTeamProjects(
   teamId: number,
   userId: string,
   standing: TeamStanding,
-  options: { search?: string; limit: number; offset: number },
+  options: { search?: string; omitOwners?: boolean; limit: number; offset: number },
 ): Promise<TeamProjectPage> {
   const where = visibleTeamProjects(teamId, userId, standing, options.search);
   const [projects, counted] = await Promise.all([
@@ -561,27 +561,28 @@ export async function listTeamProjects(
       .where(where),
   ]);
 
-  const projectOwners = projects.length
-    ? await db
-        .select({
-          projectId: projectMember.projectId,
-          userId: user.id,
-          name: user.name,
-          image: user.image,
-        })
-        .from(projectMember)
-        .innerJoin(user, eq(user.id, projectMember.userId))
-        .where(
-          and(
-            inArray(
-              projectMember.projectId,
-              projects.map((p) => p.id),
+  const projectOwners =
+    projects.length && !options.omitOwners
+      ? await db
+          .select({
+            projectId: projectMember.projectId,
+            userId: user.id,
+            name: user.name,
+            image: user.image,
+          })
+          .from(projectMember)
+          .innerJoin(user, eq(user.id, projectMember.userId))
+          .where(
+            and(
+              inArray(
+                projectMember.projectId,
+                projects.map((p) => p.id),
+              ),
+              eq(projectMember.role, 'owner'),
             ),
-            eq(projectMember.role, 'owner'),
-          ),
-        )
-        .orderBy(user.name)
-    : [];
+          )
+          .orderBy(user.name)
+      : [];
 
   const ownersByProject = new Map<number, TeamProjectRow['owners']>();
   for (const o of projectOwners) {
@@ -693,7 +694,13 @@ export async function listTeamProjectMembers(
   options: MemberFilters & { limit: number; offset: number },
 ): Promise<TeamProjectMemberPage | null> {
   if (!(await teamOwnsProject(teamId, projectId))) return null;
-  if (!runsTeam(standing) && !(await getMembership(projectId, userId))) return null;
+  // A client of the project is treated as no membership here: this route lists every
+  // member's identity, which a client must never see. They 404 like a non-member, the
+  // same gate the direct /projects/:key/members route applies through memberAdmin.
+  if (!runsTeam(standing)) {
+    const role = await getMembership(projectId, userId);
+    if (!role || role === 'client') return null;
+  }
 
   const { items, total } = await listMembersPage(projectId, { ...options, order: 'owners' });
 

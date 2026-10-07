@@ -200,6 +200,33 @@ export async function clientMemberIds(projectId: number): Promise<Set<string>> {
   return new Set(rows.map((r) => r.userId));
 }
 
+// Whether this user is an external client of the team: their only standing in the team
+// is through client-role project memberships. Used by the team-scoped member/project
+// routes, which carry no project context of their own, to refuse an external client the
+// member identities those routes expose. Fails closed — true unless the user clearly has
+// a non-client foothold: a project membership as owner or member, or an owner/manager
+// rank on the team itself. A pure client (>=1 client project membership, zero owner/member
+// project memberships, and a plain or absent team rank) is treated as external.
+export async function isExternalTeamClient(
+  teamId: number,
+  userId: string,
+  teamRole: 'owner' | 'manager' | 'member' | 'agent' | null,
+): Promise<boolean> {
+  if (teamRole === 'owner' || teamRole === 'manager') return false;
+  const rows = await db
+    .select({ role: projectMember.role })
+    .from(projectMember)
+    .innerJoin(project, eq(project.id, projectMember.projectId))
+    .where(and(eq(project.teamId, teamId), eq(projectMember.userId, userId)));
+  if (rows.length === 0) return false;
+  let hasClient = false;
+  for (const r of rows) {
+    if (r.role === 'owner' || r.role === 'member') return false;
+    if (r.role === 'client') hasClient = true;
+  }
+  return hasClient;
+}
+
 // The lowercased @handles of the current client members, so a mention of a client is
 // left as-is and every other @handle is rewritten to the face handle on the read path.
 // Keyed case-insensitively, matching how handles are issued.

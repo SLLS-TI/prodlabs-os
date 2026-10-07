@@ -47,6 +47,7 @@
   "revokeTitle": "Revogar acesso de {name}",
   "revokeDescription": "{name} perderá acesso a este projeto. Ele pode ser convidado de volta depois.",
   "selectRole": "Selecionar função",
+  "roleClient": "Cliente",
   "editDescription": "Editar descrição",
   "descriptionQuestionSelf": "O que você faz neste projeto?",
   "descriptionQuestionOther": "O que esta pessoa faz neste projeto?",

@@ -25,7 +25,7 @@ export default function MemberAccessCard({
     username: string | null;
     image: string | null;
     isAgent: boolean;
-    role: 'owner' | 'member';
+    role: 'owner' | 'member' | 'client';
     roleName: string | null;
     description: string;
     timezone: string;
@@ -39,6 +39,7 @@ export default function MemberAccessCard({
 }) {
   const tCommon = useTranslations('common');
   const isOwner = member.role === 'owner';
+  const isClient = member.role === 'client';
   const displayName = member.name || member.email;
 
   // Under the name: the address for a person, the handle for an agent, whose address
@@ -82,7 +83,11 @@ export default function MemberAccessCard({
             variant={isOwner ? 'default' : 'secondary'}
             className="px-1.5 py-0 text-[10px] font-medium"
           >
-            {isOwner ? tCommon('owner') : (member.roleName ?? tCommon('member'))}
+            {isOwner
+              ? tCommon('owner')
+              : isClient
+                ? tCommon('client')
+                : (member.roleName ?? tCommon('member'))}
           </Badge>
         </>
       }

@@ -37,18 +37,23 @@ export default function MemberRoleMenu({
   const tCommon = useTranslations('common');
   const setMemberRole = useSetMemberRole(projectKey);
   const isOwnerRow = member.role === 'owner';
+  const isClientRow = member.role === 'client';
 
   // A null roleId means the member uses the project's default role.
   const currentId = member.roleId ?? roles.find((r) => r.isDefault)?.id ?? null;
 
   function assignRole(roleId: number) {
-    if (isOwnerRow || roleId !== currentId) {
+    if (isOwnerRow || isClientRow || roleId !== currentId) {
       setMemberRole.mutate({ userId: member.userId, role: 'member', roleId });
     }
   }
 
   function promoteToOwner() {
     if (!isOwnerRow) setMemberRole.mutate({ userId: member.userId, role: 'owner' });
+  }
+
+  function makeClient() {
+    if (!isClientRow) setMemberRole.mutate({ userId: member.userId, role: 'client' });
   }
 
   return (
@@ -73,7 +78,7 @@ export default function MemberRoleMenu({
         {roles.map((r) => (
           <DropdownMenuCheckboxItem
             key={r.id}
-            checked={!isOwnerRow && r.id === currentId}
+            checked={!isOwnerRow && !isClientRow && r.id === currentId}
             onSelect={() => assignRole(r.id)}
           >
             {r.name}
@@ -82,6 +87,11 @@ export default function MemberRoleMenu({
         {!member.isAgent && canGrantOwner && (
           <DropdownMenuCheckboxItem checked={isOwnerRow} onSelect={promoteToOwner}>
             {tCommon('owner')}
+          </DropdownMenuCheckboxItem>
+        )}
+        {!member.isAgent && (
+          <DropdownMenuCheckboxItem checked={isClientRow} onSelect={makeClient}>
+            {t('roleClient')}
           </DropdownMenuCheckboxItem>
         )}
       </DropdownMenuContent>

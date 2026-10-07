@@ -285,6 +285,27 @@ describe('client attribution masking', () => {
     expect(res.status).toBe(403);
   });
 
+  it("remaps an initiative's owner id to the face for a client, real for an owner", async () => {
+    const { asOwner, owner, teammate, client } = await setupProject();
+    const created = await asOwner
+      .projects({ projectKey: 'MKT' })
+      .initiatives.post({ title: 'Launch', ownerUserId: teammate.user.userId });
+    const initiativeId = created.data!.id;
+
+    const clientList = await client.api
+      .projects({ projectKey: 'MKT' })
+      .initiatives.get({ query: {} });
+    const clientRow = clientList.data!.items.find((i) => i.id === initiativeId)!;
+    expect(clientRow.ownerUserId).toBe(owner.userId);
+
+    const clientDetail = await client.api.initiatives({ initiativeId }).get();
+    expect(clientDetail.data!.ownerUserId).toBe(owner.userId);
+
+    const ownerList = await asOwner.projects({ projectKey: 'MKT' }).initiatives.get({ query: {} });
+    const ownerRow = ownerList.data!.items.find((i) => i.id === initiativeId)!;
+    expect(ownerRow.ownerUserId).toBe(teammate.user.userId);
+  });
+
   // Time tracking is never masked for a client — it is hidden outright, so the surfaces
   // 403 rather than rewrite. These assert the 403, which is what makes masking moot.
   it('403s a client on the worklog and time-by-user routes', async () => {

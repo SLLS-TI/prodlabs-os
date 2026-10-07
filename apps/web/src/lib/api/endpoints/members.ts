@@ -3,8 +3,9 @@ import { pageQuery, type Page, type PageParams } from '@/lib/api/core/paging';
 
 // Project membership: a user's access to a project and their role in it. A member of
 // the team that owns the project is added straight away; everyone else joins through
-// an invite.
-export type MemberRole = 'owner' | 'member';
+// an invite. A 'client' is a restricted read-oriented role whose view has team-member
+// attribution masked — granted only by an owner from the members page, never by invite.
+export type MemberRole = 'owner' | 'member' | 'client';
 
 export interface MemberRow {
   userId: string;

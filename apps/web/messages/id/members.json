@@ -47,6 +47,7 @@
   "revokeTitle": "Cabut akses untuk {name}",
   "revokeDescription": "{name} akan kehilangan akses ke proyek ini. Mereka dapat diundang kembali nanti.",
   "selectRole": "Pilih peran",
+  "roleClient": "Klien",
   "editDescription": "Ubah deskripsi",
   "descriptionQuestionSelf": "Apa yang Anda lakukan dalam proyek ini?",
   "descriptionQuestionOther": "Apa yang orang ini lakukan dalam proyek ini?",

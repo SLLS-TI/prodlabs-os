@@ -13,8 +13,10 @@ import {
 } from '@/components/ui/select';
 import { useSetMemberRole } from '@/services/members.service';
 
-// Owner is not a custom role, so it sits outside the roles list under this value.
+// Owner and client are not custom roles, so they sit outside the roles list under
+// these values.
 const OWNER_VALUE = 'owner';
+const CLIENT_VALUE = 'client';
 
 // A member's role, shown in the members list and in the team's project panel. A
 // reader who may reassign it gets a select — the team's custom roles, plus Owner when
@@ -43,6 +45,7 @@ export default function MemberRoleControl({
   const tCommon = useTranslations('common');
   const setMemberRole = useSetMemberRole(projectKey);
   const isOwnerRow = member.role === 'owner';
+  const isClientRow = member.role === 'client';
 
   // A null roleId means the member uses the project's default role.
   const defaultRole = roles.find((r) => r.isDefault) ?? null;
@@ -55,16 +58,17 @@ export default function MemberRoleControl({
         variant={isOwnerRow ? 'secondary' : 'outline'}
         className="px-1.5 py-0 text-[10px] font-normal"
       >
-        {isOwnerRow ? tCommon('owner') : currentName}
+        {isOwnerRow ? tCommon('owner') : isClientRow ? t('roleClient') : currentName}
       </Badge>
     );
   }
 
-  const value = isOwnerRow ? OWNER_VALUE : currentId?.toString();
+  const value = isOwnerRow ? OWNER_VALUE : isClientRow ? CLIENT_VALUE : currentId?.toString();
 
   function onValueChange(next: string) {
     if (next === value) return;
     if (next === OWNER_VALUE) setMemberRole.mutate({ userId: member.userId, role: 'owner' });
+    else if (next === CLIENT_VALUE) setMemberRole.mutate({ userId: member.userId, role: 'client' });
     else setMemberRole.mutate({ userId: member.userId, role: 'member', roleId: Number(next) });
   }
 
@@ -90,6 +94,7 @@ export default function MemberRoleControl({
         {!member.isAgent && canGrantOwner && (
           <SelectItem value={OWNER_VALUE}>{tCommon('owner')}</SelectItem>
         )}
+        {!member.isAgent && <SelectItem value={CLIENT_VALUE}>{t('roleClient')}</SelectItem>}
       </SelectContent>
     </Select>
   );

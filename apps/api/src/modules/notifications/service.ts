@@ -471,10 +471,49 @@ export async function listNotifications(
   const hasMore = rows.length > limit;
   const page = hasMore ? rows.slice(0, limit) : rows;
   const last = page[page.length - 1];
+  const maskActorIds = await maskActorIdForClient(userId, page);
   return {
-    items: page.map(mapRow),
+    items: page.map((r) => {
+      const mapped = mapRow(r);
+      // The stored actorName is already the face for a client recipient of a maskable
+      // actor; null the raw actorUserId too, so a client cannot correlate the real
+      // team-member id the name hides. Only the ids maskActorIdForClient resolved.
+      return maskActorIds.has(r.id) ? { ...mapped, actorUserId: null } : mapped;
+    }),
     nextCursor: hasMore && last ? { ts: last.cursorTs, id: last.id } : null,
   };
+}
+
+// The notification ids whose actorUserId must be nulled for this recipient: rows of a
+// project where the recipient is a client and whose actor is maskable (not a current
+// client of that project — so team members, removed/former members and agents). The
+// stored actorName is already the face for these; this strips the correlatable id too.
+async function maskActorIdForClient(
+  userId: string,
+  rows: { id: number; projectId: number; actorUserId: string | null }[],
+): Promise<Set<number>> {
+  const withActor = rows.filter((r) => r.actorUserId != null);
+  if (withActor.length === 0) return new Set();
+  const projectIds = [...new Set(withActor.map((r) => r.projectId))];
+  const clientRows = await db
+    .select({ projectId: projectMember.projectId, userId: projectMember.userId })
+    .from(projectMember)
+    .where(and(inArray(projectMember.projectId, projectIds), eq(projectMember.role, 'client')));
+  const viewerIsClient = new Set<number>();
+  const clientsByProject = new Map<number, Set<string>>();
+  for (const r of clientRows) {
+    if (r.userId === userId) viewerIsClient.add(r.projectId);
+    const set = clientsByProject.get(r.projectId) ?? new Set<string>();
+    set.add(r.userId);
+    clientsByProject.set(r.projectId, set);
+  }
+  const masked = new Set<number>();
+  for (const r of withActor) {
+    if (!viewerIsClient.has(r.projectId)) continue;
+    const actorIsClient = clientsByProject.get(r.projectId)?.has(r.actorUserId!) ?? false;
+    if (!actorIsClient) masked.add(r.id);
+  }
+  return masked;
 }
 
 // The number of unread, non-snoozed notifications for the inbox badge, optionally

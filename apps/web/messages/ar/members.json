@@ -47,6 +47,7 @@
   "revokeTitle": "إلغاء وصول {name}",
   "revokeDescription": "{name} هيفقد الوصول للمشروع ده. تقدر تدعوه تاني بعدين.",
   "selectRole": "اختيار الدور",
+  "roleClient": "عميل",
   "editDescription": "تعديل الوصف",
   "descriptionQuestionSelf": "إنت بتعمل إيه في المشروع ده؟",
   "descriptionQuestionOther": "الشخص ده بيعمل إيه في المشروع ده؟",

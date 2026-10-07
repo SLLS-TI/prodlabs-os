@@ -47,6 +47,7 @@
   "revokeTitle": "Revoke access for {name}",
   "revokeDescription": "{name} will lose access to this project. They can be invited back later.",
   "selectRole": "Select role",
+  "roleClient": "Client",
   "editDescription": "Edit description",
   "descriptionQuestionSelf": "What do you do in this project?",
   "descriptionQuestionOther": "What does this person do in this project?",
