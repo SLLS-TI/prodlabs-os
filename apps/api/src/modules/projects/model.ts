@@ -60,6 +60,14 @@ export const updateProjectBody = t.Object({
   color: t.Optional(t.Nullable(t.String())),
 });
 
+// Params of the public logo raw route: the numeric project id and the object's uuid.
+export const logoParams = t.Object({ id: t.Numeric(), uuid: t.String() });
+
+export const uploadLogoBody = t.Object({ file: t.File() });
+
+// The relative serve URL stored on the project, returned after an upload.
+export const ProjectLogoResponse = t.Object({ logoUrl: t.String() });
+
 export const ProjectPreferencesResponse = t.Object({
   isFavorite: t.Boolean(),
   isHidden: t.Boolean(),
