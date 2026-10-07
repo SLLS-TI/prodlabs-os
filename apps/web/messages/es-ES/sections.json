@@ -23,6 +23,10 @@
       "label": "Proyectos",
       "description": "Todos los proyectos de esta instancia: lo que contiene cada uno, cuando fue la última actividad, y quién puede acceder."
     },
+    "stats": {
+      "label": "Statistics",
+      "description": "Cross-project health, time, and overdue work across every project on this instance."
+    },
     "general": {
       "label": "General",
       "description": "Valores por defecto para los proyectos nuevos."

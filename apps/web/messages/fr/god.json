@@ -313,5 +313,48 @@
       "remove": "Retirer le projet",
       "saved": "Accès du groupe enregistré"
     }
+  },
+  "stats": {
+    "empty": "No projects on this instance yet.",
+    "summary": {
+      "globalScore": "Global health",
+      "overduePct": "Overdue share",
+      "redProjects": "At-risk projects",
+      "burnRatio": "Burn ratio",
+      "openIssues": "Open issues",
+      "closedLast7d": "Closed (7d)",
+      "unassigned": "Unassigned",
+      "worked": "Time logged"
+    },
+    "hours": {
+      "title": "Worked vs estimated",
+      "subtitle": "Hours per project, top 12 by total.",
+      "worked": "Worked",
+      "estimated": "Estimated",
+      "empty": "No time logged or estimated yet."
+    },
+    "overdue": {
+      "title": "Overdue work",
+      "subtitle": "Overdue open issues per project, top 12.",
+      "label": "Overdue",
+      "empty": "Nothing is overdue."
+    },
+    "table": {
+      "title": "Project health",
+      "subtitle": "Every project, sorted by health. A dash means a dimension has no data.",
+      "project": "Project",
+      "health": "Health",
+      "open": "Open",
+      "overdue": "Overdue",
+      "closedLast7d": "Closed (7d)",
+      "unassigned": "Unassigned"
+    },
+    "dimensions": {
+      "schedule": "Schedule",
+      "budget": "Budget",
+      "velocity": "Velocity",
+      "load": "Load",
+      "freshness": "Freshness"
+    }
   }
 }

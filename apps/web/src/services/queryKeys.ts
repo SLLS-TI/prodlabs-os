@@ -305,4 +305,6 @@ export const qk = {
     ['instanceTeamProjects', teamId, filters] as const,
   instanceTeamMembers: (teamId: number, filters: unknown) =>
     ['instanceTeamMembers', teamId, filters] as const,
+  // The cross-project statistics (god mode): one request for the whole instance.
+  godStats: ['godStats'] as const,
 };
