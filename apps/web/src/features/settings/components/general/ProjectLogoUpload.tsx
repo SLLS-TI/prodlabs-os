@@ -48,6 +48,11 @@ export default function ProjectLogoUpload({
     upload.mutate({ projectKey, file });
   }
 
+  function uploadLabel() {
+    if (upload.isPending) return t('uploadingLogo');
+    return logoUrl ? t('changeLogo') : t('uploadLogo');
+  }
+
   return (
     <div className="space-y-1.5">
       <Label>{t('logo')}</Label>
@@ -71,11 +76,7 @@ export default function ProjectLogoUpload({
                 onClick={() => inputRef.current?.click()}
               >
                 <Upload className="size-3.5" />
-                {upload.isPending
-                  ? t('uploadingLogo')
-                  : logoUrl
-                    ? t('changeLogo')
-                    : t('uploadLogo')}
+                {uploadLabel()}
               </Button>
               {logoUrl && (
                 <Button
