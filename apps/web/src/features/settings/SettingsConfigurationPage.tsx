@@ -14,9 +14,11 @@ import RequirePermission from '@/components/common/permissions/RequirePermission
 import { SettingsResourceProvider } from './context/settingsPermission';
 import SettingsSubtaskAutomation from './components/configuration/SettingsSubtaskAutomation';
 import SettingsEstimates from './components/configuration/SettingsEstimates';
+import SettingsClientMasking from './components/configuration/SettingsClientMasking';
 import SettingsAutoArchive from './components/configuration/SettingsAutoArchive';
 import { useAutoArchiveForm } from './hooks/useAutoArchiveForm';
 import { useEstimatesForm } from './hooks/useEstimatesForm';
+import { useMaskingForm } from './hooks/useMaskingForm';
 import { useSubtaskAutomationForm } from './hooks/useSubtaskAutomationForm';
 
 const section = settingsSection('configuration');
@@ -38,13 +40,15 @@ function ConfigurationPage({ project }: { project: ProjectDetail }) {
   const features = useProjectFeatures();
   const subtasks = useSubtaskAutomationForm(project.project.ref);
   const estimates = useEstimatesForm(project.project);
+  const masking = useMaskingForm(project.project);
   const archive = useAutoArchiveForm(project.project.ref);
-  const saving = subtasks.saving || estimates.saving || archive.saving;
+  const saving = subtasks.saving || estimates.saving || masking.saving || archive.saving;
   const loaded = subtasks.loaded && archive.loaded;
 
   async function save() {
     await subtasks.save();
     await estimates.save();
+    await masking.save();
     await archive.save();
     toast.success(t('saved'));
   }
@@ -66,6 +70,7 @@ function ConfigurationPage({ project }: { project: ProjectDetail }) {
           <div className="space-y-10">
             {features.subtasks && <SettingsSubtaskAutomation form={subtasks} />}
             <SettingsEstimates form={estimates} />
+            <SettingsClientMasking form={masking} />
             <SettingsAutoArchive form={archive} />
           </div>
         </RequirePermission>

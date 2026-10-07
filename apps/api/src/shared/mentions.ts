@@ -40,6 +40,45 @@ export function addedMentionHandles(before: string, after: string): string[] {
   return parseMentionHandles(after).filter((handle) => !had.has(handle));
 }
 
+// The handle a masked mention is rewritten to when the face has none, so a team
+// member's @handle is never left readable even in the defense-in-depth case where no
+// face resolves. The web renders it as plain text, never a real person.
+const NEUTRAL_MENTION_HANDLE = 'user';
+
+// Rewrites, on the read path only, every @handle that is NOT a current client member's
+// handle to the face's @username, so a client cannot read a team member's (or a removed
+// member's) handle out of a comment body. The mask fails closed: an unknown handle is
+// rewritten, not left raw. The stored body keeps the real handle; this runs when a mask
+// context is present. clientMemberHandles is lowercased (handles are case-insensitive).
+// Code spans, links and URLs are skipped exactly as the mention parser skips them, so a
+// handle inside them is left untouched. A null faceUsername (the face has no handle)
+// rewrites to a neutral token rather than revealing the handle.
+export function maskMentionsInBody(
+  body: string,
+  clientMemberHandles: Set<string>,
+  faceUsername: string | null,
+): string {
+  if (body.length === 0 || body.length > MAX_MENTION_TEXT_LENGTH) return body;
+  const replacement = `@${faceUsername ?? NEUTRAL_MENTION_HANDLE}`;
+  const skip = collectSkipRanges(body);
+  return body.replace(MENTION_RE, (match, handle: string, offset: number) => {
+    if (inRange(skip, offset)) return match;
+    return clientMemberHandles.has(handle.toLowerCase()) ? match : replacement;
+  });
+}
+
+// The [start, end) spans of markup a mention must not be read out of, found with the
+// same pattern the parser uses to blank them.
+function collectSkipRanges(text: string): [number, number][] {
+  const ranges: [number, number][] = [];
+  for (const m of text.matchAll(NOT_A_MENTION_RE)) ranges.push([m.index, m.index + m[0].length]);
+  return ranges;
+}
+
+function inRange(ranges: [number, number][], offset: number): boolean {
+  return ranges.some(([start, end]) => offset >= start && offset < end);
+}
+
 // Who the handles reach, kept apart because the two are used for different things:
 // a member is notified, an agent is given a run.
 export interface MentionedUsers {

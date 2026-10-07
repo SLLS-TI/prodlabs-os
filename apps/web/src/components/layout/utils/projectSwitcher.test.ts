@@ -31,6 +31,7 @@ function project(overrides: Partial<Project> = {}): Project {
     timeGoalMinutes: null,
     timeGoalPeriod: null,
     timeVisibleRoleIds: [],
+    faceUserId: null,
     createdAt: '2026-01-01T00:00:00Z',
     ...overrides,
   };

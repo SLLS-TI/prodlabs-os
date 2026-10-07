@@ -111,6 +111,11 @@ export const project = pgTable(
     name: text('name').notNull(),
     description: text('description').notNull().default(''),
     nextSequence: integer('next_sequence').notNull().default(1),
+    // The project member whose identity every team-member action is shown under to a
+    // client-role viewer (see project_member.role 'client'). Null falls back to the
+    // oldest owner. set null when that user leaves the project or is deleted, so the
+    // fallback takes over rather than a dangling reference remaining.
+    faceUserId: text('face_user_id').references(() => user.id, { onDelete: 'set null' }),
     // Whether this project is in the team's MCP reach. Managed from the team's MCP
     // settings, not from the project, and only counts while team.mcp_enabled is on.
     // The starting value is the instance-wide project default set in god mode.
@@ -310,7 +315,7 @@ export const projectMember = pgTable(
   },
   (t) => [
     primaryKey({ columns: [t.projectId, t.userId] }),
-    check('project_member_role_check', sql`${t.role} IN ('owner', 'member')`),
+    check('project_member_role_check', sql`${t.role} IN ('owner', 'member', 'client')`),
     check('project_member_source_check', sql`${t.source} IN ('invite', 'scim')`),
     index('project_member_user_idx').on(t.userId),
   ],

@@ -1,10 +1,11 @@
 import { Elysia, t } from 'elysia';
 import { authContext } from '#shared/auth-context';
 import { guards } from '#shared/guards';
-import { requireUser } from '#shared/access';
+import { requireUser, resolveMaskContext } from '#shared/access';
 import { commonErrors, errors } from '#shared/responses';
 import { openDocumentSession, getDocumentSteps, saveDocumentSteps } from './collaboration';
 import { addDocumentComment, listDocumentComments, updateDocumentComment } from './comments';
+import { maskDocumentComments } from './service';
 import {
   collaborationOpenBody,
   collaborationQuery,
@@ -69,8 +70,14 @@ export const documentCollaborationRoutes = new Elysia({
   )
   .get(
     '/projects/:projectKey/documents/:documentId/comments',
-    ({ project, params, user }) =>
-      listDocumentComments(project.id, params.documentId, requireUser(user).id),
+    async ({ project, params, user }) => {
+      const comments = await listDocumentComments(
+        project.id,
+        params.documentId,
+        requireUser(user).id,
+      );
+      return maskDocumentComments(comments, await resolveMaskContext(project.id, user));
+    },
     {
       permission: ['documents', 'read'],
       params: documentParams,

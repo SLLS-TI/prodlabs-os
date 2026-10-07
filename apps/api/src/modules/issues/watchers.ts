@@ -2,6 +2,7 @@ import { aiAgent, db, issueWatcher, projectMember, user, userPreference } from '
 import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
 import { getMemberContext, listMemberContexts, type MemberContext } from '#modules/members/service';
 import { hasPermission } from '#shared/permissions';
+import { isMaskableActor, type MaskContext } from '#shared/access';
 
 // Who follows an issue. A watcher receives every notification the issue produces
 // (see modules/notifications/service.ts); the assignment and mention notifications are
@@ -26,10 +27,13 @@ function canReadWorkItems(context: MemberContext | null | undefined): boolean {
 }
 
 // The issue's watchers, by name. A watcher who has left the project is left out;
-// their row survives, so rejoining puts them back on the list.
+// their row survives, so rejoining puts them back on the list. For a client viewer
+// (mask present), the list is collapsed to the viewing client plus a single face entry,
+// so a client cannot read the team or enumerate the agency's other clients from it.
 export async function listIssueWatchers(
   projectId: number,
   issueId: number,
+  mask: MaskContext | null = null,
 ): Promise<IssueWatcherRow[]> {
   const rows = await db
     .select({ userId: issueWatcher.userId, name: user.name, image: user.image })
@@ -45,7 +49,23 @@ export async function listIssueWatchers(
     )
     .orderBy(asc(user.name));
   const contexts = await listMemberContexts(projectId);
-  return rows.filter((row) => canReadWorkItems(contexts.get(row.userId)));
+  const visible = rows.filter((row) => canReadWorkItems(contexts.get(row.userId)));
+  return mask ? collapseWatchers(visible, mask) : visible;
+}
+
+// For a client viewer, keeps only the viewing client's own entry and, when any maskable
+// watcher was dropped, one face entry standing for the team. Every other watcher (team
+// members, removed members, and the agency's other clients) is dropped: a client must
+// not enumerate them from the list.
+function collapseWatchers(watchers: IssueWatcherRow[], mask: MaskContext): IssueWatcherRow[] {
+  const kept = watchers.filter((w) => w.userId === mask.viewerId);
+  const hadMaskable = watchers.some((w) => isMaskableActor(mask, w.userId));
+  if (!hadMaskable || !mask.face) return kept;
+  if (kept.some((w) => w.userId === mask.face!.userId)) return kept;
+  return [
+    { userId: mask.face.userId, name: mask.face.name ?? '', image: mask.face.image },
+    ...kept,
+  ];
 }
 
 export async function watcherUserIds(projectId: number, issueId: number): Promise<Set<string>> {

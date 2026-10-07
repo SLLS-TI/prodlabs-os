@@ -224,4 +224,42 @@ describe('notifications', () => {
     const res = await owner.api.notifications({ id }).read.post({ read: true } as never);
     expect(res.status).toBe(404);
   });
+
+  // A team member's action notifies both a client recipient and a team recipient. The
+  // stored actor name is resolved per recipient: the client reads the face (the owner,
+  // by fallback), the team member reads the real actor.
+  it('stores the face actor name for a client recipient and the real name for a team recipient', async () => {
+    const { owner, columnId } = await setup();
+    const ownerName = (await owner.api.projects({ projectKey: 'MKT' }).get()).data!.assignees.find(
+      (a) => a.userId === owner.userId,
+    )!.name;
+    const actor = await addMember(owner);
+    const actorName = (await owner.api.projects({ projectKey: 'MKT' }).get()).data!.assignees.find(
+      (a) => a.userId === actor.userId,
+    )!.name;
+    const teamRecipient = await addMember(owner);
+    const u = await signUpTestUser();
+    const invite = await owner.api
+      .projects({ projectKey: 'MKT' })
+      .invites.post({ email: u.email, role: 'member' });
+    const clientRecipient = { api: authedApi(u.cookie), userId: u.userId, username: u.username };
+    await clientRecipient.api.invites({ token: invite.data!.token }).accept.post();
+    await owner.api.projects({ projectKey: 'MKT' }).members({ userId: u.userId }).patch({
+      role: 'client',
+    });
+
+    const issue = (await createIssue(owner.api, columnId)).data!;
+    await actor.api.issues({ issueId: issue.id }).comments.post({
+      body: `@${teamRecipient.username} @${clientRecipient.username} take a look`,
+    });
+
+    const teamInbox = await teamRecipient.api.notifications.get({ query: { types: 'mentioned' } });
+    expect(teamInbox.data!.items[0]).toMatchObject({ actorUserId: actor.userId });
+    expect(teamInbox.data!.items[0].actorName).toBe(actorName);
+
+    const clientInbox = await clientRecipient.api.notifications.get({
+      query: { types: 'mentioned' },
+    });
+    expect(clientInbox.data!.items[0].actorName).toBe(ownerName);
+  });
 });

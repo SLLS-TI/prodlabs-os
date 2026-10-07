@@ -97,6 +97,21 @@ export function defaultMemberPermissions(): Permissions {
   return p;
 }
 
+// The matrix for a client-role project member: read-oriented, no management. A
+// client reads the board and comments on work (work_items create/edit cover the
+// comment routes); reads shared documents and the roadmap. dashboards stays denied —
+// the analytics endpoints behind dashboards.read expose real actor names and user ids
+// with no time-visibility guard, which is the exact attribution a client must not see.
+export function clientPermissions(): Permissions {
+  const p = emptyPermissions();
+  p.work_items.read = true;
+  p.work_items.create = true;
+  p.work_items.edit = true;
+  p.documents.read = true;
+  p.initiatives.read = true;
+  return p;
+}
+
 // Coerces arbitrary input (a jsonb blob or a request body) into the canonical
 // matrix: every resource and action present, values coerced to booleans, unknown
 // keys dropped, missing entries and actions the resource does not support

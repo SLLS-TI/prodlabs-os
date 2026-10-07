@@ -153,7 +153,10 @@
     "timeVisibilityHint": "选择哪些角色可以查看此项目的时间跟踪。所有者始终可见。",
     "timeVisibilityAll": "所有角色",
     "timeVisibilityRestricted": "仅所选角色",
-    "timeVisibilityNone": "未选择任何角色 — 所有人都能查看时间跟踪。"
+    "timeVisibilityNone": "未选择任何角色 — 所有人都能查看时间跟踪。",
+    "clientMasking": "对客户展示的身份",
+    "clientMaskingHint": "客户角色的成员会看到团队的所有活动都归于这一个用户。选择此人，或回退为项目所有者。",
+    "clientMaskingAuto": "项目所有者"
   },
   "states": {
     "addState": "添加{type}状态",

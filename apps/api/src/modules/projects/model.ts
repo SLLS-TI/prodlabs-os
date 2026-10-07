@@ -129,9 +129,20 @@ export const ProjectResponse = t.Object({
   // Which team roles may see the project's time tracking. Empty means every role.
   // Editor-only config, read by the settings page.
   timeVisibleRoleIds: t.Array(t.Integer()),
+  // The member a client viewer sees every team-member action attributed to, or null to
+  // fall back to the oldest owner. Owner-only config, read by the masking settings page.
+  faceUserId: t.Nullable(t.String()),
   availableFeatures: t.Array(t.UnionEnum([...PROJECT_FEATURES])),
   createdAt: t.String(),
 });
+
+// The client-masking settings write (owner-only). Face user is security-sensitive, so
+// it is a route of its own rather than folded into the estimates settings.
+export const MaskingResponse = t.Object({
+  faceUserId: t.Nullable(t.String()),
+});
+
+export const updateMaskingBody = MaskingResponse;
 
 // A project in the caller's list (ProjectListItem): ProjectRow plus the caller's
 // own role in it, and the caller's permission matrix when requested with
@@ -140,7 +151,7 @@ export const ProjectListResponse = t.Array(
   t.Composite([
     ProjectResponse,
     t.Object({
-      role: t.Union([t.Literal('owner'), t.Literal('member')]),
+      role: t.Union([t.Literal('owner'), t.Literal('member'), t.Literal('client')]),
       lastActivityAt: t.Nullable(
         t.String({
           description: 'Newest readable work-item activity or comment timestamp, or null.',
@@ -175,7 +186,7 @@ const AssigneeCandidateResponse = t.Object({
 // The caller's own role in a project (from MemberContext in members/service). The
 // resolved permission matrix is a sibling `permissions` key on the board payload.
 const ViewerResponse = t.Object({
-  role: t.Union([t.Literal('owner'), t.Literal('member')]),
+  role: t.Union([t.Literal('owner'), t.Literal('member'), t.Literal('client')]),
   // The caller's standing in the team that owns the project, null when they are not
   // a member of it. An owner or manager of the team governs the project's settings
   // alongside the project's own owner; 'agent' is a bot user reading its own board,

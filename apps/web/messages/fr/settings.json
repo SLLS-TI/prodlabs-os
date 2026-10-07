@@ -153,7 +153,10 @@
     "timeVisibilityHint": "Choisissez les rôles qui peuvent voir le suivi du temps dans ce projet. Les propriétaires le voient toujours.",
     "timeVisibilityAll": "Tous les rôles",
     "timeVisibilityRestricted": "Seulement les rôles sélectionnés",
-    "timeVisibilityNone": "Aucun rôle sélectionné — tout le monde voit le suivi du temps."
+    "timeVisibilityNone": "Aucun rôle sélectionné — tout le monde voit le suivi du temps.",
+    "clientMasking": "Identité vue par le client",
+    "clientMaskingHint": "Les membres ayant le rôle client voient toute l'activité de l'équipe attribuée à un seul utilisateur. Choisissez qui, ou laissez revenir au propriétaire du projet.",
+    "clientMaskingAuto": "Propriétaire du projet"
   },
   "states": {
     "addState": "Ajouter un état {type}",

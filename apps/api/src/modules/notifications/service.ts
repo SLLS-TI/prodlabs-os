@@ -12,6 +12,7 @@ import {
 import { and, desc, eq, inArray, lt, or, sql, isNull } from 'drizzle-orm';
 import { addedMentionHandles, resolveMentionHandles, type MentionedUsers } from '#shared/mentions';
 import { autoWatchIssue, watcherUserIds } from '#modules/issues/watchers';
+import { resolveFaceIdentity } from '#modules/projects/visibility';
 import { iso } from '#shared/lib';
 import { enqueueOutbound } from './outbound';
 
@@ -53,14 +54,69 @@ async function actorName(id: string | null): Promise<string | null> {
   return rows[0]?.name ?? null;
 }
 
+// The recipients of this batch who are clients of the project. Their notifications show
+// the face name when the actor is a maskable team member (see service masking), so the
+// actor name they read matches what the project masks everywhere else.
+async function clientRecipients(projectId: number, userIds: string[]): Promise<Set<string>> {
+  if (userIds.length === 0) return new Set();
+  const rows = await db
+    .select({ userId: projectMember.userId })
+    .from(projectMember)
+    .where(
+      and(
+        eq(projectMember.projectId, projectId),
+        eq(projectMember.role, 'client'),
+        inArray(projectMember.userId, userIds),
+      ),
+    );
+  return new Set(rows.map((r) => r.userId));
+}
+
+// Whether the actor of this batch must be masked from a client recipient: any non-null
+// actor that is NOT a current client member of the project — team members, removed/former
+// members, and agents. Only then does a client recipient read the face name instead.
+async function actorIsMaskable(projectId: number, actorUserId: string | null): Promise<boolean> {
+  if (actorUserId == null) return false;
+  const rows = await db
+    .select({ userId: projectMember.userId })
+    .from(projectMember)
+    .where(
+      and(
+        eq(projectMember.projectId, projectId),
+        eq(projectMember.userId, actorUserId),
+        eq(projectMember.role, 'client'),
+      ),
+    )
+    .limit(1);
+  return rows.length === 0;
+}
+
+// Inserts a batch of notifications for one issue event. Every row shares the actor and
+// the project. The stored actor_name is resolved per recipient: a client recipient of
+// a maskable actor's event reads the project's face name, everyone else the real name.
+// The inbox read is recipient-scoped, so the stored name is served back verbatim to the
+// right audience with no read-time work.
 async function insertNotifications(rows: NewNotificationRow[]): Promise<void> {
   if (rows.length === 0) return;
-  const name = await actorName(rows[0].actorUserId);
-  await db.insert(notification).values(rows.map((r) => ({ ...r, actorName: name })));
+  const { projectId, actorUserId } = rows[0];
+  const realName = await actorName(actorUserId);
+
+  const recipients = [...new Set(rows.map((r) => r.userId))];
+  const clients = (await actorIsMaskable(projectId, actorUserId))
+    ? await clientRecipients(projectId, recipients)
+    : new Set<string>();
+  // Fails closed: when a client recipient must see a masked actor but no face name
+  // resolves, the stored name is null (the inbox renders its system placeholder), never
+  // the real actor.
+  const faceName = clients.size > 0 ? ((await resolveFaceIdentity(projectId))?.name ?? null) : null;
+
+  const nameFor = (userId: string) => (clients.has(userId) ? faceName : realName);
+
+  await db.insert(notification).values(rows.map((r) => ({ ...r, actorName: nameFor(r.userId) })));
   // Fan out to the project's enabled delivery channels (email, Telegram). Best-effort:
   // a delivery failure must not break the inbox insert or the domain mutation.
   try {
-    await enqueueOutbound(rows, name);
+    await enqueueOutbound(rows, nameFor);
   } catch (err) {
     console.error('[notifications] outbound enqueue failed:', err);
   }

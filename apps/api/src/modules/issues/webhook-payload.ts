@@ -9,6 +9,12 @@ import type { IssueRow } from './service';
 // Webhook payloads carry names next to ids: a receiver has no API session to resolve
 // a column, user, type, or label id, and a message built from the payload needs the
 // words. The ids stay in place, so the named fields are additive.
+//
+// Client attribution masking does NOT apply here. A webhook goes to a third-party URL
+// the agency configures per project (owner-only webhooks resource); a client never
+// receives one. Masking the actor would corrupt the agency's own integrations and
+// audit feeds, which must carry the real actor — consistent with the invariant that
+// only what a client can see is masked.
 
 // A query per kind of id, skipped when there is nothing to look up.
 function byIds<K, R>(ids: K[], query: (ids: K[]) => Promise<R[]>): Promise<R[]> {

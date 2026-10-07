@@ -129,6 +129,18 @@ export const updateEstimates = (projectKey: string, input: EstimateSettings) =>
     body: JSON.stringify(input),
   });
 
+// The client-facing face user: the member a client-role viewer sees every team-member
+// action attributed to, or null to fall back to the oldest owner. Owner-only.
+export interface MaskingSettings {
+  faceUserId: string | null;
+}
+
+export const updateMasking = (projectKey: string, input: MaskingSettings) =>
+  request<MaskingSettings>(`/projects/${projectKey}/settings/masking`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+
 // The upload limits. The read is open to any signed-in user (the upload UI shows
 // the limit); the write is god mode.
 export const getStorageSettings = () => request<StorageSettings>('/settings/storage');

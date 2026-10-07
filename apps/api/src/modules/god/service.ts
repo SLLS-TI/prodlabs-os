@@ -38,13 +38,9 @@ import type { AnyPgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { HttpError, iso } from '#shared/lib';
 import { deleteAccount } from '#shared/account-deletion';
 import { mappedProjectIds, reconcileProjects } from '#modules/scim/reconcile';
-import {
-  defaultMemberPermissions,
-  fullPermissions,
-  normalizePermissions,
-  type Permissions,
-} from '#shared/permissions';
-import { listAllMembers, listMemberContexts } from '#modules/members/service';
+import { type Permissions } from '#shared/permissions';
+import { listAllMembers, listMemberContexts, toMemberContext } from '#modules/members/service';
+import type { MemberRole } from '#modules/members/service';
 import { listRoles } from '#modules/roles/service';
 import type { TeamStanding } from '#modules/teams/service';
 
@@ -77,11 +73,11 @@ export interface InstanceUserProject {
   projectId: number;
   projectKey: string;
   projectName: string;
-  role: 'owner' | 'member';
+  role: MemberRole;
   roleId: number | null;
   roleName: string | null;
-  // The effective matrix: full for an owner, the assigned role's matrix for a
-  // member, the default member matrix when no role is assigned.
+  // The effective matrix: full for an owner, the client matrix for a client, the
+  // assigned role's matrix for a member, the default member matrix when no role is set.
   permissions: Permissions;
   // How many owners the project has. 1 on a project this user owns means deleting
   // the account would leave the project with nobody who can manage it.
@@ -94,14 +90,6 @@ export interface InstanceUserDetail extends InstanceUserRow {
 }
 
 type UserRow = typeof user.$inferSelect;
-
-// The effective matrix of a membership: full for an owner, the assigned role's
-// matrix for a member, the default member matrix when no role is assigned.
-function resolvePermissions(role: 'owner' | 'member', rolePermissions: unknown): Permissions {
-  if (role === 'owner') return fullPermissions();
-  if (!rolePermissions) return defaultMemberPermissions();
-  return normalizePermissions(rolePermissions);
-}
 
 // The per-user facts that live in other tables. Collected in one grouped query
 // each and joined in memory, so the user query stays a plain select.
@@ -259,7 +247,7 @@ export async function getInstanceUser(userId: string): Promise<InstanceUserDetai
   const ownerCounts = await countOwnersByProject(memberships.map((m) => m.projectId));
 
   const projects: InstanceUserProject[] = memberships.map((m) => {
-    const role = m.role === 'owner' ? 'owner' : 'member';
+    const role = m.role as MemberRole;
     return {
       projectId: m.projectId,
       projectKey: m.projectKey,
@@ -268,7 +256,7 @@ export async function getInstanceUser(userId: string): Promise<InstanceUserDetai
       roleId: m.roleId,
       roleName: m.roleName,
       ownerCount: ownerCounts.get(m.projectId) ?? 0,
-      permissions: resolvePermissions(role, m.permissions),
+      permissions: toMemberContext(role, m.permissions, m.roleId).permissions,
       joinedAt: iso(m.joinedAt),
     };
   });
@@ -334,7 +322,7 @@ export interface InstanceProjectMember {
   username: string | null;
   image: string | null;
   isAgent: boolean;
-  role: 'owner' | 'member';
+  role: MemberRole;
   roleId: number | null;
   roleName: string | null;
   permissions: Permissions;

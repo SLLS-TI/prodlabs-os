@@ -1,7 +1,16 @@
-import { db, issue, issueActivity, project, type ActivityPayload } from '@repo/db';
+import { db, issue, issueActivity, project, maskActor, type ActivityPayload } from '@repo/db';
 import { and, desc, eq, inArray, or, sql } from 'drizzle-orm';
 import { iso } from '#shared/lib';
-import { textSide, userName, userSide, type ActivityInput } from '#modules/issues/activity';
+import { isMaskableActor, type MaskContext } from '#shared/access';
+import { maskMentionsInBody } from '#shared/mentions';
+import {
+  maskPayloadProse,
+  maskUserSides,
+  textSide,
+  userName,
+  userSide,
+  type ActivityInput,
+} from '#modules/issues/activity';
 
 // An initiative's activity feed merges two kinds of rows from issue_activity:
 // events of the initiative itself (initiative_id set) and the activity of the
@@ -40,10 +49,13 @@ export interface FeedPage {
   nextCursor: FeedCursor | null;
 }
 
-// One page of an initiative's feed, newest first. limit is clamped to 1..100.
+// One page of an initiative's feed, newest first. limit is clamped to 1..100. A mask
+// context (present for a client viewer) rewrites team-member attribution to the face,
+// the same as the issue feed.
 export async function listFeed(
   initiativeId: number,
   opts: { before?: FeedCursor | null; limit?: number } = {},
+  mask: MaskContext | null = null,
 ): Promise<FeedPage> {
   const limit = Math.min(Math.max(opts.limit ?? 25, 1), 100);
   const before = opts.before ?? null;
@@ -88,21 +100,50 @@ export async function listFeed(
   const page = hasMore ? rows.slice(0, limit) : rows;
   const last = page[page.length - 1];
   return {
-    items: page.map((row) => ({
-      id: row.id,
-      source: row.initiativeId != null ? ('initiative' as const) : ('issue' as const),
-      kind: row.kind as FeedKind,
-      actorUserId: row.actorUserId,
-      actorName: row.actorName,
-      body: row.body,
-      action: row.action,
-      payload: row.payload,
-      createdAt: iso(row.createdAt),
-      issueId: row.issueId,
-      issueIdentifier: row.seq != null && row.projectKey ? `${row.projectKey}-${row.seq}` : null,
-    })),
+    items: page.map((row) =>
+      maskInitiativeFeedItem(
+        {
+          id: row.id,
+          source: row.initiativeId != null ? ('initiative' as const) : ('issue' as const),
+          kind: row.kind as FeedKind,
+          actorUserId: row.actorUserId,
+          actorName: row.actorName,
+          body: row.body,
+          action: row.action,
+          payload: row.payload,
+          createdAt: iso(row.createdAt),
+          issueId: row.issueId,
+          issueIdentifier:
+            row.seq != null && row.projectKey ? `${row.projectKey}-${row.seq}` : null,
+        },
+        mask,
+      ),
+    ),
     nextCursor: hasMore && last ? { ts: last.cursorTs, id: last.id } : null,
   };
+}
+
+// Masks an initiative feed row to the face for a client viewer: the actor, the body's
+// mentions of team members, the owner/assignee/delegate user-named payload sides, and
+// the mentions inside a title or description change's prose. The issue feed shares the
+// same rule (issues/activity maskFeedItem); this mirrors it for the initiative-shaped
+// row.
+function maskInitiativeFeedItem(
+  item: InitiativeFeedItemRow,
+  mask: MaskContext | null,
+): InitiativeFeedItemRow {
+  if (!mask) return item;
+  const masked = maskActor(item, mask.face, isMaskableActor(mask, item.actorUserId));
+  const body =
+    masked.body != null
+      ? maskMentionsInBody(masked.body, mask.clientMemberHandles, mask.face?.username ?? null)
+      : masked.body;
+  let payload = masked.payload;
+  if (masked.action === 'owner' || masked.action === 'assignee' || masked.action === 'delegate')
+    payload = maskUserSides(payload, mask);
+  else if (masked.action === 'title' || masked.action === 'description')
+    payload = maskPayloadProse(payload, mask);
+  return body === masked.body && payload === masked.payload ? masked : { ...masked, body, payload };
 }
 
 // --- Activity log ----------------------------------------------------------------

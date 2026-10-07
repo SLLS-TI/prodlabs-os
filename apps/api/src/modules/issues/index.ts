@@ -8,6 +8,7 @@ import {
   assertProjectOwner,
   assertTimeVisible,
   checkTimeVisible,
+  resolveMaskContext,
   requireUser,
 } from '#shared/access';
 import { HttpError } from '#shared/lib';
@@ -463,9 +464,10 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
     '/projects/:projectKey/issues/board',
     async ({ project, user }) => {
       const canSeeTime = await checkTimeVisible(project.id, user);
+      const mask = await resolveMaskContext(project.id, user);
       return {
         issues: await attachSubtaskCounts(
-          await attachBoardLinks(await listIssues(project, canSeeTime), project.id),
+          await attachBoardLinks(await listIssues(project, canSeeTime, mask), project.id),
           project.id,
         ),
       };
@@ -483,7 +485,11 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   .get(
     '/projects/:projectKey/issues/archived',
     async ({ project, user }) =>
-      listArchivedIssues(project, await checkTimeVisible(project.id, user)),
+      listArchivedIssues(
+        project,
+        await checkTimeVisible(project.id, user),
+        await resolveMaskContext(project.id, user),
+      ),
     {
       params: projectKeyParams,
       permission: ['work_items', 'read'],
@@ -499,11 +505,12 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
     '/projects/:projectKey/issues/:sequenceNumber',
     async ({ project, params, user }) => {
       const canSeeTime = await checkTimeVisible(project.id, user);
-      const issue = await getIssueBySequence(project.id, params.sequenceNumber, canSeeTime);
+      const mask = await resolveMaskContext(project.id, user);
+      const issue = await getIssueBySequence(project.id, params.sequenceNumber, canSeeTime, mask);
       if (!issue) throw new HttpError(404, 'Issue not found');
       const fields = await getIssueFieldValues(issue.id);
       const links = await listIssueLinks(issue.id);
-      const watchers = await listIssueWatchers(project.id, issue.id);
+      const watchers = await listIssueWatchers(project.id, issue.id, mask);
       const parent = await getParentRef(issue.parentId);
       const subtasks = await listSubtasks(issue.id);
       const checklists = await listChecklists(issue.id);
@@ -546,11 +553,12 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
       // This route resolves the project itself, so it also enforces the per-project
       // MCP toggle itself (it does not run through the workItem guard).
       await assertMcpAllowed(projectId, request.headers);
-      const issue = await getIssue(params.issueId, await checkTimeVisible(projectId, user));
+      const mask = await resolveMaskContext(projectId, user);
+      const issue = await getIssue(params.issueId, await checkTimeVisible(projectId, user), mask);
       if (!issue) throw new HttpError(404, 'Issue not found');
       const fields = await getIssueFieldValues(issue.id);
       const links = await listIssueLinks(issue.id);
-      const watchers = await listIssueWatchers(issue.projectId, issue.id);
+      const watchers = await listIssueWatchers(issue.projectId, issue.id, mask);
       const parent = await getParentRef(issue.parentId);
       const subtasks = await listSubtasks(issue.id);
       const checklists = await listChecklists(issue.id);
@@ -1219,7 +1227,11 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
     '/issues/:issueId/watch',
     async ({ params, projectId, user }) => {
       await setIssueWatching(params.issueId, requireUser(user).id, true);
-      return listIssueWatchers(projectId, params.issueId);
+      return listIssueWatchers(
+        projectId,
+        params.issueId,
+        await resolveMaskContext(projectId, user),
+      );
     },
     {
       params: issueParams,
@@ -1239,7 +1251,11 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
     '/issues/:issueId/watch',
     async ({ params, projectId, user }) => {
       await setIssueWatching(params.issueId, requireUser(user).id, false);
-      return listIssueWatchers(projectId, params.issueId);
+      return listIssueWatchers(
+        projectId,
+        params.issueId,
+        await resolveMaskContext(projectId, user),
+      );
     },
     {
       params: issueParams,
@@ -1257,12 +1273,16 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   // have their own delegation flow and must never receive human notifications.
   .put(
     '/issues/:issueId/watchers/:userId',
-    async ({ params, projectId }) => {
+    async ({ params, projectId, user }) => {
       if (!(await isEligibleIssueWatcher(projectId, params.userId))) {
         throw new HttpError(400, 'Watcher must be a human project member with work item access');
       }
       await setIssueWatching(params.issueId, params.userId, true);
-      return listIssueWatchers(projectId, params.issueId);
+      return listIssueWatchers(
+        projectId,
+        params.issueId,
+        await resolveMaskContext(projectId, user),
+      );
     },
     {
       params: issueWatcherParams,
@@ -1279,12 +1299,16 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
 
   .delete(
     '/issues/:issueId/watchers/:userId',
-    async ({ params, projectId }) => {
+    async ({ params, projectId, user }) => {
       if (!(await isEligibleIssueWatcher(projectId, params.userId))) {
         throw new HttpError(400, 'Watcher must be a human project member with work item access');
       }
       await setIssueWatching(params.issueId, params.userId, false);
-      return listIssueWatchers(projectId, params.issueId);
+      return listIssueWatchers(
+        projectId,
+        params.issueId,
+        await resolveMaskContext(projectId, user),
+      );
     },
     {
       params: issueWatcherParams,
@@ -1311,6 +1335,7 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
         params.issueId,
         { ...query, cursor: feedCursor(query.cursor) },
         await checkTimeVisible(projectId, user),
+        await resolveMaskContext(projectId, user),
       ),
     {
       params: issueParams,
@@ -1337,6 +1362,7 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
         params.issueId,
         { ...query, cursor: feedCursor(query.cursor) },
         await checkTimeVisible(projectId, user),
+        await resolveMaskContext(projectId, user),
       ),
     {
       params: issueParams,
@@ -1385,7 +1411,13 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   // client opening a bar asks for [from, to), leaving `to` off for the open one.
   .get(
     '/issues/:issueId/timeline/items',
-    async ({ params, query }) => listFeedRange(params.issueId, query.from, query.to),
+    async ({ params, query, user, projectId }) =>
+      listFeedRange(
+        params.issueId,
+        query.from,
+        query.to,
+        await resolveMaskContext(projectId, user),
+      ),
     {
       params: issueParams,
       query: feedRangeQuery,

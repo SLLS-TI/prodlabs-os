@@ -34,7 +34,7 @@ import {
 import type { IssueQuery } from '#modules/agents/core/issue-query';
 import { iso, num, numOrNull, HttpError } from '#shared/lib';
 import type { ProjectRow } from '#modules/projects/service';
-import { assertProjectFeature } from '#shared/access';
+import { assertProjectFeature, isMaskableActor, type MaskContext } from '#shared/access';
 import {
   getCustomFieldById,
   type CustomFieldRow,
@@ -179,6 +179,22 @@ function mapIssue(row: typeof issue.$inferSelect, projectKey: string): IssueRow 
   };
 }
 
+// Remaps the assignee/delegate ids a client viewer sees to the face id when the real
+// id is a maskable actor (anyone who is not a current client), so the chip shows the
+// face and no team identity leaks through the id the web looks the avatar up by.
+// Display-only shaping on the read path: the server routes and filters work by the real
+// issue.assignee_user_id column, which this never changes. A null mask (team/owner
+// read) is a no-op. Fails closed: with no face, a maskable id is suppressed to null
+// rather than left real.
+function maskIssueAssignees(issues: IssueRow[], mask: MaskContext | null): void {
+  if (!mask) return;
+  const faceId = mask.face?.userId ?? null;
+  for (const issue of issues) {
+    if (isMaskableActor(mask, issue.assigneeUserId)) issue.assigneeUserId = faceId;
+    if (isMaskableActor(mask, issue.delegateUserId)) issue.delegateUserId = faceId;
+  }
+}
+
 // Sets each issue's statusSince to when it entered the column it is in now, leaving
 // the createdAt default (set by mapIssue) for an issue with no open stretch. One
 // query for the whole set. Mutates the passed issues in place.
@@ -224,7 +240,11 @@ function snapshot(row: IssueRow): IssueSnapshot {
 // project's time tracking gets loggedMinutes left at 0, so no total leaks through the
 // board payload even though the time UI is hidden. Defaults true for the callers that
 // do not surface time (agent tools, writes).
-export async function listIssues(project: ProjectRow, canSeeTime = true): Promise<IssueRow[]> {
+export async function listIssues(
+  project: ProjectRow,
+  canSeeTime = true,
+  mask: MaskContext | null = null,
+): Promise<IssueRow[]> {
   const rows = await db
     .select()
     .from(issue)
@@ -236,6 +256,7 @@ export async function listIssues(project: ProjectRow, canSeeTime = true): Promis
   await attachStatusSince(issues);
   await attachGroupings(issues);
   if (canSeeTime) await attachLoggedMinutes(issues);
+  maskIssueAssignees(issues, mask);
   return issues;
 }
 
@@ -244,6 +265,7 @@ export async function listIssues(project: ProjectRow, canSeeTime = true): Promis
 export async function listArchivedIssues(
   project: ProjectRow,
   canSeeTime = true,
+  mask: MaskContext | null = null,
 ): Promise<IssueRow[]> {
   const rows = await db
     .select()
@@ -256,6 +278,7 @@ export async function listArchivedIssues(
   await attachStatusSince(issues);
   await attachGroupings(issues);
   if (canSeeTime) await attachLoggedMinutes(issues);
+  maskIssueAssignees(issues, mask);
   return issues;
 }
 
@@ -643,15 +666,23 @@ async function loadSnapshot(
   return row ? { ...row, estimatePoints: numOrNull(row.estimatePoints) } : null;
 }
 
-export async function getIssue(id: number, canSeeTime = true): Promise<IssueRow | null> {
-  return (await getIssues([id], canSeeTime))[0] ?? null;
+export async function getIssue(
+  id: number,
+  canSeeTime = true,
+  mask: MaskContext | null = null,
+): Promise<IssueRow | null> {
+  return (await getIssues([id], canSeeTime, mask))[0] ?? null;
 }
 
 // Several issues at once, in no particular order. The per-issue enrichment is
 // batched, so this costs what a single getIssue does however many ids it is given
 // — which is what makes it worth using for the writes that touch two issues.
 // canSeeTime gates the logged-time sum (see listIssues).
-export async function getIssues(ids: number[], canSeeTime = true): Promise<IssueRow[]> {
+export async function getIssues(
+  ids: number[],
+  canSeeTime = true,
+  mask: MaskContext | null = null,
+): Promise<IssueRow[]> {
   if (ids.length === 0) return [];
   const rows = await db
     .select({ issue, projectKey: projectTable.key })
@@ -663,6 +694,7 @@ export async function getIssues(ids: number[], canSeeTime = true): Promise<Issue
   await attachStatusSince(issues);
   await attachGroupings(issues);
   if (canSeeTime) await attachLoggedMinutes(issues);
+  maskIssueAssignees(issues, mask);
   return issues;
 }
 
@@ -673,6 +705,7 @@ export async function getIssueBySequence(
   projectId: number,
   sequenceNumber: number,
   canSeeTime = true,
+  mask: MaskContext | null = null,
 ): Promise<IssueRow | null> {
   const rows = await db
     .select({ issue, projectKey: projectTable.key })
@@ -685,6 +718,7 @@ export async function getIssueBySequence(
   await attachStatusSince([mapped]);
   await attachGroupings([mapped]);
   if (canSeeTime) await attachLoggedMinutes([mapped]);
+  maskIssueAssignees([mapped], mask);
   return mapped;
 }
 

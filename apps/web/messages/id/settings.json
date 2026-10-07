@@ -153,7 +153,10 @@
     "timeVisibilityHint": "Pilih peran mana yang dapat melihat pelacakan waktu di proyek ini. Pemilik selalu melihatnya.",
     "timeVisibilityAll": "Semua peran",
     "timeVisibilityRestricted": "Hanya peran terpilih",
-    "timeVisibilityNone": "Tidak ada peran dipilih — semua orang dapat melihat pelacakan waktu."
+    "timeVisibilityNone": "Tidak ada peran dipilih — semua orang dapat melihat pelacakan waktu.",
+    "clientMasking": "Identitas yang terlihat oleh klien",
+    "clientMaskingHint": "Anggota berperan klien melihat seluruh aktivitas tim diatribusikan ke satu pengguna. Pilih siapa, atau biarkan kembali ke pemilik proyek.",
+    "clientMaskingAuto": "Pemilik proyek"
   },
   "states": {
     "addState": "Tambah status {type}",

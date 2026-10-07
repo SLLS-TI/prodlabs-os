@@ -153,7 +153,10 @@
     "timeVisibilityHint": "Choose which roles can see time tracking in this project. Owners always see it.",
     "timeVisibilityAll": "All roles",
     "timeVisibilityRestricted": "Only selected roles",
-    "timeVisibilityNone": "No roles selected — everyone can see time tracking."
+    "timeVisibilityNone": "No roles selected — everyone can see time tracking.",
+    "clientMasking": "Client-facing identity",
+    "clientMaskingHint": "Client-role members see every team member's activity attributed to this one face user. Choose who, or let it fall back to the project owner.",
+    "clientMaskingAuto": "Project owner"
   },
   "states": {
     "addState": "Add {type} state",

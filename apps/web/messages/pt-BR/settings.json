@@ -153,7 +153,10 @@
     "timeVisibilityHint": "Escolha quais papéis podem ver o controle de tempo neste projeto. Owners sempre veem.",
     "timeVisibilityAll": "Todos os papéis",
     "timeVisibilityRestricted": "Apenas papéis selecionados",
-    "timeVisibilityNone": "Nenhum papel selecionado — todos podem ver o controle de tempo."
+    "timeVisibilityNone": "Nenhum papel selecionado — todos podem ver o controle de tempo.",
+    "clientMasking": "Identidade exibida ao cliente",
+    "clientMaskingHint": "Membros com papel de cliente veem toda a atividade da equipe atribuída a um único usuário. Escolha quem, ou deixe recair sobre o owner do projeto.",
+    "clientMaskingAuto": "Owner do projeto"
   },
   "states": {
     "addState": "Adicionar estado {type}",

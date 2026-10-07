@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { addedMentionHandles, parseMentionHandles } from '#shared/mentions';
+import { addedMentionHandles, maskMentionsInBody, parseMentionHandles } from '#shared/mentions';
 
 // A mention is written as @handle in a comment, an issue description or a markdown
 // custom field. parseMentionHandles extracts the handles; addedMentionHandles is what
@@ -76,5 +76,38 @@ describe('addedMentionHandles', () => {
 
   it('returns nothing when the edit removed a mention', () => {
     expect(addedMentionHandles('cc @ada and @bob', 'cc @ada')).toEqual([]);
+  });
+});
+
+describe('maskMentionsInBody', () => {
+  // The set is the current client handles to preserve; every other handle is rewritten.
+  const clientHandles = new Set(['carol']);
+
+  it('rewrites a non-client handle (a team or former member) to the face handle', () => {
+    expect(maskMentionsInBody('ping @ada now', clientHandles, 'face')).toBe('ping @face now');
+  });
+
+  it('leaves a current-client handle alone', () => {
+    expect(maskMentionsInBody('ping @carol now', clientHandles, 'face')).toBe('ping @carol now');
+  });
+
+  it('rewrites an unknown handle (fails closed)', () => {
+    expect(maskMentionsInBody('ping @stranger now', clientHandles, 'face')).toBe('ping @face now');
+  });
+
+  it('does not rewrite a mention inside a code span', () => {
+    expect(maskMentionsInBody('install `@ada` please', clientHandles, 'face')).toBe(
+      'install `@ada` please',
+    );
+  });
+
+  it('fails closed to a neutral token when the face has no handle', () => {
+    expect(maskMentionsInBody('ping @ada', clientHandles, null)).toBe('ping @user');
+  });
+
+  it('matches handles case-insensitively', () => {
+    expect(maskMentionsInBody('ping @Carol and @Ada', clientHandles, 'face')).toBe(
+      'ping @Carol and @face',
+    );
   });
 });

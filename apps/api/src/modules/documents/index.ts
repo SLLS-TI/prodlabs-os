@@ -1,7 +1,7 @@
 import { documentCollaborationRoutes } from './collaboration-routes';
 import { Elysia, t } from 'elysia';
 import { authContext } from '#shared/auth-context';
-import { assertPermission, requireUser } from '#shared/access';
+import { assertPermission, requireUser, resolveMaskContext } from '#shared/access';
 import { guards } from '#shared/guards';
 import { noContent } from '#shared/http';
 import { HttpError } from '#shared/lib';
@@ -65,6 +65,8 @@ import {
   listDocumentRevisions,
   listDocumentAssets,
   listDocuments,
+  maskDocument,
+  maskDocuments,
   restoreDocument,
   restoreDocumentRevision,
   setDocumentAccess,
@@ -114,11 +116,13 @@ export const documentRoutes = new Elysia({
   .use(documentCollaborationRoutes)
   .get(
     '/projects/:projectKey/documents',
-    async ({ project, query, user }) =>
-      listDocuments(project.id, requireUser(user).id, {
+    async ({ project, query, user }) => {
+      const docs = await listDocuments(project.id, requireUser(user).id, {
         q: query.q,
         archived: query.archived === 'true',
-      }),
+      });
+      return maskDocuments(docs, await resolveMaskContext(project.id, user));
+    },
     {
       permission: ['documents', 'read'],
       query: listDocumentsQuery,
@@ -136,7 +140,7 @@ export const documentRoutes = new Elysia({
     async ({ project, params, user }) => {
       const document = await getDocument(project.id, params.documentId, requireUser(user).id);
       if (!document) throw new HttpError(404, 'Document not found');
-      return document;
+      return maskDocument(document, await resolveMaskContext(project.id, user));
     },
     {
       permission: ['documents', 'read'],

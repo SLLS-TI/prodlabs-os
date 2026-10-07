@@ -149,7 +149,7 @@ export const TeamProjectDetailResponse = t.Object({
   stats: StatsDto,
   viewer: t.Nullable(
     t.Object({
-      role: t.Union([t.Literal('owner'), t.Literal('member')]),
+      role: t.Union([t.Literal('owner'), t.Literal('member'), t.Literal('client')]),
       source: t.Union([t.Literal('invite'), t.Literal('scim')], {
         description: "A provisioned membership is the identity provider's: it cannot be left.",
       }),
@@ -171,7 +171,7 @@ export const TeamProjectMemberPageResponse = pageResponse(
     username: t.Nullable(t.String()),
     image: t.Nullable(t.String()),
     isAgent: t.Boolean(),
-    role: t.Union([t.Literal('owner'), t.Literal('member')]),
+    role: t.Union([t.Literal('owner'), t.Literal('member'), t.Literal('client')]),
     roleId: t.Nullable(t.Number()),
     roleName: t.Nullable(t.String()),
     description: t.String(),
