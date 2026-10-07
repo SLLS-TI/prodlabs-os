@@ -218,6 +218,53 @@ describe('projects', () => {
       const res = await outsider.api.projects({ projectKey: 'MKT' }).patch({ name: 'Hijacked' });
       expect(res.status).toBe(403);
     });
+
+    it('starts a new project with no color', async () => {
+      const { api } = await signUpClient();
+      const created = await api.projects.post({ key: 'MKT', name: 'Marketing' });
+      expect(created.data?.color).toBeNull();
+
+      const view = await viewOf(api, 'MKT');
+      expect(view.data?.project.color).toBeNull();
+    });
+
+    it('sets and reads back a project color', async () => {
+      const { api } = await signUpClient();
+      await api.projects.post({ key: 'MKT', name: 'Marketing' });
+
+      const res = await api.projects({ projectKey: 'MKT' }).patch({ color: '#3b82f6' });
+      expect(res.status).toBe(200);
+      expect(res.data?.color).toBe('#3b82f6');
+
+      const view = await viewOf(api, 'MKT');
+      expect(view.data?.project.color).toBe('#3b82f6');
+    });
+
+    it('clears a project color with null', async () => {
+      const { api } = await signUpClient();
+      await api.projects.post({ key: 'MKT', name: 'Marketing' });
+      await api.projects({ projectKey: 'MKT' }).patch({ color: '#3b82f6' });
+
+      const res = await api.projects({ projectKey: 'MKT' }).patch({ color: null });
+      expect(res.status).toBe(200);
+      expect(res.data?.color).toBeNull();
+
+      const view = await viewOf(api, 'MKT');
+      expect(view.data?.project.color).toBeNull();
+    });
+
+    it('changes the color without touching name or description', async () => {
+      const { api } = await signUpClient();
+      await api.projects.post({ key: 'MKT', name: 'Marketing', description: 'Growth work' });
+
+      const res = await api.projects({ projectKey: 'MKT' }).patch({ color: '#10b981' });
+      expect(res.status).toBe(200);
+      expect(res.data).toMatchObject({
+        name: 'Marketing',
+        description: 'Growth work',
+        color: '#10b981',
+      });
+    });
   });
 
   describe('view', () => {
