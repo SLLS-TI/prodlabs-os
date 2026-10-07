@@ -128,6 +128,19 @@ export interface InstanceTelegramSettingsPatch {
   botToken?: string;
 }
 
+// The instance Slack bot: the default sender for project Slack notifications and
+// digests. `teamName` is the workspace resolved from Slack when the token is saved.
+export interface InstanceSlackSettings {
+  enabled: boolean;
+  teamName: string;
+  hasBotToken: boolean;
+}
+
+export interface InstanceSlackSettingsPatch {
+  enabled?: boolean;
+  botToken?: string;
+}
+
 // One account in the instance user directory. `role` is the global better-auth role
 // ("god" for the instance owner), which is unrelated to project membership.
 export interface InstanceUser {
@@ -250,6 +263,14 @@ export const getInstanceTelegramSettings = () =>
 
 export const updateInstanceTelegramSettings = (patch: InstanceTelegramSettingsPatch) =>
   request<InstanceTelegramSettings>('/god/telegram-settings', {
+    method: 'PUT',
+    body: JSON.stringify(patch),
+  });
+
+export const getInstanceSlackSettings = () => request<InstanceSlackSettings>('/god/slack-settings');
+
+export const updateInstanceSlackSettings = (patch: InstanceSlackSettingsPatch) =>
+  request<InstanceSlackSettings>('/god/slack-settings', {
     method: 'PUT',
     body: JSON.stringify(patch),
   });

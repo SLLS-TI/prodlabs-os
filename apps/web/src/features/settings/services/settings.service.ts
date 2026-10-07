@@ -11,11 +11,14 @@ import {
   type AutoArchiveSettings,
   type EstimateSettings,
   type ProjectFeatures,
+  type SlackProjectSettings,
   type SubtaskAutomationSettings,
   getAutoArchive,
   updateAutoArchive,
   getSubtaskAutomation,
   updateSubtaskAutomation,
+  getSlackProjectSettings,
+  updateSlackProjectSettings,
   updateEstimates,
   updateProjectSettings,
 } from '@/lib/api/endpoints/settings';
@@ -193,6 +196,24 @@ export function useUpdateSubtaskAutomation(projectKey: string) {
   return useMutation({
     mutationFn: (input: SubtaskAutomationSettings) => updateSubtaskAutomation(projectKey, input),
     onSuccess: (data) => qc.setQueryData(qk.subtaskAutomation(projectKey), data),
+  });
+}
+
+// The project's Slack channel (owner only; the route 403s a non-owner, so the query
+// only runs when the caller may read it).
+export function useSlackChannelQuery(projectKey: string, enabled: boolean) {
+  return useQuery({
+    queryKey: qk.slackProject(projectKey),
+    queryFn: () => getSlackProjectSettings(projectKey),
+    enabled,
+  });
+}
+
+export function useUpdateSlackChannel(projectKey: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SlackProjectSettings) => updateSlackProjectSettings(projectKey, input),
+    onSuccess: (data) => qc.setQueryData(qk.slackProject(projectKey), data),
   });
 }
 

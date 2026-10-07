@@ -153,7 +153,15 @@
     "timeVisibilityHint": "Elige qué roles pueden ver el seguimiento de tiempo en este proyecto. Los propietarios siempre lo ven.",
     "timeVisibilityAll": "Todos los roles",
     "timeVisibilityRestricted": "Solo roles seleccionados",
-    "timeVisibilityNone": "Ningún rol seleccionado: todos pueden ver el seguimiento de tiempo."
+    "timeVisibilityNone": "Ningún rol seleccionado: todos pueden ver el seguimiento de tiempo.",
+    "slack": "Slack",
+    "slackHint": "Publica los eventos de incidencias y los resúmenes diarios de este proyecto en un canal de Slack. Solo el propietario del proyecto puede cambiarlo.",
+    "slackSaved": "Canal de Slack guardado",
+    "slackOwnerOnly": "Solo el propietario del proyecto puede configurar el canal de Slack.",
+    "slackEnabled": "Publicar en Slack",
+    "slackEnabledHint": "Cuando está activado, los eventos de incidencias y los resúmenes diarios se publican en el canal de abajo.",
+    "slackChannel": "Canal",
+    "slackChannelHint": "Un id de canal (C01234567) o #nombre. Invita primero al bot al canal, o las publicaciones fallan con not_in_channel."
   },
   "states": {
     "addState": "Añadir un estado {type}",

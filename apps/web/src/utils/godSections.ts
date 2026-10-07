@@ -2,6 +2,7 @@ import {
   Building2,
   FolderKanban,
   HardDrive,
+  Hash,
   Keyboard,
   KeyRound,
   Mail,
@@ -70,6 +71,12 @@ export const GOD_SECTIONS: GodSection[] = [
     slug: 'telegram',
     group: 'instance',
     icon: Send,
+    integration: true,
+  },
+  {
+    slug: 'slack',
+    group: 'instance',
+    icon: Hash,
     integration: true,
   },
   {

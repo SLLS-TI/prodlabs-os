@@ -153,7 +153,15 @@
     "timeVisibilityHint": "选择哪些角色可以查看此项目的时间跟踪。所有者始终可见。",
     "timeVisibilityAll": "所有角色",
     "timeVisibilityRestricted": "仅所选角色",
-    "timeVisibilityNone": "未选择任何角色 — 所有人都能查看时间跟踪。"
+    "timeVisibilityNone": "未选择任何角色 — 所有人都能查看时间跟踪。",
+    "slack": "Slack",
+    "slackHint": "将本项目的事项事件和每日摘要发送到某个 Slack 频道。仅项目所有者可更改。",
+    "slackSaved": "Slack 频道已保存",
+    "slackOwnerOnly": "仅项目所有者可配置 Slack 频道。",
+    "slackEnabled": "发送到 Slack",
+    "slackEnabledHint": "开启后，事项事件和每日摘要会发送到下面的频道。",
+    "slackChannel": "频道",
+    "slackChannelHint": "频道 id（C01234567）或 #名称。请先把机器人邀请到频道，否则发送会因 not_in_channel 失败。"
   },
   "states": {
     "addState": "添加{type}状态",

@@ -153,7 +153,15 @@
     "timeVisibilityHint": "اختر الأدوار التي يمكنها رؤية تتبع الوقت في هذا المشروع. المالكون يرونه دائمًا.",
     "timeVisibilityAll": "كل الأدوار",
     "timeVisibilityRestricted": "الأدوار المحددة فقط",
-    "timeVisibilityNone": "لم يتم تحديد أي دور — يمكن للجميع رؤية تتبع الوقت."
+    "timeVisibilityNone": "لم يتم تحديد أي دور — يمكن للجميع رؤية تتبع الوقت.",
+    "slack": "Slack",
+    "slackHint": "انشر أحداث المهام والملخصات اليومية للمشروع ده في قناة Slack. مالك المشروع بس هو اللي يقدر يغيّر ده.",
+    "slackSaved": "تم حفظ قناة Slack",
+    "slackOwnerOnly": "مالك المشروع بس هو اللي يقدر يضبط قناة Slack.",
+    "slackEnabled": "النشر على Slack",
+    "slackEnabledHint": "لما يكون شغّال، أحداث المهام والملخصات اليومية بتتنشر في القناة اللي تحت.",
+    "slackChannel": "القناة",
+    "slackChannelHint": "معرّف قناة (C01234567) أو ‎#اسم. اعزم الروبوت على القناة الأول، وإلا النشر هيفشل بـ not_in_channel."
   },
   "states": {
     "addState": "إضافة حالة {type}",

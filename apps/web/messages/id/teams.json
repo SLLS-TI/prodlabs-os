@@ -223,7 +223,11 @@
     "telegramBotHint": "Bot yang mengirimkan notifikasi untuk setiap proyek tim. Anggota memilih obrolan masing-masing di preferensi mereka. Token disimpan secara terenkripsi.",
     "botToken": "Token API bot (opsional)",
     "emailSaved": "Penyedia email disimpan",
-    "telegramSaved": "Penyedia Telegram disimpan"
+    "telegramSaved": "Penyedia Telegram disimpan",
+    "slack": "Slack",
+    "slackBot": "Bot Slack",
+    "slackBotHint": "Bot yang mengirim notifikasi Slack untuk setiap proyek tim. Tiap proyek menetapkan kanalnya sendiri di halaman Konfigurasi. Token disimpan terenkripsi.",
+    "slackSaved": "Penyedia Slack disimpan"
   },
   "integrations": {
     "noAccess": "Anda tidak memiliki akses ke integrasi tim ini.",

@@ -31,6 +31,9 @@ export interface NotificationSettings {
   };
   resend: { enabled: boolean; hasApiKey: boolean };
   telegram: { enabled: boolean; hasBotToken: boolean };
+  // The team's own Slack bot token, an override of the instance bot. The per-project
+  // channel is a project setting, not held here.
+  slack: { enabled: boolean; hasBotToken: boolean };
 }
 
 // A partial write. Each section is optional so a provider card saves on its own.
@@ -48,6 +51,7 @@ export interface NotificationSettingsPatch {
   };
   resend?: { enabled: boolean; apiKey?: string };
   telegram?: { enabled: boolean; botToken?: string };
+  slack?: { enabled: boolean; botToken?: string };
 }
 
 // The team's notification provider credentials, shared by every project it owns

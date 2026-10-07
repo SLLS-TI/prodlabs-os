@@ -153,7 +153,15 @@
     "timeVisibilityHint": "Pilih peran mana yang dapat melihat pelacakan waktu di proyek ini. Pemilik selalu melihatnya.",
     "timeVisibilityAll": "Semua peran",
     "timeVisibilityRestricted": "Hanya peran terpilih",
-    "timeVisibilityNone": "Tidak ada peran dipilih — semua orang dapat melihat pelacakan waktu."
+    "timeVisibilityNone": "Tidak ada peran dipilih — semua orang dapat melihat pelacakan waktu.",
+    "slack": "Slack",
+    "slackHint": "Kirim event isu dan ringkasan harian proyek ini ke kanal Slack. Hanya pemilik proyek yang dapat mengubahnya.",
+    "slackSaved": "Kanal Slack disimpan",
+    "slackOwnerOnly": "Hanya pemilik proyek yang dapat mengonfigurasi kanal Slack.",
+    "slackEnabled": "Kirim ke Slack",
+    "slackEnabledHint": "Saat aktif, event isu dan ringkasan harian dikirim ke kanal di bawah.",
+    "slackChannel": "Kanal",
+    "slackChannelHint": "Id kanal (C01234567) atau #nama. Undang bot ke kanal lebih dulu, atau pesan gagal dengan not_in_channel."
   },
   "states": {
     "addState": "Tambah status {type}",
