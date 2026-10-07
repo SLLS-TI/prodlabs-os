@@ -24,6 +24,7 @@ import {
   ProjectListResponse,
   ProjectResponse,
   ProjectSettingsResponse,
+  SlackProjectResponse,
   SubtaskAutomationResponse,
   copyProjectBody,
   createProjectBody,
@@ -32,6 +33,7 @@ import {
   updateEstimatesBody,
   updateProjectBody,
   updateProjectSettingsBody,
+  updateSlackProjectBody,
   updateSubtaskAutomationBody,
 } from './model';
 import {
@@ -45,6 +47,8 @@ import {
   setAutoArchiveSettings,
   getSubtaskAutomationSettings,
   setSubtaskAutomationSettings,
+  getSlackProjectSettings,
+  setSlackProjectSettings,
   setEstimateSettings,
 } from './service';
 import { copyProject } from './copy';
@@ -306,6 +310,30 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
       permission: ['workflow_config', 'edit'],
       response: { 200: SubtaskAutomationResponse, ...commonErrors },
       detail: { summary: "Update a project's subtask automations" },
+    },
+  )
+
+  // The Slack channel this project posts notifications and daily digests to. The
+  // bot token is a team/instance setting; here only the channel and whether posting
+  // is on. Owner-only, since it directs the project's activity to an external chat.
+  .get(
+    '/projects/:projectKey/settings/slack',
+    ({ project }) => getSlackProjectSettings(project.id),
+    {
+      projectOwner: true,
+      response: { 200: SlackProjectResponse, ...accessErrors },
+      detail: { summary: "Get a project's Slack channel" },
+    },
+  )
+
+  .patch(
+    '/projects/:projectKey/settings/slack',
+    ({ project, body }) => setSlackProjectSettings(project.id, body),
+    {
+      projectOwner: true,
+      body: updateSlackProjectBody,
+      response: { 200: SlackProjectResponse, ...commonErrors },
+      detail: { summary: "Update a project's Slack channel" },
     },
   )
 

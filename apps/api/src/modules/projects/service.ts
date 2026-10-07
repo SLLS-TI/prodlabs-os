@@ -768,6 +768,35 @@ export async function setSubtaskAutomationSettings(
   return next;
 }
 
+// The project's Slack target, stored in project_setting under SLACK_KEY as
+// { channel, enabled }. channel is a Slack channel id (C01234567) or '#name'; it is
+// not a secret, so it lives in project_setting rather than the encrypted store. The
+// bot token comes from the team's notification settings or the instance default at
+// send time. enabled is forced off when the channel is blank, so an enabled project
+// always has somewhere to post. Read by the outbound enqueue path and the worker's
+// digest loop.
+const SLACK_KEY = 'slack';
+
+export interface SlackProjectSettings {
+  channel: string;
+  enabled: boolean;
+}
+
+export async function getSlackProjectSettings(projectId: number): Promise<SlackProjectSettings> {
+  const stored = await getProjectSetting<Partial<SlackProjectSettings>>(projectId, SLACK_KEY);
+  return { channel: (stored?.channel ?? '').trim(), enabled: stored?.enabled === true };
+}
+
+export async function setSlackProjectSettings(
+  projectId: number,
+  input: SlackProjectSettings,
+): Promise<SlackProjectSettings> {
+  const channel = input.channel.trim();
+  const next: SlackProjectSettings = { channel, enabled: input.enabled && channel.length > 0 };
+  await setProjectSetting(projectId, SLACK_KEY, next);
+  return next;
+}
+
 // Deletes a project and everything scoped to it. Every project-scoped foreign key
 // has ON DELETE CASCADE on project_id, so deleting the project row removes its
 // columns, issue types, labels, initiatives, issues, views, dashboards, and
