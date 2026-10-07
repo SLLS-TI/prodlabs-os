@@ -21,8 +21,11 @@ export default function SidebarConfigNav({ projectKey }: { projectKey: string | 
   const pathname = usePathname();
   const disabled = !projectKey;
   const { firstHref } = useSettingsNavGroups(projectKey);
-  const { can } = usePermissions();
+  const { can, role } = usePermissions();
   const features = useProjectFeatures();
+
+  // A client gets no project configuration: hide the whole group, its label included.
+  if (role === 'client') return null;
 
   return (
     <SidebarGroup>
