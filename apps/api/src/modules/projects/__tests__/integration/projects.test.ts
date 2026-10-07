@@ -385,6 +385,11 @@ describe('projects', () => {
         subtasks: true,
         checklists: true,
         issueStats: true,
+        aiTeam: true,
+        inbox: true,
+        workItems: true,
+        members: true,
+        notifications: true,
       });
     });
 
