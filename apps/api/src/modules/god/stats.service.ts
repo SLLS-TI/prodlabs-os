@@ -104,6 +104,20 @@ export async function getGodStats() {
      GROUP BY i.project_id
   `)) as unknown as { project_id: number; freshness_days: number }[];
 
+  // Issues committed for the current week across all projects: due_date in the Monday→Sunday
+  // week (date_trunc('week')), not archived, not in a canceled column. Done are the completed
+  // ones; remaining is the rest (committed minus done). Portfolio-wide, so no project grouping.
+  const [weekCommitment] = (await db.execute(sql`
+    SELECT count(*)::int AS committed,
+           count(*) FILTER (WHERE pc.state_type = 'completed')::int AS done
+      FROM issue i
+      JOIN project_column pc ON pc.id = i.column_id
+     WHERE i.archived_at IS NULL
+       AND pc.state_type <> 'canceled'
+       AND i.due_date >= date_trunc('week', CURRENT_DATE)::date
+       AND i.due_date < (date_trunc('week', CURRENT_DATE) + interval '7 days')::date
+  `)) as unknown as { committed: number; done: number }[];
+
   const worked = new Map(workedRows.map((r) => [r.project_id, r.worked_minutes]));
   const estimated = new Map(estimatedRows.map((r) => [r.project_id, r.estimated_minutes]));
   const states = new Map(stateRows.map((r) => [r.project_id, r]));
@@ -169,9 +183,20 @@ export async function getGodStats() {
 
   const redProjectCount = projects.filter((p) => p.healthBand === 'red').length;
 
+  const committed = weekCommitment?.committed ?? 0;
+  const done = weekCommitment?.done ?? 0;
+  const week = { committed, done, remaining: committed - done };
+
   return {
     projects,
-    global: { globalScore, overduePct, redProjectCount, globalBurnRatio, totals },
+    global: {
+      globalScore,
+      overduePct,
+      redProjectCount,
+      globalBurnRatio,
+      totals,
+      weekCommitment: week,
+    },
   };
 }
 

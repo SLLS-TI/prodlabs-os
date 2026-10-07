@@ -45,6 +45,11 @@ export interface GodStatsGlobal {
     closedLast7d: number;
     unassigned: number;
   };
+  weekCommitment: {
+    committed: number;
+    done: number;
+    remaining: number;
+  };
 }
 
 export interface GodStats {

@@ -316,6 +316,13 @@
   },
   "stats": {
     "empty": "No projects on this instance yet.",
+    "week": {
+      "title": "This week's commitment",
+      "done": "Done",
+      "remaining": "Remaining",
+      "total": "Committed",
+      "empty": "Nothing due this week."
+    },
     "summary": {
       "globalScore": "Global health",
       "overduePct": "Overdue share",

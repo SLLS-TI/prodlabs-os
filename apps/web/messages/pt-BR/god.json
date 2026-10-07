@@ -316,6 +316,13 @@
   },
   "stats": {
     "empty": "Ainda não há projetos nesta instância.",
+    "week": {
+      "title": "Comprometido nesta semana",
+      "done": "Concluídas",
+      "remaining": "Restantes",
+      "total": "Comprometidas",
+      "empty": "Nada previsto para esta semana."
+    },
     "summary": {
       "globalScore": "Saúde global",
       "overduePct": "Fração atrasada",
