@@ -15,8 +15,10 @@ import { SettingsResourceProvider } from './context/settingsPermission';
 import SettingsSubtaskAutomation from './components/configuration/SettingsSubtaskAutomation';
 import SettingsEstimates from './components/configuration/SettingsEstimates';
 import SettingsAutoArchive from './components/configuration/SettingsAutoArchive';
+import SettingsHealthWeights from './components/configuration/SettingsHealthWeights';
 import { useAutoArchiveForm } from './hooks/useAutoArchiveForm';
 import { useEstimatesForm } from './hooks/useEstimatesForm';
+import { useHealthWeightsForm } from './hooks/useHealthWeightsForm';
 import { useSubtaskAutomationForm } from './hooks/useSubtaskAutomationForm';
 
 const section = settingsSection('configuration');
@@ -39,13 +41,15 @@ function ConfigurationPage({ project }: { project: ProjectDetail }) {
   const subtasks = useSubtaskAutomationForm(project.project.ref);
   const estimates = useEstimatesForm(project.project);
   const archive = useAutoArchiveForm(project.project.ref);
-  const saving = subtasks.saving || estimates.saving || archive.saving;
-  const loaded = subtasks.loaded && archive.loaded;
+  const healthWeights = useHealthWeightsForm(project.project.ref);
+  const saving = subtasks.saving || estimates.saving || archive.saving || healthWeights.saving;
+  const loaded = subtasks.loaded && archive.loaded && healthWeights.loaded;
 
   async function save() {
     await subtasks.save();
     await estimates.save();
     await archive.save();
+    await healthWeights.save();
     toast.success(t('saved'));
   }
 
@@ -67,6 +71,7 @@ function ConfigurationPage({ project }: { project: ProjectDetail }) {
             {features.subtasks && <SettingsSubtaskAutomation form={subtasks} />}
             <SettingsEstimates form={estimates} />
             <SettingsAutoArchive form={archive} />
+            <SettingsHealthWeights form={healthWeights} />
           </div>
         </RequirePermission>
       </SettingsResourceProvider>

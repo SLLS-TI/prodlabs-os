@@ -47,6 +47,7 @@ export const qk = {
   // Configuration settings section).
   autoArchive: (projectKey: string) => ['autoArchive', projectKey] as const,
   subtaskAutomation: (projectKey: string) => ['subtaskAutomation', projectKey] as const,
+  healthWeights: (projectKey: string) => ['healthWeights', projectKey] as const,
   // The project's repository integration settings (the Repositories settings section).
   gitSettings: (projectKey: string) => ['gitSettings', projectKey] as const,
   gitConnections: (projectKey: string) => ['gitConnections', projectKey] as const,
