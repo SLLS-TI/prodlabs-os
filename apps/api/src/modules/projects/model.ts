@@ -309,3 +309,15 @@ export const SubtaskAutomationResponse = t.Object({
 });
 
 export const updateSubtaskAutomationBody = SubtaskAutomationResponse;
+
+// The project's Slack target (SlackProjectSettings from the service). channel is a
+// Slack channel id or '#name'; enabling with a blank channel is coerced to off.
+export const SlackProjectResponse = t.Object({
+  channel: t.String(),
+  enabled: t.Boolean(),
+});
+
+export const updateSlackProjectBody = t.Object({
+  channel: t.String({ maxLength: 200 }),
+  enabled: t.Boolean(),
+});

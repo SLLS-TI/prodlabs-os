@@ -47,6 +47,10 @@
       "label": "Telegram",
       "description": "El bot al que las personas conectan su cuenta de Telegram, y el que entrega las notificaciones de Telegram para los proyectos que no definen un bot propio."
     },
+    "slack": {
+      "label": "Slack",
+      "description": "El bot que publica las notificaciones del proyecto y los resúmenes diarios en el canal de Slack que cada proyecto configura, para los proyectos que no configuran un bot propio."
+    },
     "email": {
       "label": "Proveedor de correo",
       "description": "El proveedor de correo por el que la instancia envía: reinicios de contraseña, confirmación de direcciones, y enlaces de inicio de sesión."

@@ -70,4 +70,32 @@ describe('deliverNotification', () => {
 
     expect(result).toEqual({ ok: false, retryable: false, error: 'Project not found' });
   });
+
+  it('fails permanently on the slack channel when no token is configured', async () => {
+    const { projectId } = await makeProject();
+
+    const result = await deliverNotification({
+      projectId,
+      channel: 'slack',
+      recipient: '#general',
+      payload: { text: 'Assigned to you' },
+    });
+
+    expect(result).toEqual({ ok: false, retryable: false, error: 'slack not configured' });
+  });
+
+  it('fails permanently on the slack channel when no recipient is set', async () => {
+    const { projectId } = await makeProject();
+
+    const result = await deliverNotification({
+      projectId,
+      channel: 'slack',
+      recipient: null,
+      payload: { text: 'Assigned to you' },
+    });
+
+    // No token → 'slack not configured' (resolved before the recipient check).
+    expect(result.ok).toBe(false);
+    expect(result.retryable).toBe(false);
+  });
 });

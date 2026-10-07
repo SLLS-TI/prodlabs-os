@@ -38,6 +38,7 @@ export interface NotificationSettingsDto {
   };
   resend: { enabled: boolean; hasApiKey: boolean };
   telegram: { enabled: boolean; hasBotToken: boolean };
+  slack: { enabled: boolean; hasBotToken: boolean };
 }
 
 // A partial write. Each section, when present, replaces that section's non-secret
@@ -57,6 +58,7 @@ export interface NotificationSettingsPatch {
   };
   resend?: { enabled: boolean; apiKey?: string };
   telegram?: { enabled: boolean; botToken?: string };
+  slack?: { enabled: boolean; botToken?: string };
 }
 
 function toDto(config: NotificationConfig): NotificationSettingsDto {
@@ -75,6 +77,10 @@ function toDto(config: NotificationConfig): NotificationSettingsDto {
     telegram: {
       enabled: config.telegram.enabled,
       hasBotToken: config.telegram.botToken.length > 0,
+    },
+    slack: {
+      enabled: config.slack.enabled,
+      hasBotToken: config.slack.botToken.length > 0,
     },
   };
 }
@@ -96,6 +102,7 @@ function applyPatch(
     smtp: { ...current.smtp },
     resend: { ...current.resend },
     telegram: { ...current.telegram },
+    slack: { ...current.slack },
   };
 
   if (patch.system) next.system = { enabled: patch.system.enabled };
@@ -120,6 +127,12 @@ function applyPatch(
     next.telegram = {
       enabled: patch.telegram.enabled,
       botToken: mergeSecret(current.telegram.botToken, patch.telegram.botToken),
+    };
+  }
+  if (patch.slack) {
+    next.slack = {
+      enabled: patch.slack.enabled,
+      botToken: mergeSecret(current.slack.botToken, patch.slack.botToken),
     };
   }
 

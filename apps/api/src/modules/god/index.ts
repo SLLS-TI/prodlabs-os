@@ -65,6 +65,8 @@ import {
   ScimSettingsBody,
   ScimSettingsResponse,
   ScimTokenResponse,
+  SlackSettingsBody,
+  SlackSettingsResponse,
   StorageSettingsBody,
   TelegramSettingsBody,
   TelegramSettingsResponse,
@@ -80,6 +82,7 @@ import { GodStatsResponse } from './stats.model';
 import { getGodStats } from './stats.service';
 import { emailTestError } from './email-test';
 import { getInstanceBotSettings, setInstanceBotSettings } from '#modules/telegram/service';
+import { getInstanceSlackSettings, setInstanceSlackSettings } from '#modules/slack/service';
 import { SCIM_BASE_URL } from '#modules/scim/resource';
 import {
   setStorageSettings,
@@ -504,6 +507,43 @@ export const godRoutes = new Elysia({ name: 'god', detail: { tags: ['God'] } })
         summary: 'Update Telegram bot settings',
         description:
           'Update the instance Telegram bot token and whether the bot is in use. The token is verified with Telegram before it is stored.',
+      },
+    },
+  )
+
+  .get('/god/slack-settings', () => getInstanceSlackSettings(), {
+    response: { 200: SlackSettingsResponse, ...errors(401, 403) },
+    detail: {
+      summary: 'Get Slack bot settings',
+      description: 'Get the instance Slack bot (the token redacted).',
+    },
+  })
+
+  .put(
+    '/god/slack-settings',
+    async ({ body }) => {
+      const current = await getInstanceSlackSettings();
+      const hasBotToken = (body.botToken?.length ?? 0) > 0 || current.hasBotToken;
+      // Without a token the bot can neither post nor be verified, so turning it on
+      // would only enable a channel that delivers nowhere.
+      if (body.enabled && !hasBotToken) {
+        throw new HttpError(400, 'Add the bot token first');
+      }
+      try {
+        return await setInstanceSlackSettings(body);
+      } catch (err) {
+        // A token Slack rejects is the administrator's mistake, not a server
+        // failure: report it as a bad request with what Slack said.
+        throw new HttpError(400, err instanceof Error ? err.message : 'Invalid bot token');
+      }
+    },
+    {
+      body: SlackSettingsBody,
+      response: { 200: SlackSettingsResponse, ...errors(400, 401, 403) },
+      detail: {
+        summary: 'Update Slack bot settings',
+        description:
+          'Update the instance Slack bot token and whether the bot is in use. The token is verified with Slack before it is stored.',
       },
     },
   )

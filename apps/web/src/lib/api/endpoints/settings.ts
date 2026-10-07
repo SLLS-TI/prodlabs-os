@@ -44,6 +44,14 @@ export interface SubtaskAutomationSettings {
   closeSubtasks: boolean;
 }
 
+// The Slack channel a project posts its notifications and daily digests to. channel
+// is a Slack channel id (C01234567) or '#name'; enabling with a blank channel is
+// coerced to off. The bot token is a team/instance setting, not held here.
+export interface SlackProjectSettings {
+  channel: string;
+  enabled: boolean;
+}
+
 // Which optional sections a project shows. All on by default; turning one off
 // hides its navigation entry and its section, keeping the rows behind it.
 export interface ProjectFeatures {
@@ -141,6 +149,16 @@ export const updateSubtaskAutomation = (projectKey: string, input: SubtaskAutoma
 
 export const updateEstimates = (projectKey: string, input: EstimateSettings) =>
   request<EstimateSettings>(`/projects/${projectKey}/settings/estimates`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+
+// The project's Slack channel (projectOwner only).
+export const getSlackProjectSettings = (projectKey: string) =>
+  request<SlackProjectSettings>(`/projects/${projectKey}/settings/slack`);
+
+export const updateSlackProjectSettings = (projectKey: string, input: SlackProjectSettings) =>
+  request<SlackProjectSettings>(`/projects/${projectKey}/settings/slack`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });

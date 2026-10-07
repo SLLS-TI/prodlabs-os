@@ -223,7 +223,11 @@
     "telegramBotHint": "El bot que entrega las notificaciones para cada proyecto del equipo. Los miembros eligen su propio chat en sus preferencias. El token se guarda cifrado.",
     "botToken": "Token de la API del bot (opcional)",
     "emailSaved": "El proveedor de correo se ha guardado",
-    "telegramSaved": "El proveedor de Telegram se ha guardado"
+    "telegramSaved": "El proveedor de Telegram se ha guardado",
+    "slack": "Slack",
+    "slackBot": "Bot de Slack",
+    "slackBotHint": "El bot que entrega las notificaciones de Slack para cada proyecto del equipo. Cada proyecto configura su propio canal en su página de Configuración. El token se almacena cifrado.",
+    "slackSaved": "Proveedor de Slack guardado"
   },
   "integrations": {
     "noAccess": "No tienes acceso a las integraciones de este equipo.",
