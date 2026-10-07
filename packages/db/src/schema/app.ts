@@ -96,6 +96,17 @@ export const teamMember = pgTable(
   ],
 );
 
+// Weights for the cross-project health score (god stats). The canonical shape and
+// defaults live in the api helper (apps/api/src/modules/god/health.ts); this local
+// copy types the jsonb column without the db package depending on the api.
+type HealthWeights = {
+  schedule: number;
+  budget: number;
+  velocity: number;
+  load: number;
+  freshness: number;
+};
+
 // A project groups its own columns, issue types, labels, custom fields, and
 // issues. next_sequence is the atomic counter behind each issue's human
 // identifier (e.g. "MKT-42"): incrementing it under a row lock keeps concurrent
@@ -156,6 +167,11 @@ export const project = pgTable(
     // An owner and an instance admin bypass the list. Operating the timer still also needs
     // work_items edit; this is the read gate.
     timeVisibleRoleIds: jsonb('time_visible_role_ids').$type<number[]>().notNull().default([]),
+    // Per-project weights for the cross-project health score (god stats). Null means use
+    // the code default (DEFAULT_HEALTH_WEIGHTS); a missing key falls back to its default.
+    // The score normalizes over whichever dimensions have data, so values matter only in
+    // proportion to each other.
+    healthWeights: jsonb('health_weights').$type<Partial<HealthWeights>>(),
     // An optional hex background tint for the whole project interface. Null = no tint,
     // the neutral default.
     color: text('color'),

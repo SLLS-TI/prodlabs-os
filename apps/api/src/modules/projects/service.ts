@@ -39,6 +39,7 @@ import {
   type Permissions,
 } from '#shared/permissions';
 import { getProjectSetting, setProjectSetting } from '#shared/project-settings';
+import { DEFAULT_HEALTH_WEIGHTS, type HealthWeights } from '#modules/god/health';
 import { PROJECT_FEATURES, featureLabel, type ProjectFeature } from '#shared/features';
 import { getLimits } from '#shared/limits';
 import { deleteThreadsWhere } from '#modules/agents/core/runtime/memory';
@@ -96,6 +97,10 @@ export interface ProjectRow {
   // every role sees it. Editor-only config: it reaches the settings page, not the
   // board scaffold, which carries the resolved canSeeTimeTracking boolean instead.
   timeVisibleRoleIds: number[];
+  // Per-project weights for the cross-project health score (god stats), or null when never
+  // configured. The health-weights settings route reads them; the board scaffold does not
+  // carry them.
+  healthWeights: Partial<HealthWeights> | null;
   // The sections this project may use at all. A section missing here is blocked for
   // the team that owns the project: its flag above reads as off and the settings page
   // does not offer it.
@@ -192,6 +197,7 @@ export async function mapProject(row: ProjectWithTeam): Promise<ProjectRow> {
     timeGoalMinutes: row.timeGoalMinutes,
     timeGoalPeriod: row.timeGoalPeriod as 'total' | 'weekly' | null,
     timeVisibleRoleIds: row.timeVisibleRoleIds,
+    healthWeights: row.healthWeights,
     availableFeatures: PROJECT_FEATURES.filter((feature) => !blockedFeatures.includes(feature)),
     createdAt: iso(row.createdAt),
   };
@@ -718,6 +724,25 @@ export async function setEstimateSettings(
         timeVisibleRoleIds: row.timeVisibleRoleIds,
       }
     : null;
+}
+
+// The health-score weights, always filled with the defaults merged over the stored partial
+// so the settings form never sees a missing key. The read takes the already-resolved
+// project row (the guard loaded it), so no extra query.
+export function getHealthWeights(project: ProjectRow): HealthWeights {
+  return { ...DEFAULT_HEALTH_WEIGHTS, ...(project.healthWeights ?? {}) };
+}
+
+export async function setHealthWeights(
+  projectId: number,
+  input: HealthWeights,
+): Promise<HealthWeights | null> {
+  const [row] = await db
+    .update(project)
+    .set({ healthWeights: input })
+    .where(eq(project.id, projectId))
+    .returning();
+  return row ? { ...DEFAULT_HEALTH_WEIGHTS, ...(row.healthWeights ?? {}) } : null;
 }
 
 // Auto-archive thresholds for a project. Stored in project_setting under

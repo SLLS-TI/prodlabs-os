@@ -289,6 +289,19 @@ export const EstimatesResponse = t.Object({
 
 export const updateEstimatesBody = EstimatesResponse;
 
+// The weights for the cross-project health score (god stats), configured per project. The
+// response merges the stored partial over the defaults, so every key is present. Values are
+// stored as-is and the score normalizes by proportion, so they need not sum to 100.
+export const HealthWeightsResponse = t.Object({
+  schedule: t.Integer({ minimum: 0, maximum: 1000 }),
+  budget: t.Integer({ minimum: 0, maximum: 1000 }),
+  velocity: t.Integer({ minimum: 0, maximum: 1000 }),
+  load: t.Integer({ minimum: 0, maximum: 1000 }),
+  freshness: t.Integer({ minimum: 0, maximum: 1000 }),
+});
+
+export const updateHealthWeightsBody = HealthWeightsResponse;
+
 // The subtask automations (SubtaskAutomationSettings from the service).
 export const SubtaskAutomationResponse = t.Object({
   completeParent: t.Boolean(),

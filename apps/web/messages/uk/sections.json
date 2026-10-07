@@ -23,6 +23,10 @@
       "label": "Проєкти",
       "description": "Усі проєкти цього інстансу: що в кожному, коли була остання активність і хто має доступ."
     },
+    "stats": {
+      "label": "Statistics",
+      "description": "Cross-project health, time, and overdue work across every project on this instance."
+    },
     "general": {
       "label": "Загальне",
       "description": "Налаштування за замовчуванням для нових проєктів."

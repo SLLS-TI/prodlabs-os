@@ -23,6 +23,10 @@
       "label": "المشاريع",
       "description": "كل مشروع على النسخة دي: كل واحد فيه إيه، وآخر مرة كان نشط فيها، ومين يقدر يدخله."
     },
+    "stats": {
+      "label": "Statistics",
+      "description": "Cross-project health, time, and overdue work across every project on this instance."
+    },
     "general": {
       "label": "عام",
       "description": "الإعدادات الافتراضية للمشاريع الجديدة."

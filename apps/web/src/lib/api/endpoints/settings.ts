@@ -24,6 +24,17 @@ export interface EstimateSettings {
   timeVisibleRoleIds: number[];
 }
 
+// Per-project weights for the cross-project health score (god stats): five
+// non-negative integers. Stored as-is and normalized by proportion, so they need
+// not sum to 100; a new or never-configured project reads the defaults.
+export interface HealthWeights {
+  schedule: number;
+  budget: number;
+  velocity: number;
+  load: number;
+  freshness: number;
+}
+
 // Per-project subtask automations, both off by default. completeParent closes a
 // parent once all its subtasks are closed; closeSubtasks closes the remaining
 // subtasks of a closed parent. Only closing is synchronized — an issue moving
@@ -130,6 +141,15 @@ export const updateSubtaskAutomation = (projectKey: string, input: SubtaskAutoma
 
 export const updateEstimates = (projectKey: string, input: EstimateSettings) =>
   request<EstimateSettings>(`/projects/${projectKey}/settings/estimates`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+
+export const getHealthWeights = (projectKey: string) =>
+  request<HealthWeights>(`/projects/${projectKey}/settings/health-weights`);
+
+export const updateHealthWeights = (projectKey: string, input: HealthWeights) =>
+  request<HealthWeights>(`/projects/${projectKey}/settings/health-weights`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });

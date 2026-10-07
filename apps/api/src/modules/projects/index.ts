@@ -19,6 +19,7 @@ import { listIssueTemplates } from '#modules/issue-templates/service';
 import {
   AutoArchiveResponse,
   EstimatesResponse,
+  HealthWeightsResponse,
   PROJECT_DESCRIPTION_LIMIT,
   ProjectBoardResponse,
   ProjectListResponse,
@@ -32,6 +33,7 @@ import {
   logoParams,
   updateAutoArchiveBody,
   updateEstimatesBody,
+  updateHealthWeightsBody,
   updateProjectBody,
   updateProjectSettingsBody,
   updateSubtaskAutomationBody,
@@ -49,6 +51,8 @@ import {
   getSubtaskAutomationSettings,
   setSubtaskAutomationSettings,
   setEstimateSettings,
+  getHealthWeights,
+  setHealthWeights,
 } from './service';
 import { copyProject } from './copy';
 import { projectPreferences } from './preferences';
@@ -357,6 +361,34 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
       permission: ['workflow_config', 'edit'],
       response: { 200: EstimatesResponse, ...commonErrors },
       detail: { summary: "Update a project's estimate kinds and time logging" },
+    },
+  )
+
+  // The weights for this project's health score in the god stats view. Configured here
+  // rather than in god mode: it is the team's judgement of what matters for the project.
+  // Read with workflow_config read so a granted non-owner sees them; written with edit.
+  .get(
+    '/projects/:projectKey/settings/health-weights',
+    ({ project }) => getHealthWeights(project),
+    {
+      permission: ['workflow_config', 'read'],
+      response: { 200: HealthWeightsResponse, ...accessErrors },
+      detail: { summary: "Get a project's health-score weights" },
+    },
+  )
+
+  .patch(
+    '/projects/:projectKey/settings/health-weights',
+    async ({ project, body }) => {
+      const updated = await setHealthWeights(project.id, body);
+      if (!updated) throw new HttpError(404, 'Project not found');
+      return updated;
+    },
+    {
+      body: updateHealthWeightsBody,
+      permission: ['workflow_config', 'edit'],
+      response: { 200: HealthWeightsResponse, ...commonErrors },
+      detail: { summary: "Update a project's health-score weights" },
     },
   )
 
