@@ -56,17 +56,41 @@ function fullMatrix(catalog: PermissionCatalog): Permissions {
   return out;
 }
 
+// The client role's fixed matrix, resolved in code like the API's clientPermissions():
+// read/create/edit on work items, read on documents and initiatives, nothing else.
+// A client carries no team role, so its access is not read from the roles list.
+const CLIENT_GRANTS: Partial<Record<PermissionResource, PermissionAction[]>> = {
+  work_items: ['read', 'create', 'edit'],
+  documents: ['read'],
+  initiatives: ['read'],
+};
+
+function clientMatrix(catalog: PermissionCatalog): Permissions {
+  const out = {} as Permissions;
+  for (const resource of catalog.resources) {
+    const granted = new Set(CLIENT_GRANTS[resource.key] ?? []);
+    const row = {} as Record<PermissionAction, boolean>;
+    for (const action of catalog.actions) {
+      row[action] = resource.actions.includes(action) && granted.has(action);
+    }
+    out[resource.key] = row;
+  }
+  return out;
+}
+
 // What a project membership resolves to, read from the team's roles rather than
-// carried on every member: an owner gets everything, anyone else the matrix of the
-// role they hold, or of the team's default role when they carry none. Undefined
-// while the catalog or the roles are still loading, which renders as a skeleton.
+// carried on every member: an owner gets everything, a client its fixed matrix, anyone
+// else the matrix of the role they hold, or of the team's default role when they carry
+// none. Undefined while the catalog or the roles are still loading, which renders as a
+// skeleton.
 export function membershipPermissions(
   catalog: PermissionCatalog | undefined,
   roles: { id: number; isDefault: boolean; permissions: Permissions }[],
-  member: { role: 'owner' | 'member'; roleId: number | null },
+  member: { role: 'owner' | 'member' | 'client'; roleId: number | null },
 ): Permissions | undefined {
   if (!catalog) return undefined;
   if (member.role === 'owner') return fullMatrix(catalog);
+  if (member.role === 'client') return clientMatrix(catalog);
   if (roles.length === 0) return undefined;
   const role = roles.find((r) => r.id === member.roleId) ?? roles.find((r) => r.isDefault);
   return matrixFromCatalog(catalog, role?.permissions ?? {});

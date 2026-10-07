@@ -2,6 +2,7 @@ import { db, initiative, initiativeLabel, issue, label, projectColumn, user } fr
 import { and, asc, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 import { labelNames, rowSide } from '#modules/issues/activity';
 import { getMembership } from '#modules/members/service';
+import { isMaskableActor, type MaskContext } from '#shared/access';
 import { HttpError, iso, num } from '#shared/lib';
 import { computeHealth, type Health } from './health';
 import { recordActivity, logInitiativeUpdate, type InitiativeSnapshot } from './activity';
@@ -107,6 +108,19 @@ function mapInitiative(
   };
 }
 
+// Rewrites a maskable owner id to the face for a client viewer, so the owner chip shows
+// the face and the real team-member id never reaches a client. The server routes work by
+// the real initiative.owner_user_id column, which this output shaping never changes. A
+// null mask (team/owner read) is a no-op. Fails closed: with no face a maskable owner is
+// suppressed to null.
+function maskInitiativeOwners(rows: InitiativeRow[], mask: MaskContext | null): void {
+  if (!mask) return;
+  const faceId = mask.face?.userId ?? null;
+  for (const row of rows) {
+    if (isMaskableActor(mask, row.ownerUserId)) row.ownerUserId = faceId;
+  }
+}
+
 const EMPTY_PROGRESS: InitiativeProgress = { completed: 0, canceled: 0, total: 0 };
 
 // Sortable columns. progress and health are derived per row after the query, so
@@ -149,6 +163,7 @@ function orderExpr(sort: InitiativeSort) {
 export async function listInitiatives(
   projectId: number,
   opts: ListInitiativesOpts,
+  mask: MaskContext | null = null,
 ): Promise<InitiativeListPage> {
   const conds = [eq(initiative.projectId, projectId)];
   if (opts.statuses && opts.statuses.length) {
@@ -182,12 +197,11 @@ export async function listInitiatives(
 
   const ids = rows.map((r) => r.id);
   const [counts, labels] = await Promise.all([countsFor(ids), labelsFor(ids)]);
-  return {
-    items: rows.map((row) =>
-      mapInitiative(row, labels.get(row.id) ?? [], counts.get(row.id) ?? EMPTY_PROGRESS),
-    ),
-    total: Number(total),
-  };
+  const items = rows.map((row) =>
+    mapInitiative(row, labels.get(row.id) ?? [], counts.get(row.id) ?? EMPTY_PROGRESS),
+  );
+  maskInitiativeOwners(items, mask);
+  return { items, total: Number(total) };
 }
 
 export interface InitiativeOption {
@@ -265,11 +279,16 @@ export async function initiativeStatusCounts(projectId: number): Promise<Initiat
   return out;
 }
 
-export async function getInitiative(id: number): Promise<InitiativeRow | null> {
+export async function getInitiative(
+  id: number,
+  mask: MaskContext | null = null,
+): Promise<InitiativeRow | null> {
   const rows = await db.select().from(initiative).where(eq(initiative.id, id));
   if (!rows[0]) return null;
   const [counts, labels] = await Promise.all([countsFor([id]), labelsFor([id])]);
-  return mapInitiative(rows[0], labels.get(id) ?? [], counts.get(id) ?? EMPTY_PROGRESS);
+  const row = mapInitiative(rows[0], labels.get(id) ?? [], counts.get(id) ?? EMPTY_PROGRESS);
+  maskInitiativeOwners([row], mask);
+  return row;
 }
 
 // The project an initiative belongs to, or null if it does not exist. Used by the

@@ -47,6 +47,7 @@
   "revokeTitle": "Відкликати доступ для {name}",
   "revokeDescription": "{name} втратить доступ до цього проєкту. Його можна буде запросити знову.",
   "selectRole": "Виберіть роль",
+  "roleClient": "Клієнт",
   "editDescription": "Редагувати опис",
   "descriptionQuestionSelf": "Чим ви займаєтесь у цьому проєкті?",
   "descriptionQuestionOther": "Чим ця людина займається в цьому проєкті?",

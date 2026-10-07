@@ -16,6 +16,7 @@ import {
 } from '#modules/projects/model';
 import { createProject, deleteProject, updateProject } from '#modules/projects/service';
 import { copyProject } from '#modules/projects/copy';
+import { getMembership, isExternalTeamClient } from '#modules/members/service';
 import {
   TeamDetailResponse,
   TeamListResponse,
@@ -55,6 +56,7 @@ import {
   setTeamProjectDefaults,
   setTeamMemberRole,
   teamOwnsProject,
+  runsTeam,
 } from './service';
 
 // The write routes act on a project the team owns; one of another team answers 404
@@ -110,19 +112,26 @@ export const teamRoutes = new Elysia({ name: 'teams', detail: { tags: ['Teams'] 
 
   .get(
     '/teams/:teamId/members',
-    ({ membership, query }) =>
-      paginate(query, (window) =>
+    async ({ membership, query }) => {
+      // An external client of the team (their only standing is client-role project
+      // memberships) must never enumerate the team's people. The teamMember guard alone
+      // lets them in, since a client is a team member before joining a project.
+      if (await isExternalTeamClient(membership.teamId, membership.userId, membership.role)) {
+        throw new HttpError(403, 'You do not have access to the team member list');
+      }
+      return paginate(query, (window) =>
         listTeamMembers(membership.teamId, {
           search: query.search,
           kind: query.kind,
           ...window,
         }),
-      ),
+      );
+    },
     {
       teamMember: true,
       params: teamParams,
       query: memberListQuery,
-      response: { 200: TeamMemberPageResponse, ...errors(401, 404) },
+      response: { 200: TeamMemberPageResponse, ...errors(401, 403, 404) },
       detail: {
         summary: 'List team members',
         description:
@@ -135,13 +144,23 @@ export const teamRoutes = new Elysia({ name: 'teams', detail: { tags: ['Teams'] 
 
   .get(
     '/teams/:teamId/projects',
-    ({ membership, query }) =>
-      paginate(query, (window) =>
+    async ({ membership, query }) => {
+      // An external client sees the project list, but never the identity of its owners:
+      // their names and avatars are stripped so no team-member identity leaks through
+      // the team-scoped project list. The rest of the payload is unchanged.
+      const omitOwners = await isExternalTeamClient(
+        membership.teamId,
+        membership.userId,
+        membership.role,
+      );
+      return paginate(query, (window) =>
         listTeamProjects(membership.teamId, membership.userId, membership.role, {
           search: query.search,
+          omitOwners,
           ...window,
         }),
-      ),
+      );
+    },
     {
       teamMember: true,
       params: teamParams,
@@ -199,8 +218,17 @@ export const teamRoutes = new Elysia({ name: 'teams', detail: { tags: ['Teams'] 
 
   .get(
     '/teams/:teamId/projects/:projectId/members',
-    ({ membership, params, query }) =>
-      paginate(query, async (window) => {
+    async ({ membership, params, query }) => {
+      // A client of the project is refused outright, the same gate the direct
+      // /projects/:key/members route applies through memberAdmin: this team-scoped alias
+      // must not expose every member's identity to a client.
+      if (
+        !runsTeam(membership.role) &&
+        (await getMembership(params.projectId, membership.userId)) === 'client'
+      ) {
+        throw new HttpError(403, 'You do not have access to this project member list');
+      }
+      return paginate(query, async (window) => {
         const page = await listTeamProjectMembers(
           membership.teamId,
           params.projectId,
@@ -210,12 +238,13 @@ export const teamRoutes = new Elysia({ name: 'teams', detail: { tags: ['Teams'] 
         );
         if (!page) throw new HttpError(404, 'Project not found');
         return page;
-      }),
+      });
+    },
     {
       teamMember: true,
       params: teamProjectParams,
       query: memberListQuery,
-      response: { 200: TeamProjectMemberPageResponse, ...errors(401, 404) },
+      response: { 200: TeamProjectMemberPageResponse, ...errors(401, 403, 404) },
       detail: {
         summary: "List a project's members",
         description:

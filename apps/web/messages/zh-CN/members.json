@@ -47,6 +47,7 @@
   "revokeTitle": "撤销 {name} 的访问权限",
   "revokeDescription": "{name} 将失去对此项目的访问权限，之后可以重新邀请。",
   "selectRole": "选择角色",
+  "roleClient": "客户",
   "editDescription": "编辑描述",
   "descriptionQuestionSelf": "你在此项目中负责什么？",
   "descriptionQuestionOther": "此成员在项目中负责什么？",

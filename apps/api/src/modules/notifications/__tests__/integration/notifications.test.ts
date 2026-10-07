@@ -261,5 +261,8 @@ describe('notifications', () => {
       query: { types: 'mentioned' },
     });
     expect(clientInbox.data!.items[0].actorName).toBe(ownerName);
+    // The real actor id is nulled for the client too, so they cannot correlate the
+    // masked name back to the team member it hides.
+    expect(clientInbox.data!.items[0].actorUserId).toBeNull();
   });
 });

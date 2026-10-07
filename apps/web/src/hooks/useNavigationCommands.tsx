@@ -105,7 +105,8 @@ export function useNavigationCommands(projectKey: string | null): CommandSection
         aiAgentsPath(key),
         'ai team agents',
       );
-    add('nav.members', t('members'), <Users />, membersPath(key), 'team people invite');
+    if (features.members && can('members_manage', 'read'))
+      add('nav.members', t('members'), <Users />, membersPath(key), 'team people invite');
     add(
       'nav.notifications',
       t('notificationPreferences'),
