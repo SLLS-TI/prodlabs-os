@@ -13,7 +13,8 @@ export const HEALTH_DIMENSIONS: HealthDimension[] = [
   'freshness',
 ];
 
-// Defaults that a reset returns to, matching DEFAULT_HEALTH_WEIGHTS on the API.
+// Defaults a reset returns to. The web app can't import packages, so this mirrors the
+// source of truth DEFAULT_HEALTH_WEIGHTS in apps/api/src/modules/god/health.ts — keep in sync.
 export const DEFAULT_HEALTH_WEIGHTS: HealthWeights = {
   schedule: 30,
   budget: 25,
