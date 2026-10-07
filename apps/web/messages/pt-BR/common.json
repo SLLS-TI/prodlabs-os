@@ -216,5 +216,12 @@
     "page": "Página {number}",
     "perPage": "por página",
     "range": "{first}-{last} de {total}"
-  }
+  },
+  "logo": "Logo",
+  "uploadLogo": "Enviar logo",
+  "changeLogo": "Trocar logo",
+  "uploadingLogo": "Enviando…",
+  "logoFormats": "PNG, JPEG, GIF, WebP ou AVIF.",
+  "logoMaxSize": "Até {mb} MB.",
+  "logoTooLarge": "A imagem excede o limite de {mb} MB."
 }

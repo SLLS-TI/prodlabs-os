@@ -216,5 +216,12 @@
     "page": "第 {number} 页",
     "perPage": "每页",
     "range": "第 {first}-{last} 项，共 {total} 项"
-  }
+  },
+  "logo": "标志",
+  "uploadLogo": "上传标志",
+  "changeLogo": "更换标志",
+  "uploadingLogo": "上传中…",
+  "logoFormats": "PNG、JPEG、GIF、WebP 或 AVIF。",
+  "logoMaxSize": "最大 {mb} MB。",
+  "logoTooLarge": "图片超过 {mb} MB 限制。"
 }

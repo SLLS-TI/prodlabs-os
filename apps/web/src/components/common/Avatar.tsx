@@ -7,16 +7,16 @@ import { mediaUrl } from '@/lib/api/core/media';
 import { cn } from '@/lib/utils';
 
 // A person's avatar. With an uploaded `image` it shows that picture; otherwise
-// (or if the image fails to load) it falls back to a colored circle with their
+// (or if the image fails to load) it falls back to a colored badge with their
 // initials, deterministic per name (same name → same color, see
 // avatarColor/initials in lib/avatar). The default size matches the issue-card
 // avatar; pass a size-* / text-* className to scale it (comments use a larger
-// one). forwardRef + spread so it works as a Radix Tooltip/Popover `asChild`
-// trigger.
+// one). `shape` is 'circle' for people and 'rounded' for a project logo.
+// forwardRef + spread so it works as a Radix Tooltip/Popover `asChild` trigger.
 const Avatar = forwardRef<
   HTMLSpanElement,
-  ComponentProps<'span'> & { name: string; image?: string | null }
->(({ name, image, className, ...props }, ref) => {
+  ComponentProps<'span'> & { name: string; image?: string | null; shape?: 'circle' | 'rounded' }
+>(({ name, image, shape = 'circle', className, ...props }, ref) => {
   // The url that failed to load, not a flag: the same mounted Avatar is reused for a
   // different person (a select trigger) or gets a freshly uploaded picture, and both
   // must try the new url again.
@@ -27,7 +27,8 @@ const Avatar = forwardRef<
     <span
       ref={ref}
       className={cn(
-        'relative inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full text-[9px] font-semibold text-white',
+        'relative inline-flex size-5 shrink-0 items-center justify-center overflow-hidden text-[9px] font-semibold text-white',
+        shape === 'rounded' ? 'rounded-md' : 'rounded-full',
         className,
       )}
       {...props}

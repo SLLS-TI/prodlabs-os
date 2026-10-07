@@ -216,5 +216,12 @@
     "page": "Сторінка {number}",
     "perPage": "на сторінці",
     "range": "{first}-{last} з {total}"
-  }
+  },
+  "logo": "Логотип",
+  "uploadLogo": "Завантажити логотип",
+  "changeLogo": "Змінити логотип",
+  "uploadingLogo": "Завантаження…",
+  "logoFormats": "PNG, JPEG, GIF, WebP або AVIF.",
+  "logoMaxSize": "До {mb} МБ.",
+  "logoTooLarge": "Зображення перевищує ліміт {mb} МБ."
 }
