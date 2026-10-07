@@ -10,6 +10,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import {
   type AutoArchiveSettings,
   type EstimateSettings,
+  type HealthWeights,
   type ProjectFeatures,
   type SlackProjectSettings,
   type SubtaskAutomationSettings,
@@ -20,6 +21,8 @@ import {
   getSlackProjectSettings,
   updateSlackProjectSettings,
   updateEstimates,
+  getHealthWeights,
+  updateHealthWeights,
   updateProjectSettings,
 } from '@/lib/api/endpoints/settings';
 import {
@@ -223,6 +226,23 @@ export function useUpdateEstimates(projectKey: string) {
   return useProjectMutation(projectKey, (input: EstimateSettings) =>
     updateEstimates(projectKey, input),
   );
+}
+
+// The health-score weights have their own read (they are not on the project payload),
+// so the write caches the returned result directly, the same as the auto-archive write.
+export function useHealthWeightsQuery(projectKey: string) {
+  return useQuery({
+    queryKey: qk.healthWeights(projectKey),
+    queryFn: () => getHealthWeights(projectKey),
+  });
+}
+
+export function useUpdateHealthWeights(projectKey: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: HealthWeights) => updateHealthWeights(projectKey, input),
+    onSuccess: (data) => qc.setQueryData(qk.healthWeights(projectKey), data),
+  });
 }
 
 // Repository section: the inbound webhook connection and its pull request automations.

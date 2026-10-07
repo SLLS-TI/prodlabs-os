@@ -23,6 +23,10 @@
       "label": "Проекты",
       "description": "Все проекты этого инстанса: что в каждом, когда была последняя активность и у кого есть доступ."
     },
+    "stats": {
+      "label": "Statistics",
+      "description": "Cross-project health, time, and overdue work across every project on this instance."
+    },
     "general": {
       "label": "Общее",
       "description": "Настройки по умолчанию для новых проектов."

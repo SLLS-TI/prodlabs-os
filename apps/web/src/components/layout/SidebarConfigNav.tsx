@@ -4,6 +4,7 @@ import { Bell, Settings, Users } from 'lucide-react';
 import { membersPath, notificationsPath } from '@/utils/paths';
 import { useSettingsNavGroups } from '@/hooks/useSettingsNavGroups';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useProjectFeatures } from '@/hooks/useProjectFeatures';
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -21,13 +22,14 @@ export default function SidebarConfigNav({ projectKey }: { projectKey: string | 
   const disabled = !projectKey;
   const { firstHref } = useSettingsNavGroups(projectKey);
   const { can } = usePermissions();
+  const features = useProjectFeatures();
 
   return (
     <SidebarGroup>
       <SidebarGroupLabel>{t('configuration')}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {can('members_manage', 'read') && (
+          {features.members && can('members_manage', 'read') && (
             <SidebarNavItem
               href={projectKey ? membersPath(projectKey) : '#'}
               icon={Users}
@@ -36,13 +38,15 @@ export default function SidebarConfigNav({ projectKey }: { projectKey: string | 
               disabled={disabled}
             />
           )}
-          <SidebarNavItem
-            href={projectKey ? notificationsPath(projectKey) : '#'}
-            icon={Bell}
-            label={t('notifications')}
-            active={!!projectKey && pathname === notificationsPath(projectKey)}
-            disabled={disabled}
-          />
+          {features.notifications && (
+            <SidebarNavItem
+              href={projectKey ? notificationsPath(projectKey) : '#'}
+              icon={Bell}
+              label={t('notifications')}
+              active={!!projectKey && pathname === notificationsPath(projectKey)}
+              disabled={disabled}
+            />
+          )}
           {firstHref && (
             <SidebarNavItem
               href={firstHref}

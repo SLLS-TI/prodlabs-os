@@ -16,8 +16,10 @@ import SettingsSubtaskAutomation from './components/configuration/SettingsSubtas
 import SettingsEstimates from './components/configuration/SettingsEstimates';
 import SettingsAutoArchive from './components/configuration/SettingsAutoArchive';
 import SettingsSlackChannel from './components/configuration/SettingsSlackChannel';
+import SettingsHealthWeights from './components/configuration/SettingsHealthWeights';
 import { useAutoArchiveForm } from './hooks/useAutoArchiveForm';
 import { useEstimatesForm } from './hooks/useEstimatesForm';
+import { useHealthWeightsForm } from './hooks/useHealthWeightsForm';
 import { useSubtaskAutomationForm } from './hooks/useSubtaskAutomationForm';
 import { useSlackChannelForm } from './hooks/useSlackChannelForm';
 
@@ -42,13 +44,15 @@ function ConfigurationPage({ project }: { project: ProjectDetail }) {
   const estimates = useEstimatesForm(project.project);
   const archive = useAutoArchiveForm(project.project.ref);
   const slack = useSlackChannelForm(project.project.ref);
-  const saving = subtasks.saving || estimates.saving || archive.saving;
-  const loaded = subtasks.loaded && archive.loaded;
+  const healthWeights = useHealthWeightsForm(project.project.ref);
+  const saving = subtasks.saving || estimates.saving || archive.saving || healthWeights.saving;
+  const loaded = subtasks.loaded && archive.loaded && healthWeights.loaded;
 
   async function save() {
     await subtasks.save();
     await estimates.save();
     await archive.save();
+    await healthWeights.save();
     toast.success(t('saved'));
   }
 
@@ -71,6 +75,7 @@ function ConfigurationPage({ project }: { project: ProjectDetail }) {
             <SettingsEstimates form={estimates} />
             <SettingsAutoArchive form={archive} />
             <SettingsSlackChannel form={slack} />
+            <SettingsHealthWeights form={healthWeights} />
           </div>
         </RequirePermission>
       </SettingsResourceProvider>

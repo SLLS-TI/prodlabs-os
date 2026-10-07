@@ -47,5 +47,6 @@
   "create": "Créer le projet",
   "copyAction": "Copier le projet",
   "defaultAgents": "Agents ajoutés à ce projet : {names}",
-  "copyName": "{name} (copie)"
+  "copyName": "{name} (copie)",
+  "logoUploadFailed": "Projet créé, mais le logo n'a pas pu être importé."
 }

@@ -323,5 +323,48 @@
       "remove": "Remover projeto",
       "saved": "Acesso do grupo salvo"
     }
+  },
+  "stats": {
+    "empty": "Ainda não há projetos nesta instância.",
+    "summary": {
+      "globalScore": "Saúde global",
+      "overduePct": "Fração atrasada",
+      "redProjects": "Projetos em risco",
+      "burnRatio": "Proporção de consumo",
+      "openIssues": "Issues abertas",
+      "closedLast7d": "Fechadas (7d)",
+      "unassigned": "Sem responsável",
+      "worked": "Tempo registrado"
+    },
+    "hours": {
+      "title": "Trabalhado vs estimado",
+      "subtitle": "Horas por projeto, 12 maiores por total.",
+      "worked": "Trabalhado",
+      "estimated": "Estimado",
+      "empty": "Nenhum tempo registrado ou estimado ainda."
+    },
+    "overdue": {
+      "title": "Trabalho atrasado",
+      "subtitle": "Issues abertas atrasadas por projeto, 12 maiores.",
+      "label": "Atrasado",
+      "empty": "Nada está atrasado."
+    },
+    "table": {
+      "title": "Saúde dos projetos",
+      "subtitle": "Todos os projetos, ordenados por saúde. Um traço indica que a dimensão não tem dados.",
+      "project": "Projeto",
+      "health": "Saúde",
+      "open": "Abertas",
+      "overdue": "Atrasadas",
+      "closedLast7d": "Fechadas (7d)",
+      "unassigned": "Sem responsável"
+    },
+    "dimensions": {
+      "schedule": "Prazo",
+      "budget": "Orçamento",
+      "velocity": "Velocidade",
+      "load": "Carga",
+      "freshness": "Frescor"
+    }
   }
 }

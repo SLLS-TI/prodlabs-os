@@ -1,5 +1,5 @@
 {
-  "id": "aaeb7c3d-69b0-4e5b-922d-a26b7a050ae3",
+  "id": "5c3ebefd-53b8-4bff-bd47-2841211fb7af",
   "prevId": "597453a9-58d1-4c95-b4e9-1bb2c02e422b",
   "version": "7",
   "dialect": "postgresql",
@@ -7896,7 +7896,7 @@
       "checkConstraints": {
         "notification_delivery_channel_check": {
           "name": "notification_delivery_channel_check",
-          "value": "\"notification_delivery\".\"channel\" IN ('email', 'telegram', 'slack')"
+          "value": "\"notification_delivery\".\"channel\" IN ('email', 'telegram')"
         }
       },
       "isRLSEnabled": false
@@ -8001,6 +8001,41 @@
         },
         "issue_stats_enabled": {
           "name": "issue_stats_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "ai_team_enabled": {
+          "name": "ai_team_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "inbox_enabled": {
+          "name": "inbox_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "work_items_enabled": {
+          "name": "work_items_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "members_enabled": {
+          "name": "members_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "notifications_enabled": {
+          "name": "notifications_enabled",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,

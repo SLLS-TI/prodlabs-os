@@ -23,6 +23,10 @@
       "label": "Projetos",
       "description": "Todo projeto nesta instância: o que cada um contém, quando esteve ativo pela última vez e quem pode alcançá-lo."
     },
+    "stats": {
+      "label": "Estatísticas",
+      "description": "Saúde, tempo e trabalho atrasado entre todos os projetos desta instância."
+    },
     "general": {
       "label": "Geral",
       "description": "Padrões para novos projetos."

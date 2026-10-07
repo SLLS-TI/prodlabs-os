@@ -47,5 +47,6 @@
   "create": "Criar projeto",
   "copyAction": "Copiar projeto",
   "defaultAgents": "Agentes que entrarão neste projeto: {names}",
-  "copyName": "{name} cópia"
+  "copyName": "{name} cópia",
+  "logoUploadFailed": "Projeto criado, mas não foi possível enviar a logo."
 }

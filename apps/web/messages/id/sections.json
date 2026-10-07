@@ -23,6 +23,10 @@
       "label": "Proyek",
       "description": "Setiap proyek di instance ini: apa yang dimuatnya, waktu aktif terakhir, dan siapa yang dapat mengaksesnya."
     },
+    "stats": {
+      "label": "Statistics",
+      "description": "Cross-project health, time, and overdue work across every project on this instance."
+    },
     "general": {
       "label": "Umum",
       "description": "Pengaturan bawaan untuk proyek baru."

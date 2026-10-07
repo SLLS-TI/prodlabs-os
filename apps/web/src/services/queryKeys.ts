@@ -49,6 +49,7 @@ export const qk = {
   subtaskAutomation: (projectKey: string) => ['subtaskAutomation', projectKey] as const,
   // The project's Slack channel (the Configuration settings section, owner only).
   slackProject: (projectKey: string) => ['slackProject', projectKey] as const,
+  healthWeights: (projectKey: string) => ['healthWeights', projectKey] as const,
   // The project's repository integration settings (the Repositories settings section).
   gitSettings: (projectKey: string) => ['gitSettings', projectKey] as const,
   gitConnections: (projectKey: string) => ['gitConnections', projectKey] as const,
@@ -308,4 +309,6 @@ export const qk = {
     ['instanceTeamProjects', teamId, filters] as const,
   instanceTeamMembers: (teamId: number, filters: unknown) =>
     ['instanceTeamMembers', teamId, filters] as const,
+  // The cross-project statistics (god mode): one request for the whole instance.
+  godStats: ['godStats'] as const,
 };

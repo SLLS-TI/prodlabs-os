@@ -96,6 +96,17 @@ export const teamMember = pgTable(
   ],
 );
 
+// Weights for the cross-project health score (god stats). The canonical shape and
+// defaults live in the api helper (apps/api/src/modules/god/health.ts); this local
+// copy types the jsonb column without the db package depending on the api.
+type HealthWeights = {
+  schedule: number;
+  budget: number;
+  velocity: number;
+  load: number;
+  freshness: number;
+};
+
 // A project groups its own columns, issue types, labels, custom fields, and
 // issues. next_sequence is the atomic counter behind each issue's human
 // identifier (e.g. "MKT-42"): incrementing it under a row lock keeps concurrent
@@ -110,6 +121,10 @@ export const project = pgTable(
     key: text('key').notNull(),
     name: text('name').notNull(),
     description: text('description').notNull().default(''),
+    // Relative serve URL of the project's custom logo (/project-logos/<id>/<uuid>/raw),
+    // or null to fall back to the name initials. Set from Settings -> General and on
+    // project creation.
+    logoUrl: text('logo_url'),
     nextSequence: integer('next_sequence').notNull().default(1),
     // Whether this project is in the team's MCP reach. Managed from the team's MCP
     // settings, not from the project, and only counts while team.mcp_enabled is on.
@@ -117,7 +132,9 @@ export const project = pgTable(
     mcpEnabled: boolean('mcp_enabled').notNull().default(false),
     // Optional sections of the app, toggled per project in Settings -> Features. All
     // on by default. Turning one off only hides its UI; the rows it owns stay and
-    // come back with it.
+    // come back with it. The ai_team..notifications flags are navigation-only: they
+    // hide a sidebar entry, are never blockable by a hosted plan, and never hide the
+    // rows behind the section.
     initiativesEnabled: boolean('initiatives_enabled').notNull().default(true),
     dashboardsEnabled: boolean('dashboards_enabled').notNull().default(true),
     documentsEnabled: boolean('documents_enabled').notNull().default(true),
@@ -126,6 +143,11 @@ export const project = pgTable(
     subtasksEnabled: boolean('subtasks_enabled').notNull().default(true),
     checklistsEnabled: boolean('checklists_enabled').notNull().default(true),
     issueStatsEnabled: boolean('issue_stats_enabled').notNull().default(true),
+    aiTeamEnabled: boolean('ai_team_enabled').notNull().default(true),
+    inboxEnabled: boolean('inbox_enabled').notNull().default(true),
+    workItemsEnabled: boolean('work_items_enabled').notNull().default(true),
+    membersEnabled: boolean('members_enabled').notNull().default(true),
+    notificationsEnabled: boolean('notifications_enabled').notNull().default(true),
     // Which kinds of estimate the issues of this project carry, set in Settings ->
     // Configuration. Both off by default; turning one off hides its UI and keeps the
     // values, which show again when it is turned back on.
@@ -145,6 +167,14 @@ export const project = pgTable(
     // An owner and an instance admin bypass the list. Operating the timer still also needs
     // work_items edit; this is the read gate.
     timeVisibleRoleIds: jsonb('time_visible_role_ids').$type<number[]>().notNull().default([]),
+    // Per-project weights for the cross-project health score (god stats). Null means use
+    // the code default (DEFAULT_HEALTH_WEIGHTS); a missing key falls back to its default.
+    // The score normalizes over whichever dimensions have data, so values matter only in
+    // proportion to each other.
+    healthWeights: jsonb('health_weights').$type<Partial<HealthWeights>>(),
+    // An optional hex background tint for the whole project interface. Null = no tint,
+    // the neutral default.
+    color: text('color'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

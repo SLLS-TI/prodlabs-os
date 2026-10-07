@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInitiativeOptionsQuery } from '@/services/initiatives.service';
 import { useIssueBySeqQuery } from '@/services/issues.service';
@@ -33,12 +33,21 @@ import { useTranslations } from 'next-intl';
 // settings pages). It owns the project data, the view editor and the
 // project-level overlays, renders the sidebar + header chrome, and passes the
 // project state to the active child through React context (see lib/shellContext).
+// A week, matching SIDEBAR_COOKIE_MAX_AGE in the generated sidebar component.
+const PROJECT_COLOR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+
+// An invalid hex would make the color-mix declaration invalid; gate on it so the
+// background falls back to the neutral base rather than breaking.
+const PROJECT_COLOR_HEX = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
 export default function Shell({
   children,
   defaultSidebarOpen = true,
+  initialColor,
 }: {
   children: ReactNode;
   defaultSidebarOpen?: boolean;
+  initialColor?: string;
 }) {
   const t = useTranslations('nav');
   const router = useRouter();
@@ -82,6 +91,31 @@ export default function Shell({
   const openNewProject = newProjectTeamId != null ? () => overlays.setShowNewProject(true) : null;
 
   useProjectRouteSync({ projects, projectsLoaded, projectKey });
+
+  // The active project's background tint. The loaded project wins once resolved;
+  // the cookie value (initialColor) covers first paint before it does.
+  const color = project?.project.color ?? initialColor ?? null;
+
+  // Set the tinted tokens on the sidebar wrapper so the mix resolves there, against
+  // the base tokens in scope, and covers the sidebar, header and content inside it.
+  const tintStyle =
+    color && PROJECT_COLOR_HEX.test(color)
+      ? ({
+          '--background': `color-mix(in oklch, var(--base-background), ${color} var(--project-tint-strength))`,
+          '--sidebar': `color-mix(in oklch, var(--base-sidebar), ${color} var(--project-tint-strength))`,
+        } as CSSProperties)
+      : undefined;
+
+  // Persist the active color so the next first paint (within the same project) has
+  // it before the query resolves. Keyed by projectKey so a cross-project switch
+  // stores an unambiguous value.
+  useEffect(() => {
+    if (!projectKey || project == null) return;
+    document.cookie =
+      color == null
+        ? 'project_color=; path=/; max-age=0'
+        : `project_color=${projectKey}|${color}; path=/; max-age=${PROJECT_COLOR_COOKIE_MAX_AGE}`;
+  }, [projectKey, project, color]);
 
   // The settings sections the member may open; the hotkey lands on the first of
   // them, the same entry the sidebar links to.
@@ -159,7 +193,11 @@ export default function Shell({
 
   return (
     <ShellCtx.Provider value={context}>
-      <SidebarProvider defaultOpen={defaultSidebarOpen} className="h-svh overflow-hidden">
+      <SidebarProvider
+        defaultOpen={defaultSidebarOpen}
+        className="h-svh overflow-hidden"
+        style={tintStyle}
+      >
         <AppSidebar
           projects={projects}
           currentProjectKey={projectKey}
@@ -178,8 +216,6 @@ export default function Shell({
             hasProject={!!project}
             onOpenCommand={() => overlays.setShowCommand(true)}
             onNewIssue={openNewIssue}
-            chatActive={chatPanel.open}
-            onToggleChat={chatPanel.toggle}
           />
 
           {errorMsg && !forbidden && (

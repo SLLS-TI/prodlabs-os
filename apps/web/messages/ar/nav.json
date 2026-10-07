@@ -39,7 +39,8 @@
   "groups": {
     "project": "المشروع",
     "workflow": "سير العمل",
-    "automation": "الأتمتة"
+    "automation": "الأتمتة",
+    "developer": "المطوّر"
   },
   "godModeOwnerOnly": "وضع المشرف متاح لمالك النسخة بس.",
   "project": "المشروع",

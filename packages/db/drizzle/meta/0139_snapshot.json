@@ -1,6 +1,6 @@
 {
-  "id": "44d03c5c-61cf-4b50-ba38-bbb0463e16db",
-  "prevId": "aaeb7c3d-69b0-4e5b-922d-a26b7a050ae3",
+  "id": "8fd38fd7-3859-4d38-9394-ef758886a061",
+  "prevId": "5c3ebefd-53b8-4bff-bd47-2841211fb7af",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -7896,7 +7896,7 @@
       "checkConstraints": {
         "notification_delivery_channel_check": {
           "name": "notification_delivery_channel_check",
-          "value": "\"notification_delivery\".\"channel\" IN ('email', 'telegram', 'slack')"
+          "value": "\"notification_delivery\".\"channel\" IN ('email', 'telegram')"
         }
       },
       "isRLSEnabled": false
@@ -8006,6 +8006,41 @@
           "notNull": true,
           "default": true
         },
+        "ai_team_enabled": {
+          "name": "ai_team_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "inbox_enabled": {
+          "name": "inbox_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "work_items_enabled": {
+          "name": "work_items_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "members_enabled": {
+          "name": "members_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "notifications_enabled": {
+          "name": "notifications_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
         "points_estimate_enabled": {
           "name": "points_estimate_enabled",
           "type": "boolean",
@@ -8045,6 +8080,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'[]'::jsonb"
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -9640,72 +9681,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.slack_digest_run": {
-      "name": "slack_digest_run",
-      "schema": "",
-      "columns": {
-        "project_id": {
-          "name": "project_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "slot": {
-          "name": "slot",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "run_date": {
-          "name": "run_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "posted_at": {
-          "name": "posted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "slack_digest_run_project_id_project_id_fk": {
-          "name": "slack_digest_run_project_id_project_id_fk",
-          "tableFrom": "slack_digest_run",
-          "tableTo": "project",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "slack_digest_run_project_id_slot_run_date_pk": {
-          "name": "slack_digest_run_project_id_slot_run_date_pk",
-          "columns": [
-            "project_id",
-            "slot",
-            "run_date"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "slack_digest_run_slot_check": {
-          "name": "slack_digest_run_slot_check",
-          "value": "\"slack_digest_run\".\"slot\" IN ('morning', 'evening')"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.team": {

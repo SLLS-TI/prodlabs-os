@@ -78,6 +78,8 @@ import {
   teamParams,
   userParams,
 } from './model';
+import { GodStatsResponse } from './stats.model';
+import { getGodStats } from './stats.service';
 import { emailTestError } from './email-test';
 import { getInstanceBotSettings, setInstanceBotSettings } from '#modules/telegram/service';
 import { getInstanceSlackSettings, setInstanceSlackSettings } from '#modules/slack/service';
@@ -457,6 +459,18 @@ export const godRoutes = new Elysia({ name: 'god', detail: { tags: ['God'] } })
       summary: 'Check for updates now',
       description:
         'Read the published releases on demand. Returns the update status either way: a failed check answers from the release history of this build.',
+    },
+  })
+
+  .get('/god/stats', () => getGodStats(), {
+    response: { 200: GodStatsResponse, ...errors(401, 403) },
+    detail: {
+      summary: 'Cross-project statistics',
+      description:
+        'Portfolio statistics computed point-in-time over every project: worked and estimated ' +
+        'minutes, open/overdue/unassigned counts, closings in the last 7 days, and a 0-100 ' +
+        'health score per project with a size-weighted global roll-up. Reads across the ' +
+        'per-project time-visibility gate, like the rest of god mode.',
     },
   })
 

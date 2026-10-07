@@ -155,7 +155,12 @@
     "notes": "Заметки",
     "subtasks": "Подзадачи",
     "checklists": "Чек-листы",
-    "issueStats": "Статистика задач"
+    "issueStats": "Статистика задач",
+    "aiTeam": "AI-команда",
+    "inbox": "Входящие",
+    "workItems": "Задачи",
+    "members": "Участники",
+    "notifications": "Уведомления"
   },
   "featureOffTitle": "Раздел «{feature}» выключен",
   "toggleSidebar": "Показать или скрыть боковую панель",
@@ -211,5 +216,12 @@
     "page": "Страница {number}",
     "perPage": "на странице",
     "range": "{first}-{last} из {total}"
-  }
+  },
+  "logo": "Логотип",
+  "uploadLogo": "Загрузить логотип",
+  "changeLogo": "Изменить логотип",
+  "uploadingLogo": "Загрузка…",
+  "logoFormats": "PNG, JPEG, GIF, WebP или AVIF.",
+  "logoMaxSize": "До {mb} МБ.",
+  "logoTooLarge": "Изображение превышает лимит {mb} МБ."
 }

@@ -103,6 +103,9 @@
     "saved": "حُدّث المشروع",
     "project": "المشروع",
     "projectHint": "المفتاح بيتحط قبل رقم كل مهمة ومش هينفع يتغيّر بعد كده.",
+    "themeColor": "لون المظهر",
+    "themeColorHint": "بيدي لون لكل واجهة المشروع ده. سيبه فاضي عشان ميبقاش فيه لون.",
+    "themeColorNone": "بدون لون",
     "key": "المفتاح",
     "features": "الميزات",
     "featuresHint": "الأقسام اللي المشروع ده بيعرضها. لما توقف واحد بيتخفي بس محتواه بيفضل زي ما هو.",
@@ -114,7 +117,12 @@
       "subtasks": "مهام بتتقسّم لمهام فرعية تحت مهمة أصل.",
       "checklists": "قوايم خطوات بتتابعها جوه المهمة.",
       "issueStats": "المدة اللي قضتها المهمة في كل حالة.",
-      "documents": "وثائق المشروع المشتركة والمنظمة كويكي."
+      "documents": "وثائق المشروع المشتركة والمنظمة كويكي.",
+      "aiTeam": "قسم فريق الذكاء الاصطناعي: الجداول والوكلاء.",
+      "inbox": "صندوق وارد المشروع والنشاط غير المقروء.",
+      "workItems": "لوحة عناصر العمل والعروض المحفوظة.",
+      "members": "قائمة أعضاء المشروع.",
+      "notifications": "تفضيلات الإشعارات لهذا المشروع."
     },
     "featureOn": "تم تفعيل {feature}",
     "featureOff": "تم إيقاف {feature}"
@@ -161,7 +169,23 @@
     "slackEnabled": "النشر على Slack",
     "slackEnabledHint": "لما يكون شغّال، أحداث المهام والملخصات اليومية بتتنشر في القناة اللي تحت.",
     "slackChannel": "القناة",
-    "slackChannelHint": "معرّف قناة (C01234567) أو ‎#اسم. اعزم الروبوت على القناة الأول، وإلا النشر هيفشل بـ not_in_channel."
+    "slackChannelHint": "معرّف قناة (C01234567) أو ‎#اسم. اعزم الروبوت على القناة الأول، وإلا النشر هيفشل بـ not_in_channel.",
+    "healthWeight": {
+      "title": "Health score weights",
+      "hint": "How much each dimension counts toward this project's score in the cross-project statistics.",
+      "weights": "Weights",
+      "weightsHint": "A larger weight makes that dimension matter more.",
+      "dimensions": {
+        "schedule": "Schedule",
+        "budget": "Budget",
+        "velocity": "Velocity",
+        "load": "Load",
+        "freshness": "Freshness"
+      },
+      "total": "Total: {total}",
+      "totalHint": "Total: {total}. Weights need not sum to 100 — the score uses them in proportion.",
+      "reset": "Reset to defaults"
+    }
   },
   "states": {
     "addState": "إضافة حالة {type}",

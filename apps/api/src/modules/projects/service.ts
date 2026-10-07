@@ -39,6 +39,7 @@ import {
   type Permissions,
 } from '#shared/permissions';
 import { getProjectSetting, setProjectSetting } from '#shared/project-settings';
+import { DEFAULT_HEALTH_WEIGHTS, type HealthWeights } from '#modules/god/health';
 import { PROJECT_FEATURES, featureLabel, type ProjectFeature } from '#shared/features';
 import { getLimits } from '#shared/limits';
 import { deleteThreadsWhere } from '#modules/agents/core/runtime/memory';
@@ -66,6 +67,10 @@ export interface ProjectRow {
   ref: string;
   name: string;
   description: string;
+  // An optional hex background tint for the whole project interface; null = no tint.
+  color: string | null;
+  // Relative serve URL of the project's custom logo, or null to fall back to initials.
+  logoUrl: string | null;
   mcpEnabled: boolean;
   // The team's own MCP switch, carried here because every MCP gate is a project
   // gate: a project is reachable only while both flags are on.
@@ -78,6 +83,11 @@ export interface ProjectRow {
   subtasksEnabled: boolean;
   checklistsEnabled: boolean;
   issueStatsEnabled: boolean;
+  aiTeamEnabled: boolean;
+  inboxEnabled: boolean;
+  workItemsEnabled: boolean;
+  membersEnabled: boolean;
+  notificationsEnabled: boolean;
   pointsEstimateEnabled: boolean;
   timeEstimateEnabled: boolean;
   timeLoggingEnabled: boolean;
@@ -87,6 +97,10 @@ export interface ProjectRow {
   // every role sees it. Editor-only config: it reaches the settings page, not the
   // board scaffold, which carries the resolved canSeeTimeTracking boolean instead.
   timeVisibleRoleIds: number[];
+  // Per-project weights for the cross-project health score (god stats), or null when never
+  // configured. The health-weights settings route reads them; the board scaffold does not
+  // carry them.
+  healthWeights: Partial<HealthWeights> | null;
   // The sections this project may use at all. A section missing here is blocked for
   // the team that owns the project: its flag above reads as off and the settings page
   // does not offer it.
@@ -95,7 +109,9 @@ export interface ProjectRow {
 }
 
 // The optional sections an owner can turn off per project (Settings -> General).
-// A disabled section is hidden in the web app; its rows are kept.
+// A disabled section is hidden in the web app; its rows are kept. The aiTeam..
+// notifications flags are navigation-only: they hide a sidebar entry and are never
+// blockable by a hosted plan, so they are not part of PROJECT_FEATURES.
 export interface ProjectFeatures {
   initiatives: boolean;
   dashboards: boolean;
@@ -105,6 +121,11 @@ export interface ProjectFeatures {
   subtasks: boolean;
   checklists: boolean;
   issueStats: boolean;
+  aiTeam: boolean;
+  inbox: boolean;
+  workItems: boolean;
+  members: boolean;
+  notifications: boolean;
 }
 
 // A project in the caller's list, carrying the caller's own role in it. The list
@@ -153,6 +174,8 @@ export async function mapProject(row: ProjectWithTeam): Promise<ProjectRow> {
     ref: projectRef({ id: row.teamId, slug: row.teamSlug }, row.key),
     name: row.name,
     description: row.description,
+    color: row.color,
+    logoUrl: row.logoUrl,
     mcpEnabled: row.mcpEnabled,
     teamMcpEnabled: row.teamMcpEnabled,
     initiativesEnabled: on('initiatives', row.initiativesEnabled),
@@ -163,12 +186,18 @@ export async function mapProject(row: ProjectWithTeam): Promise<ProjectRow> {
     subtasksEnabled: on('subtasks', row.subtasksEnabled),
     checklistsEnabled: on('checklists', row.checklistsEnabled),
     issueStatsEnabled: on('issueStats', row.issueStatsEnabled),
+    aiTeamEnabled: row.aiTeamEnabled,
+    inboxEnabled: row.inboxEnabled,
+    workItemsEnabled: row.workItemsEnabled,
+    membersEnabled: row.membersEnabled,
+    notificationsEnabled: row.notificationsEnabled,
     pointsEstimateEnabled: row.pointsEstimateEnabled,
     timeEstimateEnabled: row.timeEstimateEnabled,
     timeLoggingEnabled: row.timeLoggingEnabled,
     timeGoalMinutes: row.timeGoalMinutes,
     timeGoalPeriod: row.timeGoalPeriod as 'total' | 'weekly' | null,
     timeVisibleRoleIds: row.timeVisibleRoleIds,
+    healthWeights: row.healthWeights,
     availableFeatures: PROJECT_FEATURES.filter((feature) => !blockedFeatures.includes(feature)),
     createdAt: iso(row.createdAt),
   };
@@ -560,7 +589,7 @@ export async function createProject(
 // identifier, so it may be replaced once. A valid key does not change.
 export async function updateProject(
   projectId: number,
-  patch: { key?: string; name?: string; description?: string },
+  patch: { key?: string; name?: string; description?: string; color?: string | null },
 ): Promise<ProjectRow | null> {
   const values: Partial<typeof project.$inferInsert> = {};
   if (patch.key !== undefined) {
@@ -575,6 +604,7 @@ export async function updateProject(
   }
   if (patch.name !== undefined) values.name = patch.name;
   if (patch.description !== undefined) values.description = patch.description;
+  if (patch.color !== undefined) values.color = patch.color;
   if (Object.keys(values).length === 0) return getProjectById(projectId);
   await db.update(project).set(values).where(eq(project.id, projectId));
   return getProjectById(projectId);
@@ -591,6 +621,11 @@ export function projectFeatures(row: ProjectRow): ProjectFeatures {
     subtasks: row.subtasksEnabled,
     checklists: row.checklistsEnabled,
     issueStats: row.issueStatsEnabled,
+    aiTeam: row.aiTeamEnabled,
+    inbox: row.inboxEnabled,
+    workItems: row.workItemsEnabled,
+    members: row.membersEnabled,
+    notifications: row.notificationsEnabled,
   };
 }
 
@@ -614,6 +649,11 @@ export async function setProjectFeatures(
   if (patch.subtasks !== undefined) values.subtasksEnabled = patch.subtasks;
   if (patch.checklists !== undefined) values.checklistsEnabled = patch.checklists;
   if (patch.issueStats !== undefined) values.issueStatsEnabled = patch.issueStats;
+  if (patch.aiTeam !== undefined) values.aiTeamEnabled = patch.aiTeam;
+  if (patch.inbox !== undefined) values.inboxEnabled = patch.inbox;
+  if (patch.workItems !== undefined) values.workItemsEnabled = patch.workItems;
+  if (patch.members !== undefined) values.membersEnabled = patch.members;
+  if (patch.notifications !== undefined) values.notificationsEnabled = patch.notifications;
   if (Object.keys(values).length === 0) return getProjectById(projectId);
   await db.update(project).set(values).where(eq(project.id, projectId));
   return getProjectById(projectId);
@@ -684,6 +724,25 @@ export async function setEstimateSettings(
         timeVisibleRoleIds: row.timeVisibleRoleIds,
       }
     : null;
+}
+
+// The health-score weights, always filled with the defaults merged over the stored partial
+// so the settings form never sees a missing key. The read takes the already-resolved
+// project row (the guard loaded it), so no extra query.
+export function getHealthWeights(project: ProjectRow): HealthWeights {
+  return { ...DEFAULT_HEALTH_WEIGHTS, ...(project.healthWeights ?? {}) };
+}
+
+export async function setHealthWeights(
+  projectId: number,
+  input: HealthWeights,
+): Promise<HealthWeights | null> {
+  const [row] = await db
+    .update(project)
+    .set({ healthWeights: input })
+    .where(eq(project.id, projectId))
+    .returning();
+  return row ? { ...DEFAULT_HEALTH_WEIGHTS, ...(row.healthWeights ?? {}) } : null;
 }
 
 // Auto-archive thresholds for a project. Stored in project_setting under

@@ -19,9 +19,11 @@ import { listIssueTemplates } from '#modules/issue-templates/service';
 import {
   AutoArchiveResponse,
   EstimatesResponse,
+  HealthWeightsResponse,
   PROJECT_DESCRIPTION_LIMIT,
   ProjectBoardResponse,
   ProjectListResponse,
+  ProjectLogoResponse,
   ProjectResponse,
   ProjectSettingsResponse,
   SlackProjectResponse,
@@ -29,12 +31,15 @@ import {
   copyProjectBody,
   createProjectBody,
   listProjectsQuery,
+  logoParams,
   updateAutoArchiveBody,
   updateEstimatesBody,
+  updateHealthWeightsBody,
   updateProjectBody,
   updateProjectSettingsBody,
   updateSlackProjectBody,
   updateSubtaskAutomationBody,
+  uploadLogoBody,
 } from './model';
 import {
   listProjects,
@@ -50,9 +55,12 @@ import {
   getSlackProjectSettings,
   setSlackProjectSettings,
   setEstimateSettings,
+  getHealthWeights,
+  setHealthWeights,
 } from './service';
 import { copyProject } from './copy';
 import { projectPreferences } from './preferences';
+import { replaceProjectLogo, clearProjectLogo, readProjectLogo } from './logo';
 
 export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Projects'] } })
   .use(authContext)
@@ -222,6 +230,35 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
     },
   )
 
+  // Uploads a custom logo for the project, replacing any previous one. Owner-only.
+  .post(
+    '/projects/:projectKey/logo',
+    async ({ project, body }) => {
+      const url = await replaceProjectLogo(project.id, project.logoUrl, body.file);
+      return { logoUrl: url };
+    },
+    {
+      body: uploadLogoBody,
+      projectOwner: true,
+      response: { 200: ProjectLogoResponse, ...errors(400, 401, 403, 404, 413, 502) },
+      detail: { summary: "Upload the project's logo" },
+    },
+  )
+
+  // Removes the project's logo, returning it to the name-initials fallback. Owner-only.
+  .delete(
+    '/projects/:projectKey/logo',
+    async ({ project }) => {
+      await clearProjectLogo(project.id, project.logoUrl);
+      return noContent();
+    },
+    {
+      projectOwner: true,
+      response: { 204: t.Void(), ...accessErrors },
+      detail: { summary: "Remove the project's logo" },
+    },
+  )
+
   // Reads the project's settings: whether it is reachable over MCP and which
   // optional sections are enabled. Any member may read. MCP reachability is reported
   // as the two flags behind it, so the page can say which one closed the project.
@@ -355,6 +392,34 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
     },
   )
 
+  // The weights for this project's health score in the god stats view. Configured here
+  // rather than in god mode: it is the team's judgement of what matters for the project.
+  // Read with workflow_config read so a granted non-owner sees them; written with edit.
+  .get(
+    '/projects/:projectKey/settings/health-weights',
+    ({ project }) => getHealthWeights(project),
+    {
+      permission: ['workflow_config', 'read'],
+      response: { 200: HealthWeightsResponse, ...accessErrors },
+      detail: { summary: "Get a project's health-score weights" },
+    },
+  )
+
+  .patch(
+    '/projects/:projectKey/settings/health-weights',
+    async ({ project, body }) => {
+      const updated = await setHealthWeights(project.id, body);
+      if (!updated) throw new HttpError(404, 'Project not found');
+      return updated;
+    },
+    {
+      body: updateHealthWeightsBody,
+      permission: ['workflow_config', 'edit'],
+      response: { 200: HealthWeightsResponse, ...commonErrors },
+      detail: { summary: "Update a project's health-score weights" },
+    },
+  )
+
   // Permanently removes the project and everything scoped to it. Irreversible.
   // Owner-only.
   .delete(
@@ -373,3 +438,32 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
       },
     },
   );
+
+// Public preview URL for a project logo. Its own top-level path (not under
+// /projects/:projectKey) so its numeric :id param does not clash with the
+// :projectKey tree in the Eden Treaty client. Unauthenticated so it works in an
+// <img> tag. The uuid is unguessable and must match the project's current logo.
+// Only raster image types are stored, and nosniff keeps the bytes from being
+// interpreted as executable.
+export const projectLogoRawRoute = new Elysia({
+  name: 'project-logo-raw',
+  detail: { tags: ['Projects'] },
+}).get(
+  '/project-logos/:id/:uuid/raw',
+  async ({ params }) => {
+    const obj = await readProjectLogo(params.id, params.uuid);
+    const ct = /^image\//i.test(obj.contentType) ? obj.contentType : 'application/octet-stream';
+    const headers: Record<string, string> = {
+      'Content-Type': ct,
+      'X-Content-Type-Options': 'nosniff',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    };
+    if (obj.contentLength != null) headers['Content-Length'] = String(obj.contentLength);
+    return new Response(obj.body, { headers });
+  },
+  {
+    params: logoParams,
+    response: { ...errors(404) },
+    detail: { summary: "Preview a project's logo (public, no auth)" },
+  },
+);
