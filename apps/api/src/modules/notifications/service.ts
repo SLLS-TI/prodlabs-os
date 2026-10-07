@@ -13,7 +13,7 @@ import { and, desc, eq, inArray, lt, or, sql, isNull } from 'drizzle-orm';
 import { addedMentionHandles, resolveMentionHandles, type MentionedUsers } from '#shared/mentions';
 import { autoWatchIssue, watcherUserIds } from '#modules/issues/watchers';
 import { iso } from '#shared/lib';
-import { enqueueOutbound } from './outbound';
+import { enqueueChannelPost, enqueueOutbound } from './outbound';
 
 // Inbox notifications. A notification is one (recipient, event) row: a user is told
 // about an issue they are involved in. What happens on the issue ('commented',
@@ -53,16 +53,33 @@ async function actorName(id: string | null): Promise<string | null> {
   return rows[0]?.name ?? null;
 }
 
-async function insertNotifications(rows: NewNotificationRow[]): Promise<void> {
+async function insertNotifications(rows: NewNotificationRow[], name: string | null): Promise<void> {
   if (rows.length === 0) return;
-  const name = await actorName(rows[0].actorUserId);
   await db.insert(notification).values(rows.map((r) => ({ ...r, actorName: name })));
-  // Fan out to the project's enabled delivery channels (email, Telegram). Best-effort:
-  // a delivery failure must not break the inbox insert or the domain mutation.
+  // Fan out to the project's per-member delivery channels (email, Telegram).
+  // Best-effort: a delivery failure must not break the inbox insert or the domain
+  // mutation. The Slack channel post is enqueued separately by each event producer.
   try {
     await enqueueOutbound(rows, name);
   } catch (err) {
     console.error('[notifications] outbound enqueue failed:', err);
+  }
+}
+
+// Enqueues the project's Slack channel post for one issue event. Separate from
+// insertNotifications because the channel post fires on the event regardless of
+// whether any member is notified. Best-effort, like enqueueOutbound.
+async function postChannel(input: {
+  projectId: number;
+  issueId: number;
+  actorName: string | null;
+  types: NotificationType[];
+  statusActivityId: number | null;
+}): Promise<void> {
+  try {
+    await enqueueChannelPost(input);
+  } catch (err) {
+    console.error('[notifications] channel post enqueue failed:', err);
   }
 }
 
@@ -103,7 +120,15 @@ export async function notifyComment(
       actorUserId: actor,
     });
   }
-  await insertNotifications(rows);
+  const name = await actorName(actor);
+  await insertNotifications(rows, name);
+  await postChannel({
+    projectId,
+    issueId: comment.issueId,
+    actorName: name,
+    types: ['commented'],
+    statusActivityId: null,
+  });
 }
 
 // Fan out the mentions an edit newly added to a comment. The handles the comment
@@ -120,6 +145,7 @@ export async function notifyEditedCommentMentions(
   );
   if (mentioned.length === 0) return;
   await autoWatchIssue(projectId, comment.issueId, mentioned);
+  const name = await actorName(comment.actorUserId);
   await insertNotifications(
     mentioned.map((userId) => ({
       userId,
@@ -129,7 +155,15 @@ export async function notifyEditedCommentMentions(
       type: 'mentioned' as const,
       actorUserId: comment.actorUserId,
     })),
+    name,
   );
+  await postChannel({
+    projectId,
+    issueId: comment.issueId,
+    actorName: name,
+    types: ['mentioned'],
+    statusActivityId: null,
+  });
 }
 
 // Fan out the mentions an issue's description or markdown custom field gained. Only
@@ -153,6 +187,7 @@ export async function notifyTextMentions(input: {
   const { memberIds } = await resolveMentionHandles(projectId, handles);
   if (memberIds.length === 0) return;
   await autoWatchIssue(projectId, issueId, memberIds);
+  const name = await actorName(actor);
   await insertNotifications(
     memberIds
       .filter((userId) => userId !== actor)
@@ -164,7 +199,15 @@ export async function notifyTextMentions(input: {
         type: 'mentioned' as const,
         actorUserId: actor,
       })),
+    name,
   );
+  await postChannel({
+    projectId,
+    issueId,
+    actorName: name,
+    types: ['mentioned'],
+    statusActivityId: null,
+  });
 }
 
 // Fan out issue field changes recorded by an update. A new assignee (if a member and
@@ -217,7 +260,19 @@ export async function notifyIssueChange(input: {
     }
   }
 
-  await insertNotifications(rows);
+  const channelTypes: NotificationType[] = [];
+  if (input.assignedUserId && input.assignedUserId !== actor) channelTypes.push('assigned');
+  if (input.statusChanged) channelTypes.push('state_changed');
+
+  const name = await actorName(actor);
+  await insertNotifications(rows, name);
+  await postChannel({
+    projectId,
+    issueId,
+    actorName: name,
+    types: channelTypes,
+    statusActivityId: input.statusActivityId ?? null,
+  });
 }
 
 // --- Inbox read + mutations ------------------------------------------------------

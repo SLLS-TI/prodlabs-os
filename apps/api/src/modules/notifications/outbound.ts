@@ -20,17 +20,19 @@ import { escapeHtml } from '#shared/lib';
 import { issueUrl, teamRef } from '#modules/teams/ref';
 import type { NotificationType, NewNotificationRow } from './service';
 
-// Outbound notification delivery: turns the inbox notification rows produced by an
-// issue event into notification_delivery outbox rows. Email and Telegram are per
-// member and per their own preferences: for each inbox row (already one per
-// recipient), the member's notification-preferences decide whether it goes by email
-// (to their account address) and/or Telegram (to the chat of the Telegram account
-// they linked). Slack is per project instead: one post per distinct event type to the
-// project's configured channel, independent of member preferences. The team that owns
-// the project supplies the provider credentials (SMTP/Resend, and optionally its own
-// Telegram/Slack bot token — each otherwise goes through the instance bot). The
-// message text is composed here at enqueue time and stored on the row; the worker
-// drains the outbox and the sender reads the credentials at send time.
+// Outbound notification delivery: turns an issue event into notification_delivery
+// outbox rows. Email and Telegram are per member and per their own preferences:
+// enqueueOutbound takes the inbox notification rows (already one per recipient) and,
+// for each, the member's notification-preferences decide whether it goes by email (to
+// their account address) and/or Telegram (to the chat of the Telegram account they
+// linked). The Slack channel post is per project and driven by the event itself:
+// enqueueChannelPost posts one message per distinct event type to the project's
+// configured channel, independent of member preferences and independent of whether any
+// member is notified. The team that owns the project supplies the provider credentials
+// (SMTP/Resend, and optionally its own Telegram/Slack bot token — each otherwise goes
+// through the instance bot). The message text is composed here at enqueue time and
+// stored on the row; the worker drains the outbox and the sender reads the credentials
+// at send time.
 //
 // This is best-effort: enqueue never throws into the caller (a failure here must not
 // break creating a comment or updating an issue), so callers wrap it in try/catch.
@@ -157,10 +159,11 @@ function slackPayload(
   return { text, url };
 }
 
-// Enqueues outbound delivery rows for the inbox notifications just created for one
-// issue event. All rows in `notifications` share the same issue and actor (both call
-// sites operate on a single issue). No-op when the team has no enabled provider or
-// no member wants any of the event types present.
+// Enqueues email and Telegram delivery rows for the inbox notifications just created
+// for one issue event. All rows in `notifications` share the same issue and actor
+// (both call sites operate on a single issue). No-op when the team has no enabled
+// provider or no member wants any of the event types present. The Slack channel post
+// is separate — see enqueueChannelPost.
 export async function enqueueOutbound(
   notifications: NewNotificationRow[],
   actorName: string | null,
@@ -192,16 +195,7 @@ export async function enqueueOutbound(
   // set no token, the instance bot.
   const telegramEnabled =
     settings.telegram.enabled && (settings.telegram.hasBotToken || (await hasUsableInstanceBot()));
-  // Slack is per project: the project names a channel, and a usable bot token exists
-  // on the team (its own or the enabled flag) or on the instance. Unlike email and
-  // Telegram, Slack posts to the project channel, not to the members, so it does not
-  // depend on any member preference.
-  const projectSlack = await getSlackProjectSettings(projectId);
-  const slackEnabled =
-    projectSlack.enabled &&
-    projectSlack.channel.length > 0 &&
-    (settings.slack.hasBotToken || (await hasUsableInstanceSlack()));
-  if (!emailEnabled && !telegramEnabled && !slackEnabled) return;
+  if (!emailEnabled && !telegramEnabled) return;
 
   const issueId = notifications[0].issueId;
   const [issueRow] = await db
@@ -261,19 +255,62 @@ export async function enqueueOutbound(
     }
   }
 
-  // One Slack post per distinct event type in the batch (the per-member rows collapse
-  // to the underlying event), all to the project channel.
-  if (slackEnabled) {
-    for (const type of new Set(notifications.map((n) => n.type))) {
-      out.push({
-        projectId,
-        channel: 'slack',
-        recipient: projectSlack.channel,
-        payload: slackPayload(type, ref, issueRow.title, actor, url, stateChange),
-      });
-    }
-  }
-
   if (out.length === 0) return;
+  await db.insert(notificationDelivery).values(out);
+}
+
+// Enqueues the Slack channel post for one issue event. Driven by the event's own
+// types, not by the per-member inbox rows, so it fires even when the only member
+// involved is the actor (who is never notified) — the case the per-member batch
+// misses. One notification_delivery row per distinct type, all to the project's
+// configured channel. No-op when the project has no channel, Slack is off, or no
+// usable bot token exists on the team or the instance.
+export async function enqueueChannelPost(input: {
+  projectId: number;
+  issueId: number;
+  actorName: string | null;
+  types: NotificationType[];
+  statusActivityId: number | null;
+}): Promise<void> {
+  const types = [...new Set(input.types)];
+  if (types.length === 0) return;
+
+  const [projectRow] = await db
+    .select({ key: project.key, name: project.name, teamId: project.teamId, teamSlug: team.slug })
+    .from(project)
+    .innerJoin(team, eq(team.id, project.teamId))
+    .where(eq(project.id, input.projectId));
+  if (!projectRow) return;
+
+  const projectSlack = await getSlackProjectSettings(input.projectId);
+  const settings = await readRedactedSettings(projectRow.teamId);
+  const slackEnabled =
+    projectSlack.enabled &&
+    projectSlack.channel.length > 0 &&
+    (settings.slack.hasBotToken || (await hasUsableInstanceSlack()));
+  if (!slackEnabled) return;
+
+  const [issueRow] = await db
+    .select({ seq: issue.sequenceNumber, title: issue.title })
+    .from(issue)
+    .where(eq(issue.id, input.issueId));
+  if (!issueRow) return;
+
+  const ref = issueRef(projectRow.key, issueRow.seq);
+  const url = issueUrl(
+    teamRef({ id: projectRow.teamId, slug: projectRow.teamSlug }),
+    projectRow.key,
+    issueRow.seq,
+  );
+  const actor = input.actorName ?? 'Someone';
+  const stateChange =
+    input.statusActivityId != null ? await readStateChange(input.statusActivityId) : null;
+
+  const out: OutboxRow[] = types.map((type) => ({
+    projectId: input.projectId,
+    channel: 'slack',
+    recipient: projectSlack.channel,
+    payload: slackPayload(type, ref, issueRow.title, actor, url, stateChange),
+  }));
   await db.insert(notificationDelivery).values(out);
 }
