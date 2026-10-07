@@ -978,6 +978,28 @@ export const notificationDelivery = pgTable(
   ],
 );
 
+// Idempotency marker for the daily Slack digests. One row per (project, slot, local
+// date) the worker's digest loop has already enqueued. The loop inserts the marker
+// with ON CONFLICT DO NOTHING and only enqueues the Slack row when the insert took,
+// so a digest fires exactly once per project per slot per day regardless of worker
+// restarts or replica count. runDate is the local date in DIGEST_TIMEZONE the digest
+// covered. The api applies the migration; the worker writes the rows.
+export const slackDigestRun = pgTable(
+  'slack_digest_run',
+  {
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => project.id, { onDelete: 'cascade' }),
+    slot: text('slot').notNull(),
+    runDate: date('run_date').notNull(),
+    postedAt: timestamp('posted_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.projectId, t.slot, t.runDate] }),
+    check('slack_digest_run_slot_check', sql`${t.slot} IN ('morning', 'evening')`),
+  ],
+);
+
 // Skill library of a team, shared by every project it owns. A skill is a unit of
 // knowledge given to an internal agent (Anthropic Agent Skill format): a SKILL.md
 // with YAML frontmatter (name/description) plus optional reference files, no
