@@ -36,6 +36,10 @@ import { useTranslations } from 'next-intl';
 // A week, matching SIDEBAR_COOKIE_MAX_AGE in the generated sidebar component.
 const PROJECT_COLOR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 
+// An invalid hex would make the color-mix declaration invalid; gate on it so the
+// background falls back to the neutral base rather than breaking.
+const PROJECT_COLOR_HEX = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
 export default function Shell({
   children,
   defaultSidebarOpen = true,
@@ -91,6 +95,16 @@ export default function Shell({
   // The active project's background tint. The loaded project wins once resolved;
   // the cookie value (initialColor) covers first paint before it does.
   const color = project?.project.color ?? initialColor ?? null;
+
+  // Set the tinted tokens on the sidebar wrapper so the mix resolves there, against
+  // the base tokens in scope, and covers the sidebar, header and content inside it.
+  const tintStyle =
+    color && PROJECT_COLOR_HEX.test(color)
+      ? ({
+          '--background': `color-mix(in oklch, var(--base-background), ${color} var(--project-tint-strength))`,
+          '--sidebar': `color-mix(in oklch, var(--base-sidebar), ${color} var(--project-tint-strength))`,
+        } as CSSProperties)
+      : undefined;
 
   // Persist the active color so the next first paint (within the same project) has
   // it before the query resolves. Keyed by projectKey so a cross-project switch
@@ -182,7 +196,7 @@ export default function Shell({
       <SidebarProvider
         defaultOpen={defaultSidebarOpen}
         className="h-svh overflow-hidden"
-        style={{ '--project-color': color ?? '' } as CSSProperties}
+        style={tintStyle}
       >
         <AppSidebar
           projects={projects}
