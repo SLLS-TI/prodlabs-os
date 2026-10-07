@@ -7,6 +7,12 @@ import {
 } from '@repo/db';
 import { sql } from 'drizzle-orm';
 import { dueSlots, digestTimezone, type DigestSlot } from './slack-digest-schedule';
+import {
+  morningText,
+  eveningText,
+  type SlackProject,
+  type DigestIssue,
+} from './slack-digest-format';
 
 // Daily Slack digests. The loop runs every minute; at the 07:00 and 17:00 local
 // firing windows it enqueues one notification_delivery 'slack' row per Slack-enabled
@@ -16,21 +22,8 @@ import { dueSlots, digestTimezone, type DigestSlot } from './slack-digest-schedu
 // and backoff are reused. A per-(project, slot, local date) marker in slack_digest_run
 // makes a digest fire exactly once a day regardless of worker restarts or replica
 // count. The timezone is a single instance setting (DIGEST_TIMEZONE, default UTC). The
-// slot/date logic is in slack-digest-schedule.ts, dependency-free so it unit-tests
-// without a database.
-
-// Cap each digest list so a project with hundreds of overdue issues does not produce
-// a message Slack renders poorly. The overflow is reported with a trailing line.
-const LIST_CAP = 50;
-
-interface SlackProject {
-  projectId: number;
-  teamId: number;
-  key: string;
-  name: string;
-  teamSlug: string | null;
-  channel: string;
-}
+// slot/date logic is in slack-digest-schedule.ts and the message formatting in
+// slack-digest-format.ts, both dependency-free so they unit-test without a database.
 
 // Projects with a non-empty Slack channel and enabled=true in project_setting.
 async function slackEnabledProjects(): Promise<SlackProject[]> {
@@ -54,15 +47,9 @@ async function teamCanSendSlack(teamId: number, instanceUsable: boolean): Promis
   return instanceUsable;
 }
 
-interface DigestIssue {
-  seq: number;
-  title: string;
-  dueDate: string | null;
-}
-
 async function openDueIssues(projectId: number, localDate: string): Promise<DigestIssue[]> {
   return (await db.execute(sql`
-    SELECT i.sequence_number AS seq, i.title, i.due_date AS "dueDate"
+    SELECT i.sequence_number AS seq, i.title, i.due_date AS "dueDate", c.state_type AS "stateType"
     FROM issue i
     JOIN project_column c ON c.id = i.column_id
     WHERE i.project_id = ${projectId}
@@ -83,7 +70,7 @@ async function completedTodayIssues(
   // is compared against. "<date> AT TIME ZONE <zone>" reads the local wall-clock
   // time in that zone and yields the corresponding instant.
   return (await db.execute(sql`
-    SELECT DISTINCT i.sequence_number AS seq, i.title, i.due_date AS "dueDate"
+    SELECT DISTINCT i.sequence_number AS seq, i.title, i.due_date AS "dueDate", s.state_type AS "stateType"
     FROM issue_status s
     JOIN issue i ON i.id = s.issue_id
     WHERE i.project_id = ${projectId}
@@ -91,50 +78,6 @@ async function completedTodayIssues(
       AND s.entered_at >= (${localDate}::date::timestamp AT TIME ZONE ${tz})
     ORDER BY i.sequence_number
   `)) as unknown as DigestIssue[];
-}
-
-function escapeSlack(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function issueUrl(p: SlackProject, seq: number): string | undefined {
-  const base = process.env.APP_URL;
-  if (!base) return undefined;
-  const teamRef = p.teamSlug ?? String(p.teamId);
-  return `${base}/${teamRef}/issue/${p.key}-${seq}`;
-}
-
-function issueLine(p: SlackProject, issue: DigestIssue, withDue: boolean): string {
-  const ref = `${p.key}-${issue.seq}`;
-  const url = issueUrl(p, issue.seq);
-  const link = url ? `<${url}|${escapeSlack(ref)}>` : `*${escapeSlack(ref)}*`;
-  const due = withDue && issue.dueDate ? ` (due ${issue.dueDate})` : '';
-  return `• ${link} ${escapeSlack(issue.title)}${due}`;
-}
-
-// Caps a list to LIST_CAP lines, appending "…and N more" when it overflows.
-function capLines(lines: string[]): string[] {
-  if (lines.length <= LIST_CAP) return lines;
-  return [...lines.slice(0, LIST_CAP), `…and ${lines.length - LIST_CAP} more`];
-}
-
-function morningText(p: SlackProject, open: DigestIssue[]): string {
-  const header = `*Tasks to finish today — ${escapeSlack(p.name)}*`;
-  if (open.length === 0) return `${header}\n_Nothing due today._`;
-  return [header, ...capLines(open.map((i) => issueLine(p, i, true)))].join('\n');
-}
-
-function eveningText(p: SlackProject, completed: DigestIssue[], pending: DigestIssue[]): string {
-  const header = `*End of day — ${escapeSlack(p.name)}*`;
-  const completedBlock =
-    completed.length === 0
-      ? ['*Completed today*', '_Nothing completed today._']
-      : ['*Completed today*', ...capLines(completed.map((i) => issueLine(p, i, false)))];
-  const pendingBlock =
-    pending.length === 0
-      ? ['*Still pending*', '_Nothing pending._']
-      : ['*Still pending*', ...capLines(pending.map((i) => issueLine(p, i, true)))];
-  return [header, ...completedBlock, ...pendingBlock].join('\n');
 }
 
 async function digestText(p: SlackProject, slot: DigestSlot, localDate: string): Promise<string> {
