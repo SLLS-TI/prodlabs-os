@@ -61,6 +61,11 @@ export const TeamResponse = t.Object({
   agentCount: t.Number({ description: 'How many AI agents the team owns.' }),
   skillCount: t.Number({ description: 'How many agent skills the team library holds.' }),
   toolCount: t.Number({ description: 'How many configured tools the team holds.' }),
+  isExternalClient: t.Boolean({
+    description:
+      'Whether you are an external client of this team: your only standing in it is through ' +
+      'client-role project memberships. True hides team-management surfaces from you.',
+  }),
   createdAt: t.String(),
 });
 

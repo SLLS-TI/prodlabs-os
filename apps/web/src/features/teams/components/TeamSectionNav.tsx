@@ -58,15 +58,21 @@ export default function TeamSectionNav({ team }: { team: Team }) {
     };
   }
 
-  const top = [
-    section('info', t('info.title'), Info),
-    section('projects', t('projects.title'), FolderKanban, team.projectCount),
-    // The roles are managed by the team's owner and managers, so the section is theirs.
-    ...(team.role === 'owner' || team.role === 'manager'
-      ? [section('roles', t('roles.title'), ShieldCheck, team.roleCount)]
-      : []),
-    section('members', t('members.title'), Users, team.memberCount),
-  ];
+  // An external client of the team may not read any team-management section: info,
+  // the project list, the member list and MCP are all hidden, and the route redirects
+  // them out. The roles, git, notifications and the AI group are already gated to a
+  // standing or a permission a client never holds.
+  const top = team.isExternalClient
+    ? []
+    : [
+        section('info', t('info.title'), Info),
+        section('projects', t('projects.title'), FolderKanban, team.projectCount),
+        // The roles are managed by the team's owner and managers, so the section is theirs.
+        ...(team.role === 'owner' || team.role === 'manager'
+          ? [section('roles', t('roles.title'), ShieldCheck, team.roleCount)]
+          : []),
+        section('members', t('members.title'), Users, team.memberCount),
+      ];
   const ai = [
     ...(permissions?.integrations.read
       ? [section('integrations', t('integrations.title'), Plug, team.integrationCount)]
@@ -84,7 +90,7 @@ export default function TeamSectionNav({ team }: { team: Team }) {
   // The notification providers are the owner's: nobody else reads or writes them.
   const bottom = [
     ...(team.role === 'owner' || team.role === 'manager' ? [section('git', 'Git', GitBranch)] : []),
-    section('mcp', t('mcp.title'), Radio),
+    ...(team.isExternalClient ? [] : [section('mcp', t('mcp.title'), Radio)]),
     ...(team.role === 'owner' ? [section('notifications', t('notifications.title'), Bell)] : []),
   ];
 

@@ -39,6 +39,11 @@ export interface Team {
   agentCount: number;
   skillCount: number;
   toolCount: number;
+  // Whether the caller is an external client of this team: their only standing in it is
+  // through client-role project memberships. True hides team-management surfaces (the
+  // project switcher footer, the team section rail) and redirects them out of team
+  // settings. The server computes it; see the API's isExternalTeamClient.
+  isExternalClient: boolean;
   createdAt: string;
 }
 

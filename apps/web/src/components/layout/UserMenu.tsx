@@ -10,6 +10,7 @@ import { ACCOUNT_SECTIONS, accountPath } from '@/utils/accountSections';
 import { GOD_SECTIONS } from '@/utils/godSections';
 import { godPath } from '@/utils/paths';
 import { useAccountSectionLabel } from '@/hooks/useSectionLabels';
+import { useGlobalExternalClient } from '@/services/teams.service';
 import Avatar from '@/components/common/Avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -33,6 +34,8 @@ export default function UserMenu() {
   const sectionLabel = useAccountSectionLabel();
   const router = useRouter();
   const { data: session, isPending } = useSession();
+  // The API keys page is closed to a global external client; drop its menu entry.
+  const isExternalClient = useGlobalExternalClient() === true;
 
   // better-auth reads the session on the client, so the server renders no user and
   // the client may already have a cached session. Render the placeholder until
@@ -72,14 +75,16 @@ export default function UserMenu() {
           <span className="text-xs text-muted-foreground capitalize">{t('role', { role })}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {ACCOUNT_SECTIONS.map(({ slug, icon: Icon }) => (
-          <DropdownMenuItem key={slug} asChild>
-            <Link href={accountPath(slug)}>
-              <Icon />
-              {sectionLabel(slug)}
-            </Link>
-          </DropdownMenuItem>
-        ))}
+        {ACCOUNT_SECTIONS.filter(({ slug }) => !(isExternalClient && slug === 'api-keys')).map(
+          ({ slug, icon: Icon }) => (
+            <DropdownMenuItem key={slug} asChild>
+              <Link href={accountPath(slug)}>
+                <Icon />
+                {sectionLabel(slug)}
+              </Link>
+            </DropdownMenuItem>
+          ),
+        )}
         {isGod && (
           <>
             <DropdownMenuSeparator />

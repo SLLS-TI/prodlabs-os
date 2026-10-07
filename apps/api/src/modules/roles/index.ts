@@ -68,7 +68,7 @@ export const roleRoutes = new Elysia({ name: 'roles', detail: { tags: ['Roles'] 
     {
       params: teamParams,
       query: roleListQuery,
-      teamMember: true,
+      teamMemberNotClient: true,
       response: { 200: RolePageResponse, ...accessErrors },
       detail: {
         summary: "List a team's roles",
@@ -85,7 +85,7 @@ export const roleRoutes = new Elysia({ name: 'roles', detail: { tags: ['Roles'] 
   // along: the roles are exported to the clipboard from here as well.
   .get('/teams/:teamId/roles/options', ({ membership }) => listRoles(membership.teamId), {
     params: teamParams,
-    teamMember: true,
+    teamMemberNotClient: true,
     response: { 200: t.Array(RoleResponse), ...accessErrors },
     detail: {
       summary: "List a team's role options",

@@ -1301,5 +1301,45 @@ describe('teams', () => {
       expect(mkt.owners.length).toBeGreaterThan(0);
       expect(mkt.owners[0].userId).toBe(owner.user.userId);
     });
+
+    it('marks the team detail isExternalClient for a client and not for an owner', async () => {
+      const { owner, teamId, client, member } = await setupWithClient();
+      const clientRes = await client.api.teams({ teamId }).get();
+      expect(clientRes.status).toBe(200);
+      expect(clientRes.data!.isExternalClient).toBe(true);
+
+      const ownerRes = await owner.api.teams({ teamId }).get();
+      expect(ownerRes.data!.isExternalClient).toBe(false);
+
+      // A real project member (owner/member role) is not an external client.
+      const memberRes = await member.api.teams({ teamId }).get();
+      expect(memberRes.data!.isExternalClient).toBe(false);
+    });
+
+    it('hides the team leads from a client', async () => {
+      const { owner, teamId, client } = await setupWithClient();
+      const clientRes = await client.api.teams({ teamId }).get();
+      expect(clientRes.data!.leads).toEqual([]);
+
+      const ownerRes = await owner.api.teams({ teamId }).get();
+      expect(ownerRes.data!.leads.length).toBeGreaterThan(0);
+    });
+
+    it('refuses a client the team roles, role options, integration options and defaults', async () => {
+      const { teamId, client } = await setupWithClient();
+      expect((await client.api.teams({ teamId }).roles.get({ query: {} })).status).toBe(403);
+      expect((await client.api.teams({ teamId }).roles.options.get()).status).toBe(403);
+      expect(
+        (await client.api.teams({ teamId }).integrations.options.get({ query: {} })).status,
+      ).toBe(403);
+      expect((await client.api.teams({ teamId })['project-defaults'].get()).status).toBe(403);
+    });
+
+    it('still lets an owner read the team roles and defaults', async () => {
+      const { owner, teamId } = await setupWithClient();
+      expect((await owner.api.teams({ teamId }).roles.get({ query: {} })).status).toBe(200);
+      expect((await owner.api.teams({ teamId }).roles.options.get()).status).toBe(200);
+      expect((await owner.api.teams({ teamId })['project-defaults'].get()).status).toBe(200);
+    });
   });
 });

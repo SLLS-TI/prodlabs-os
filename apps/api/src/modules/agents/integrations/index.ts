@@ -97,7 +97,7 @@ export const integrationRoutes = new Elysia({
     {
       params: teamParams,
       query: integrationOptionsQuery,
-      teamMember: true,
+      teamMemberNotClient: true,
       response: { 200: IntegrationOptionListResponse, ...commonErrors },
       detail: {
         summary: 'List integration options',

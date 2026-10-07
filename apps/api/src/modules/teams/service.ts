@@ -74,6 +74,11 @@ export interface TeamRow {
   agentCount: number;
   skillCount: number;
   toolCount: number;
+  // Whether the caller is an external client of this team: their only standing in it is
+  // through client-role project memberships. The web reads it to hide team-management nav
+  // (the project switcher footer, the team section rail) and to redirect an external
+  // client out of team settings. Fails closed, matching isExternalTeamClient.
+  isExternalClient: boolean;
   createdAt: string;
 }
 
@@ -226,6 +231,7 @@ async function loadTeamRows(userId: string, teamId?: number): Promise<TeamRow[]>
     agentCounts,
     skillCounts,
     toolCounts,
+    projectStandings,
   ] = await Promise.all([
     db
       .select({
@@ -274,6 +280,21 @@ async function loadTeamRows(userId: string, teamId?: number): Promise<TeamRow[]>
       .from(agentTool)
       .where(inArray(agentTool.teamId, ids))
       .groupBy(agentTool.teamId),
+    // The caller's own project memberships in each team, split by whether the role is a
+    // non-client foothold (owner/member) or a client one. An external client of a team
+    // has a client membership and no non-client one. Fails closed: the owner/manager
+    // team rank is checked below, so a plain-member rank with no project standing reads
+    // as not-external (count zero), matching isExternalTeamClient.
+    db
+      .select({
+        teamId: project.teamId,
+        nonClient: sql<number>`count(*) filter (where ${projectMember.role} in ('owner','member'))::int`,
+        client: sql<number>`count(*) filter (where ${projectMember.role} = 'client')::int`,
+      })
+      .from(projectMember)
+      .innerJoin(project, eq(project.id, projectMember.projectId))
+      .where(and(inArray(project.teamId, ids), eq(projectMember.userId, userId)))
+      .groupBy(project.teamId),
   ]);
   const projects = new Map(projectCounts.map((r) => [r.teamId, r]));
   const members = new Map(memberCounts.map((r) => [r.teamId, r]));
@@ -282,10 +303,14 @@ async function loadTeamRows(userId: string, teamId?: number): Promise<TeamRow[]>
   const agents = new Map(agentCounts.map((r) => [r.teamId, r.count]));
   const skills = new Map(skillCounts.map((r) => [r.teamId, r.count]));
   const tools = new Map(toolCounts.map((r) => [r.teamId, r.count]));
+  const standings = new Map(projectStandings.map((r) => [r.teamId, r]));
 
   return rows.map((row) => {
     const standing = row.role as TeamStanding;
     const projectCount = projects.get(row.id);
+    const standingRow = standings.get(row.id);
+    const isExternalClient =
+      !runsTeam(standing) && (standingRow?.nonClient ?? 0) === 0 && (standingRow?.client ?? 0) > 0;
     return {
       id: row.id,
       name: row.name,
@@ -303,6 +328,7 @@ async function loadTeamRows(userId: string, teamId?: number): Promise<TeamRow[]>
       agentCount: agents.get(row.id) ?? 0,
       skillCount: skills.get(row.id) ?? 0,
       toolCount: tools.get(row.id) ?? 0,
+      isExternalClient,
       createdAt: iso(row.createdAt),
     };
   });
@@ -423,7 +449,10 @@ export async function getTeam(teamId: number, userId: string): Promise<TeamDetai
 
   const [permissions, leads] = await Promise.all([
     runsTeam(row.role) ? fullPermissions() : getTeamPermissions(teamId, userId),
-    listTeamLeads(teamId),
+    // The leads carry the team owners' and managers' names and addresses. An external
+    // client must not learn who runs the team, so they get an empty list; their own
+    // view redirects out of team settings anyway.
+    row.isExternalClient ? Promise.resolve([]) : listTeamLeads(teamId),
   ]);
   return { ...row, permissions, leads };
 }
@@ -802,6 +831,7 @@ export async function createTeam(name: string, slug: string, ownerId: string): P
         agentCount: 0,
         skillCount: 0,
         toolCount: 0,
+        isExternalClient: false,
         createdAt: iso(row.createdAt),
       };
     }),

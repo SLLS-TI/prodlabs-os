@@ -277,7 +277,7 @@ export const teamRoutes = new Elysia({ name: 'teams', detail: { tags: ['Teams'] 
     '/teams/:teamId/project-defaults',
     ({ membership }) => getTeamProjectDefaults(membership.teamId),
     {
-      teamMember: true,
+      teamMemberNotClient: true,
       params: teamParams,
       response: { 200: TeamProjectDefaultsResponse, ...errors(401, 403, 404) },
       detail: { summary: "Get a team's defaults for new projects" },

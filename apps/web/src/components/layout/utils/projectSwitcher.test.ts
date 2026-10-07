@@ -62,6 +62,7 @@ function team(overrides: Partial<Team> = {}): Team {
     agentCount: 0,
     skillCount: 0,
     toolCount: 0,
+    isExternalClient: false,
     createdAt: '2026-01-01T00:00:00Z',
     ...overrides,
   };
