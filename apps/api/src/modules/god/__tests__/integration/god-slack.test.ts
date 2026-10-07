@@ -50,6 +50,7 @@ describe('god slack settings', () => {
   });
 
   it('refuses PUT for a non-god user', async () => {
+    await setup();
     const plain = await addUser({ email: 'plain2@example.com' });
 
     const res = await plain.api.god['slack-settings'].put({ enabled: false });
