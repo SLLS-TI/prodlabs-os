@@ -11,6 +11,15 @@ import { addUser, setup } from '../helpers';
 
 const TODAY = new Date().toISOString().slice(0, 10);
 
+// Monday of the current week (date_trunc('week') in Postgres), as 'YYYY-MM-DD'. Any due
+// date between this and the following Sunday counts toward the current-week commitment.
+function mondayOfThisWeek(): string {
+  const d = new Date();
+  const dow = (d.getUTCDay() + 6) % 7; // 0 = Monday
+  d.setUTCDate(d.getUTCDate() - dow);
+  return d.toISOString().slice(0, 10);
+}
+
 async function createProject(api: Api, key: string, name: string) {
   const created = await api.projects.post({ key, name });
   const view = await api.projects({ projectKey: key }).get();
@@ -124,6 +133,33 @@ describe('god stats', () => {
 
       expect(row.open).toBe(0);
       expect(row.overdue).toBe(0);
+    });
+
+    it('counts the current-week commitment across projects by state', async () => {
+      const { god } = await setup();
+      const { col: mkt } = await createProject(god.api, 'MKT', 'Marketing');
+      const { col: eng } = await createProject(god.api, 'ENG', 'Engineering');
+      const week = mondayOfThisWeek();
+
+      // Committed this week: two open (MKT + ENG) and one completed (MKT).
+      await createIssue(god.api, 'MKT', mkt.unstarted, { dueDate: week });
+      await createIssue(god.api, 'ENG', eng.started, { dueDate: week });
+      const done = await createIssue(god.api, 'MKT', mkt.started, { dueDate: week });
+      await god.api.issues({ issueId: done.id }).patch({ columnId: mkt.completed });
+
+      // Excluded: due last week, canceled this week, and archived this week.
+      await createIssue(god.api, 'MKT', mkt.unstarted, { dueDate: '2000-01-01' });
+      await createIssue(god.api, 'MKT', mkt.canceled, { dueDate: week });
+      const archived = await createIssue(god.api, 'ENG', eng.unstarted, { dueDate: week });
+      await god.api.issues({ issueId: archived.id }).archive.post();
+
+      const res = await god.api.god.stats.get();
+      expect(res.status).toBe(200);
+      expect(res.data!.global.weekCommitment).toMatchObject({
+        committed: 3,
+        done: 1,
+        remaining: 2,
+      });
     });
 
     it('reads worked time across a restrictive time-visibility allowlist', async () => {

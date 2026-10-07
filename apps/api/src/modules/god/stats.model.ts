@@ -42,6 +42,11 @@ const GlobalRollup = t.Object({
     closedLast7d: t.Integer(),
     unassigned: t.Integer(),
   }),
+  weekCommitment: t.Object({
+    committed: t.Integer(),
+    done: t.Integer(),
+    remaining: t.Integer(),
+  }),
 });
 
 export const GodStatsResponse = t.Object({
