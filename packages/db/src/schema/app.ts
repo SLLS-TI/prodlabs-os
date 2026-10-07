@@ -110,8 +110,9 @@ export const project = pgTable(
     key: text('key').notNull(),
     name: text('name').notNull(),
     description: text('description').notNull().default(''),
-    // Relative serve URL of the project's custom logo (/projects/<id>/logo/<uuid>/raw),
-    // or null to fall back to the name initials. Set from Settings -> General.
+    // Relative serve URL of the project's custom logo (/project-logos/<id>/<uuid>/raw),
+    // or null to fall back to the name initials. Set from Settings -> General and on
+    // project creation.
     logoUrl: text('logo_url'),
     nextSequence: integer('next_sequence').notNull().default(1),
     // Whether this project is in the team's MCP reach. Managed from the team's MCP
