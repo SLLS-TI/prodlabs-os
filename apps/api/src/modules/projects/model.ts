@@ -57,7 +57,16 @@ export const updateProjectBody = t.Object({
   key: t.Optional(projectKey),
   name: t.Optional(t.String({ minLength: 1 })),
   description: t.Optional(t.String({ maxLength: PROJECT_DESCRIPTION_LIMIT })),
+  color: t.Optional(t.Nullable(t.String())),
 });
+
+// Params of the public logo raw route: the numeric project id and the object's uuid.
+export const logoParams = t.Object({ id: t.Numeric(), uuid: t.String() });
+
+export const uploadLogoBody = t.Object({ file: t.File() });
+
+// The relative serve URL stored on the project, returned after an upload.
+export const ProjectLogoResponse = t.Object({ logoUrl: t.String() });
 
 export const ProjectPreferencesResponse = t.Object({
   isFavorite: t.Boolean(),
@@ -109,6 +118,10 @@ export const ProjectResponse = t.Object({
   }),
   name: t.String(),
   description: t.String(),
+  // An optional hex background tint for the whole project interface; null = no tint.
+  color: t.Nullable(t.String()),
+  // Relative serve URL of the project's custom logo, or null to fall back to initials.
+  logoUrl: t.Nullable(t.String()),
   mcpEnabled: t.Boolean(),
   teamMcpEnabled: t.Boolean(),
   // The optional sections, toggled in Settings -> General. All on by default; a
@@ -121,6 +134,11 @@ export const ProjectResponse = t.Object({
   subtasksEnabled: t.Boolean(),
   checklistsEnabled: t.Boolean(),
   issueStatsEnabled: t.Boolean(),
+  aiTeamEnabled: t.Boolean(),
+  inboxEnabled: t.Boolean(),
+  workItemsEnabled: t.Boolean(),
+  membersEnabled: t.Boolean(),
+  notificationsEnabled: t.Boolean(),
   pointsEstimateEnabled: t.Boolean(),
   timeEstimateEnabled: t.Boolean(),
   timeLoggingEnabled: t.Boolean(),
@@ -227,6 +245,11 @@ const FeaturesResponse = t.Object({
   subtasks: t.Boolean(),
   checklists: t.Boolean(),
   issueStats: t.Boolean(),
+  aiTeam: t.Boolean(),
+  inbox: t.Boolean(),
+  workItems: t.Boolean(),
+  members: t.Boolean(),
+  notifications: t.Boolean(),
 });
 
 // The project's settings: MCP reachability and the enabled sections. Reachability is
@@ -277,6 +300,19 @@ export const EstimatesResponse = t.Object({
 
 export const updateEstimatesBody = EstimatesResponse;
 
+// The weights for the cross-project health score (god stats), configured per project. The
+// response merges the stored partial over the defaults, so every key is present. Values are
+// stored as-is and the score normalizes by proportion, so they need not sum to 100.
+export const HealthWeightsResponse = t.Object({
+  schedule: t.Integer({ minimum: 0, maximum: 1000 }),
+  budget: t.Integer({ minimum: 0, maximum: 1000 }),
+  velocity: t.Integer({ minimum: 0, maximum: 1000 }),
+  load: t.Integer({ minimum: 0, maximum: 1000 }),
+  freshness: t.Integer({ minimum: 0, maximum: 1000 }),
+});
+
+export const updateHealthWeightsBody = HealthWeightsResponse;
+
 // The subtask automations (SubtaskAutomationSettings from the service).
 export const SubtaskAutomationResponse = t.Object({
   completeParent: t.Boolean(),
@@ -284,3 +320,15 @@ export const SubtaskAutomationResponse = t.Object({
 });
 
 export const updateSubtaskAutomationBody = SubtaskAutomationResponse;
+
+// The project's Slack target (SlackProjectSettings from the service). channel is a
+// Slack channel id or '#name'; enabling with a blank channel is coerced to off.
+export const SlackProjectResponse = t.Object({
+  channel: t.String(),
+  enabled: t.Boolean(),
+});
+
+export const updateSlackProjectBody = t.Object({
+  channel: t.String({ maxLength: 200 }),
+  enabled: t.Boolean(),
+});

@@ -23,6 +23,10 @@
       "label": "Proyectos",
       "description": "Todos los proyectos de esta instancia: lo que contiene cada uno, cuando fue la última actividad, y quién puede acceder."
     },
+    "stats": {
+      "label": "Statistics",
+      "description": "Cross-project health, time, and overdue work across every project on this instance."
+    },
     "general": {
       "label": "General",
       "description": "Valores por defecto para los proyectos nuevos."
@@ -42,6 +46,10 @@
     "telegram": {
       "label": "Telegram",
       "description": "El bot al que las personas conectan su cuenta de Telegram, y el que entrega las notificaciones de Telegram para los proyectos que no definen un bot propio."
+    },
+    "slack": {
+      "label": "Slack",
+      "description": "El bot que publica las notificaciones del proyecto y los resúmenes diarios en el canal de Slack que cada proyecto configura, para los proyectos que no configuran un bot propio."
     },
     "email": {
       "label": "Proveedor de correo",

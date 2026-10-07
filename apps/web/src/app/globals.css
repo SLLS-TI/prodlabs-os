@@ -73,7 +73,15 @@
 /* Grayscale ramps with no hue, and the page never sits on pure white or pure black.
    Text pairs are measured with APCA, not eyeballed: see DESIGN.md for the thresholds. */
 :root {
-  --background: oklch(0.985 0 0);
+  /* --background and --sidebar default to the neutral base tokens. For an optional
+     per-project tint the Shell sets both, inline on the sidebar wrapper, to a
+     color-mix of the base and the project's color, so the tint applies only inside a
+     project. A composed value here would resolve against :root and not pick up a
+     color set lower in the tree. .dark overrides only the base tokens. */
+  --project-tint-strength: 25%;
+  --base-background: oklch(0.985 0 0);
+  --base-sidebar: oklch(0.972 0 0);
+  --background: var(--base-background);
   --foreground: oklch(0.18 0 0);
   --card: oklch(0.998 0 0);
   --card-foreground: oklch(0.18 0 0);
@@ -98,7 +106,7 @@
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.972 0 0);
+  --sidebar: var(--base-sidebar);
   --sidebar-foreground: oklch(0.18 0 0);
   --sidebar-primary: oklch(0.22 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
@@ -133,7 +141,7 @@
 }
 
 .dark {
-  --background: oklch(0.185 0 0);
+  --base-background: oklch(0.185 0 0);
   --foreground: oklch(0.965 0 0);
   --card: oklch(0.225 0 0);
   --card-foreground: oklch(0.965 0 0);
@@ -157,7 +165,7 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.145 0 0);
+  --base-sidebar: oklch(0.145 0 0);
   --sidebar-foreground: oklch(0.965 0 0);
   --sidebar-primary: oklch(0.93 0 0);
   --sidebar-primary-foreground: oklch(0.18 0 0);

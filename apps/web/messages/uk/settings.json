@@ -103,6 +103,9 @@
     "saved": "Проєкт оновлено",
     "project": "Проєкт",
     "projectHint": "Ключ додається до кожної задачі і не змінюється.",
+    "themeColor": "Колір теми",
+    "themeColorHint": "Забарвлює весь інтерфейс цього проєкту. Залиште порожнім, щоб не застосовувати відтінок.",
+    "themeColorNone": "Без кольору",
     "key": "Ключ",
     "features": "Розділи",
     "featuresHint": "Розділи, які показує цей проєкт. Вимкнений розділ ховається, а його вміст залишається.",
@@ -114,7 +117,12 @@
       "subtasks": "Задачі, розбиті на підзадачі під батьківською.",
       "checklists": "Списки кроків усередині задачі.",
       "issueStats": "Скільки часу задача пробула в кожному статусі.",
-      "documents": "Спільна робота з документами проєкту."
+      "documents": "Спільна робота з документами проєкту.",
+      "aiTeam": "Розділ AI-команди: розклади та агенти.",
+      "inbox": "Вхідні проєкту та непрочитана активність.",
+      "workItems": "Дошка задач і збережені подання.",
+      "members": "Список учасників проєкту.",
+      "notifications": "Ваші налаштування сповіщень для цього проєкту."
     },
     "featureOn": "Розділ «{feature}» увімкнено",
     "featureOff": "Розділ «{feature}» вимкнено"
@@ -156,7 +164,31 @@
     "timeVisibilityNone": "Ролі не вибрано — облік часу бачать усі.",
     "clientMasking": "Особа, видима клієнту",
     "clientMaskingHint": "Учасники з роллю клієнта бачать усю активність команди, приписану одному користувачу. Виберіть кого, або залиште повернення до власника проєкту.",
-    "clientMaskingAuto": "Власник проєкту"
+    "clientMaskingAuto": "Власник проєкту",
+    "slack": "Slack",
+    "slackHint": "Публікуйте події задач і щоденні зведення цього проєкту в канал Slack. Змінити це може лише власник проєкту.",
+    "slackSaved": "Канал Slack збережено",
+    "slackOwnerOnly": "Налаштувати канал Slack може лише власник проєкту.",
+    "slackEnabled": "Публікувати у Slack",
+    "slackEnabledHint": "Коли ввімкнено, події задач і щоденні зведення публікуються в канал нижче.",
+    "slackChannel": "Канал",
+    "slackChannelHint": "Id каналу (C01234567) або #ім'я. Спершу запросіть бота в канал, інакше публікації не пройдуть з помилкою not_in_channel.",
+    "healthWeight": {
+      "title": "Health score weights",
+      "hint": "How much each dimension counts toward this project's score in the cross-project statistics.",
+      "weights": "Weights",
+      "weightsHint": "A larger weight makes that dimension matter more.",
+      "dimensions": {
+        "schedule": "Schedule",
+        "budget": "Budget",
+        "velocity": "Velocity",
+        "load": "Load",
+        "freshness": "Freshness"
+      },
+      "total": "Total: {total}",
+      "totalHint": "Total: {total}. Weights need not sum to 100 — the score uses them in proportion.",
+      "reset": "Reset to defaults"
+    }
   },
   "states": {
     "addState": "Додати статус групи «{type}»",

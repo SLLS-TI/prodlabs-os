@@ -39,7 +39,8 @@
   "groups": {
     "project": "项目",
     "workflow": "工作流",
-    "automation": "自动化"
+    "automation": "自动化",
+    "developer": "开发者"
   },
   "godModeOwnerOnly": "管理模式仅对实例管理员开放。",
   "project": "项目",

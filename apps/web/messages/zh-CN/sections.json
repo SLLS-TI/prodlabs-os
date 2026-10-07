@@ -23,6 +23,10 @@
       "label": "项目",
       "description": "此实例中的所有项目，包括项目内容、最近活动时间和访问成员。"
     },
+    "stats": {
+      "label": "Statistics",
+      "description": "Cross-project health, time, and overdue work across every project on this instance."
+    },
     "general": {
       "label": "通用",
       "description": "新建项目的默认设置。"
@@ -42,6 +46,10 @@
     "telegram": {
       "label": "Telegram",
       "description": "设置用户关联 Telegram 账户所用的机器人，以及项目未单独配置时发送通知的机器人。"
+    },
+    "slack": {
+      "label": "Slack",
+      "description": "为未设置自有机器人的项目，将项目通知和每日摘要发送到各项目所设 Slack 频道的机器人。"
     },
     "email": {
       "label": "邮件服务商",

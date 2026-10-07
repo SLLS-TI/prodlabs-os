@@ -23,6 +23,10 @@
       "label": "Projects",
       "description": "Every project on this instance: what each one holds, when it was last active, and who can reach it."
     },
+    "stats": {
+      "label": "Statistics",
+      "description": "Cross-project health, time, and overdue work across every project on this instance."
+    },
     "general": {
       "label": "General",
       "description": "Defaults for new projects."
@@ -42,6 +46,10 @@
     "telegram": {
       "label": "Telegram",
       "description": "The bot people connect their Telegram account to, and the one that delivers Telegram notifications for projects that set no bot of their own."
+    },
+    "slack": {
+      "label": "Slack",
+      "description": "The bot that posts project notifications and daily digests to the Slack channel each project sets, for projects that set no bot of their own."
     },
     "email": {
       "label": "Email provider",

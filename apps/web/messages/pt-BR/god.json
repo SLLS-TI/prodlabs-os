@@ -220,6 +220,16 @@
     "botTokenHint": "O token é verificado com o Telegram ao salvar, então um errado é recusado aqui em vez de falhar silenciosamente depois.",
     "resolvedHint": "Resolvido a partir do token. Este é o bot que as pessoas verão ao conectar."
   },
+  "slack": {
+    "saved": "Configurações do Slack salvas",
+    "bot": "Bot",
+    "botConfigured": "Os projetos publicam suas notificações e resumos diários no canal do Slack que cada um escolhe, por meio deste bot.",
+    "botMissing": "Crie um app do Slack com um token de bot, instale-o no seu workspace e cole o token do bot (xoxb-…) aqui.",
+    "botToken": "Token do bot",
+    "botTokenHint": "O token é verificado com o Slack ao salvar, então um errado é recusado aqui em vez de falhar silenciosamente depois.",
+    "workspace": "Workspace",
+    "resolvedHint": "Resolvido a partir do token. Este é o workspace do Slack onde o bot publica."
+  },
   "email": {
     "saved": "Provedor de e-mail salvo",
     "provider": "Provedor de e-mail",
@@ -312,6 +322,56 @@
       "defaultRole": "Função padrão",
       "remove": "Remover projeto",
       "saved": "Acesso do grupo salvo"
+    }
+  },
+  "stats": {
+    "empty": "Ainda não há projetos nesta instância.",
+    "week": {
+      "title": "Comprometido nesta semana",
+      "done": "Concluídas",
+      "remaining": "Restantes",
+      "total": "Comprometidas",
+      "empty": "Nada previsto para esta semana."
+    },
+    "summary": {
+      "globalScore": "Saúde global",
+      "overduePct": "Fração atrasada",
+      "redProjects": "Projetos em risco",
+      "burnRatio": "Proporção de consumo",
+      "openIssues": "Issues abertas",
+      "closedLast7d": "Fechadas (7d)",
+      "unassigned": "Sem responsável",
+      "worked": "Tempo registrado"
+    },
+    "hours": {
+      "title": "Trabalhado vs estimado",
+      "subtitle": "Horas por projeto, 12 maiores por total.",
+      "worked": "Trabalhado",
+      "estimated": "Estimado",
+      "empty": "Nenhum tempo registrado ou estimado ainda."
+    },
+    "overdue": {
+      "title": "Trabalho atrasado",
+      "subtitle": "Issues abertas atrasadas por projeto, 12 maiores.",
+      "label": "Atrasado",
+      "empty": "Nada está atrasado."
+    },
+    "table": {
+      "title": "Saúde dos projetos",
+      "subtitle": "Todos os projetos, ordenados por saúde. Um traço indica que a dimensão não tem dados.",
+      "project": "Projeto",
+      "health": "Saúde",
+      "open": "Abertas",
+      "overdue": "Atrasadas",
+      "closedLast7d": "Fechadas (7d)",
+      "unassigned": "Sem responsável"
+    },
+    "dimensions": {
+      "schedule": "Prazo",
+      "budget": "Orçamento",
+      "velocity": "Velocidade",
+      "load": "Carga",
+      "freshness": "Frescor"
     }
   }
 }

@@ -155,7 +155,12 @@
     "notes": "便签",
     "subtasks": "子任务",
     "checklists": "检查清单",
-    "issueStats": "工作项统计"
+    "issueStats": "工作项统计",
+    "aiTeam": "AI 团队",
+    "inbox": "收件箱",
+    "workItems": "工作项",
+    "members": "成员",
+    "notifications": "通知"
   },
   "featureOffTitle": "{feature}已停用",
   "toggleSidebar": "切换侧边栏",
@@ -211,5 +216,12 @@
     "page": "第 {number} 页",
     "perPage": "每页",
     "range": "第 {first}-{last} 项，共 {total} 项"
-  }
+  },
+  "logo": "标志",
+  "uploadLogo": "上传标志",
+  "changeLogo": "更换标志",
+  "uploadingLogo": "上传中…",
+  "logoFormats": "PNG、JPEG、GIF、WebP 或 AVIF。",
+  "logoMaxSize": "最大 {mb} MB。",
+  "logoTooLarge": "图片超过 {mb} MB 限制。"
 }

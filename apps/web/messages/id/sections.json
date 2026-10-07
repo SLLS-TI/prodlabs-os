@@ -23,6 +23,10 @@
       "label": "Proyek",
       "description": "Setiap proyek di instance ini: apa yang dimuatnya, waktu aktif terakhir, dan siapa yang dapat mengaksesnya."
     },
+    "stats": {
+      "label": "Statistics",
+      "description": "Cross-project health, time, and overdue work across every project on this instance."
+    },
     "general": {
       "label": "Umum",
       "description": "Pengaturan bawaan untuk proyek baru."
@@ -42,6 +46,10 @@
     "telegram": {
       "label": "Telegram",
       "description": "Bot yang dihubungkan pengguna ke akun Telegram mereka, dan bot yang mengirimkan notifikasi Telegram untuk proyek yang tidak menetapkan bot sendiri."
+    },
+    "slack": {
+      "label": "Slack",
+      "description": "Bot yang mengirim notifikasi proyek dan ringkasan harian ke kanal Slack yang ditetapkan tiap proyek, untuk proyek yang tidak menetapkan bot sendiri."
     },
     "email": {
       "label": "Penyedia email",

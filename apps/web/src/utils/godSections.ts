@@ -1,7 +1,9 @@
 import {
+  BarChart3,
   Building2,
   FolderKanban,
   HardDrive,
+  Hash,
   Keyboard,
   KeyRound,
   Mail,
@@ -47,6 +49,11 @@ export const GOD_SECTIONS: GodSection[] = [
     icon: FolderKanban,
   },
   {
+    slug: 'stats',
+    group: 'management',
+    icon: BarChart3,
+  },
+  {
     slug: 'general',
     group: 'instance',
     icon: SlidersHorizontal,
@@ -70,6 +77,12 @@ export const GOD_SECTIONS: GodSection[] = [
     slug: 'telegram',
     group: 'instance',
     icon: Send,
+    integration: true,
+  },
+  {
+    slug: 'slack',
+    group: 'instance',
+    icon: Hash,
     integration: true,
   },
   {

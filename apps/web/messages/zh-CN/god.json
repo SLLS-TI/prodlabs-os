@@ -220,6 +220,16 @@
     "botTokenHint": "保存时会通过 Telegram 验证令牌，错误令牌会立即被拒绝。",
     "resolvedHint": "根据令牌解析。用户关联账户时会看到此机器人。"
   },
+  "slack": {
+    "saved": "Slack 设置已保存",
+    "bot": "机器人",
+    "botConfigured": "各项目通过此机器人，将通知和每日摘要发送到各自选择的 Slack 频道。",
+    "botMissing": "在 Slack 中创建带机器人令牌的应用，安装到你的工作区，然后在此粘贴机器人令牌（xoxb-…）。",
+    "botToken": "机器人令牌",
+    "botTokenHint": "保存时会通过 Slack 验证令牌，错误令牌会立即被拒绝。",
+    "workspace": "工作区",
+    "resolvedHint": "根据令牌解析。这是机器人发布消息的 Slack 工作区。"
+  },
   "email": {
     "saved": "邮件服务商已保存",
     "provider": "邮件服务商",
@@ -312,6 +322,56 @@
       "defaultRole": "默认角色",
       "remove": "移除项目",
       "saved": "群组权限已保存"
+    }
+  },
+  "stats": {
+    "empty": "No projects on this instance yet.",
+    "week": {
+      "title": "This week's commitment",
+      "done": "Done",
+      "remaining": "Remaining",
+      "total": "Committed",
+      "empty": "Nothing due this week."
+    },
+    "summary": {
+      "globalScore": "Global health",
+      "overduePct": "Overdue share",
+      "redProjects": "At-risk projects",
+      "burnRatio": "Burn ratio",
+      "openIssues": "Open issues",
+      "closedLast7d": "Closed (7d)",
+      "unassigned": "Unassigned",
+      "worked": "Time logged"
+    },
+    "hours": {
+      "title": "Worked vs estimated",
+      "subtitle": "Hours per project, top 12 by total.",
+      "worked": "Worked",
+      "estimated": "Estimated",
+      "empty": "No time logged or estimated yet."
+    },
+    "overdue": {
+      "title": "Overdue work",
+      "subtitle": "Overdue open issues per project, top 12.",
+      "label": "Overdue",
+      "empty": "Nothing is overdue."
+    },
+    "table": {
+      "title": "Project health",
+      "subtitle": "Every project, sorted by health. A dash means a dimension has no data.",
+      "project": "Project",
+      "health": "Health",
+      "open": "Open",
+      "overdue": "Overdue",
+      "closedLast7d": "Closed (7d)",
+      "unassigned": "Unassigned"
+    },
+    "dimensions": {
+      "schedule": "Schedule",
+      "budget": "Budget",
+      "velocity": "Velocity",
+      "load": "Load",
+      "freshness": "Freshness"
     }
   }
 }

@@ -103,6 +103,9 @@
     "saved": "El proyecto se ha actualizado",
     "project": "Proyecto",
     "projectHint": "La clave que prefija cada ticket y no puede cambiar.",
+    "themeColor": "Color del tema",
+    "themeColorHint": "Tiñe toda la interfaz de este proyecto. Déjalo vacío para no aplicar tinte.",
+    "themeColorNone": "Sin color",
     "key": "Clave",
     "features": "Características",
     "featuresHint": "Las secciones que este proyecto muestra. Apagar una la oculta y conserva su contenido.",
@@ -114,7 +117,12 @@
       "subtasks": "Tickets descompuestos en subtareas bajo un padre.",
       "checklists": "Listas de pasos seguidas dentro de un ticket.",
       "issueStats": "Cuánto tiempo ha pasado un ticket en cada estado.",
-      "documents": "Documentación del proyecto compartida, organizada en páginas."
+      "documents": "Documentación del proyecto compartida, organizada en páginas.",
+      "aiTeam": "La sección Equipo de IA: programaciones y agentes.",
+      "inbox": "La bandeja de entrada del proyecto y la actividad no leída.",
+      "workItems": "El tablero de elementos de trabajo y las vistas guardadas.",
+      "members": "La lista de miembros del proyecto.",
+      "notifications": "Tus preferencias de notificación para este proyecto."
     },
     "featureOn": "{feature} se ha activado",
     "featureOff": "{feature} se ha desactivado"
@@ -156,7 +164,31 @@
     "timeVisibilityNone": "Ningún rol seleccionado: todos pueden ver el seguimiento de tiempo.",
     "clientMasking": "Identidad mostrada al cliente",
     "clientMaskingHint": "Los miembros con rol de cliente ven toda la actividad del equipo atribuida a un único usuario. Elige quién, o deja que recaiga en el propietario del proyecto.",
-    "clientMaskingAuto": "Propietario del proyecto"
+    "clientMaskingAuto": "Propietario del proyecto",
+    "slack": "Slack",
+    "slackHint": "Publica los eventos de incidencias y los resúmenes diarios de este proyecto en un canal de Slack. Solo el propietario del proyecto puede cambiarlo.",
+    "slackSaved": "Canal de Slack guardado",
+    "slackOwnerOnly": "Solo el propietario del proyecto puede configurar el canal de Slack.",
+    "slackEnabled": "Publicar en Slack",
+    "slackEnabledHint": "Cuando está activado, los eventos de incidencias y los resúmenes diarios se publican en el canal de abajo.",
+    "slackChannel": "Canal",
+    "slackChannelHint": "Un id de canal (C01234567) o #nombre. Invita primero al bot al canal, o las publicaciones fallan con not_in_channel.",
+    "healthWeight": {
+      "title": "Health score weights",
+      "hint": "How much each dimension counts toward this project's score in the cross-project statistics.",
+      "weights": "Weights",
+      "weightsHint": "A larger weight makes that dimension matter more.",
+      "dimensions": {
+        "schedule": "Schedule",
+        "budget": "Budget",
+        "velocity": "Velocity",
+        "load": "Load",
+        "freshness": "Freshness"
+      },
+      "total": "Total: {total}",
+      "totalHint": "Total: {total}. Weights need not sum to 100 — the score uses them in proportion.",
+      "reset": "Reset to defaults"
+    }
   },
   "states": {
     "addState": "Añadir un estado {type}",

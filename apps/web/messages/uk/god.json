@@ -220,6 +220,16 @@
     "botTokenHint": "Токен перевіряється в Telegram під час збереження, тож хибний відхиляється одразу, а не мовчки ламається згодом.",
     "resolvedHint": "Отримано з токена. Саме цього бота побачать люди під час підключення."
   },
+  "slack": {
+    "saved": "Налаштування Slack збережено",
+    "bot": "Бот",
+    "botConfigured": "Проєкти публікують свої сповіщення та щоденні зведення в канал Slack, який обирає кожен із них, через цього бота.",
+    "botMissing": "Створіть застосунок Slack із токеном бота, установіть його у ваш робочий простір і вставте токен бота (xoxb-…) сюди.",
+    "botToken": "Токен бота",
+    "botTokenHint": "Токен перевіряється в Slack під час збереження, тож хибний відхиляється одразу, а не мовчки ламається згодом.",
+    "workspace": "Робочий простір",
+    "resolvedHint": "Отримано з токена. Це робочий простір Slack, куди бот публікує."
+  },
   "email": {
     "saved": "Поштового провайдера збережено",
     "provider": "Поштовий провайдер",
@@ -312,6 +322,56 @@
       "defaultRole": "Роль за замовчуванням",
       "remove": "Прибрати проєкт",
       "saved": "Доступ групи збережено"
+    }
+  },
+  "stats": {
+    "empty": "No projects on this instance yet.",
+    "week": {
+      "title": "This week's commitment",
+      "done": "Done",
+      "remaining": "Remaining",
+      "total": "Committed",
+      "empty": "Nothing due this week."
+    },
+    "summary": {
+      "globalScore": "Global health",
+      "overduePct": "Overdue share",
+      "redProjects": "At-risk projects",
+      "burnRatio": "Burn ratio",
+      "openIssues": "Open issues",
+      "closedLast7d": "Closed (7d)",
+      "unassigned": "Unassigned",
+      "worked": "Time logged"
+    },
+    "hours": {
+      "title": "Worked vs estimated",
+      "subtitle": "Hours per project, top 12 by total.",
+      "worked": "Worked",
+      "estimated": "Estimated",
+      "empty": "No time logged or estimated yet."
+    },
+    "overdue": {
+      "title": "Overdue work",
+      "subtitle": "Overdue open issues per project, top 12.",
+      "label": "Overdue",
+      "empty": "Nothing is overdue."
+    },
+    "table": {
+      "title": "Project health",
+      "subtitle": "Every project, sorted by health. A dash means a dimension has no data.",
+      "project": "Project",
+      "health": "Health",
+      "open": "Open",
+      "overdue": "Overdue",
+      "closedLast7d": "Closed (7d)",
+      "unassigned": "Unassigned"
+    },
+    "dimensions": {
+      "schedule": "Schedule",
+      "budget": "Budget",
+      "velocity": "Velocity",
+      "load": "Load",
+      "freshness": "Freshness"
     }
   }
 }

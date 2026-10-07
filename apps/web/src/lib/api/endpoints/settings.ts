@@ -24,6 +24,17 @@ export interface EstimateSettings {
   timeVisibleRoleIds: number[];
 }
 
+// Per-project weights for the cross-project health score (god stats): five
+// non-negative integers. Stored as-is and normalized by proportion, so they need
+// not sum to 100; a new or never-configured project reads the defaults.
+export interface HealthWeights {
+  schedule: number;
+  budget: number;
+  velocity: number;
+  load: number;
+  freshness: number;
+}
+
 // Per-project subtask automations, both off by default. completeParent closes a
 // parent once all its subtasks are closed; closeSubtasks closes the remaining
 // subtasks of a closed parent. Only closing is synchronized — an issue moving
@@ -31,6 +42,14 @@ export interface EstimateSettings {
 export interface SubtaskAutomationSettings {
   completeParent: boolean;
   closeSubtasks: boolean;
+}
+
+// The Slack channel a project posts its notifications and daily digests to. channel
+// is a Slack channel id (C01234567) or '#name'; enabling with a blank channel is
+// coerced to off. The bot token is a team/instance setting, not held here.
+export interface SlackProjectSettings {
+  channel: string;
+  enabled: boolean;
 }
 
 // Which optional sections a project shows. All on by default; turning one off
@@ -44,6 +63,11 @@ export interface ProjectFeatures {
   subtasks: boolean;
   checklists: boolean;
   issueStats: boolean;
+  aiTeam: boolean;
+  inbox: boolean;
+  workItems: boolean;
+  members: boolean;
+  notifications: boolean;
 }
 
 // A project's settings: MCP reachability, which is read-only here, and the enabled
@@ -137,6 +161,25 @@ export interface MaskingSettings {
 
 export const updateMasking = (projectKey: string, input: MaskingSettings) =>
   request<MaskingSettings>(`/projects/${projectKey}/settings/masking`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+
+// The project's Slack channel (projectOwner only).
+export const getSlackProjectSettings = (projectKey: string) =>
+  request<SlackProjectSettings>(`/projects/${projectKey}/settings/slack`);
+
+export const updateSlackProjectSettings = (projectKey: string, input: SlackProjectSettings) =>
+  request<SlackProjectSettings>(`/projects/${projectKey}/settings/slack`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+
+export const getHealthWeights = (projectKey: string) =>
+  request<HealthWeights>(`/projects/${projectKey}/settings/health-weights`);
+
+export const updateHealthWeights = (projectKey: string, input: HealthWeights) =>
+  request<HealthWeights>(`/projects/${projectKey}/settings/health-weights`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });

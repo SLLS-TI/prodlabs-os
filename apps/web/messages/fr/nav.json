@@ -39,7 +39,8 @@
   "groups": {
     "project": "Projet",
     "workflow": "Flux de travail",
-    "automation": "Automatisation"
+    "automation": "Automatisation",
+    "developer": "Développeur"
   },
   "godModeOwnerOnly": "Le God mode est réservé au propriétaire de l'instance.",
   "project": "Projet",

@@ -17,6 +17,7 @@ import {
   type InstanceGoogleSettingsPatch,
   type InstanceOidcSettingsPatch,
   type InstanceTelegramSettingsPatch,
+  type InstanceSlackSettingsPatch,
   type InstanceUserKind,
   getInstanceAuthSettings,
   updateInstanceAuthSettings,
@@ -29,6 +30,8 @@ import {
   updateInstanceOidcSettings,
   getInstanceTelegramSettings,
   updateInstanceTelegramSettings,
+  getInstanceSlackSettings,
+  updateInstanceSlackSettings,
   getInstanceProjectDefaults,
   updateInstanceProjectDefaults,
   getInstanceStorageSettings,
@@ -201,6 +204,23 @@ export function useUpdateInstanceTelegramSettings() {
   return useMutation({
     mutationFn: (patch: InstanceTelegramSettingsPatch) => updateInstanceTelegramSettings(patch),
     onSuccess: (data) => qc.setQueryData(qk.instanceTelegramSettings, data),
+  });
+}
+
+// The instance Slack bot: the default sender for project Slack notifications and
+// daily digests.
+export function useInstanceSlackSettingsQuery() {
+  return useQuery({
+    queryKey: qk.instanceSlackSettings,
+    queryFn: () => getInstanceSlackSettings(),
+  });
+}
+
+export function useUpdateInstanceSlackSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (patch: InstanceSlackSettingsPatch) => updateInstanceSlackSettings(patch),
+    onSuccess: (data) => qc.setQueryData(qk.instanceSlackSettings, data),
   });
 }
 

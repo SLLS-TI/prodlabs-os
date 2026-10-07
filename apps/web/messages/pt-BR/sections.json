@@ -23,6 +23,10 @@
       "label": "Projetos",
       "description": "Todo projeto nesta instância: o que cada um contém, quando esteve ativo pela última vez e quem pode alcançá-lo."
     },
+    "stats": {
+      "label": "Estatísticas",
+      "description": "Saúde, tempo e trabalho atrasado entre todos os projetos desta instância."
+    },
     "general": {
       "label": "Geral",
       "description": "Padrões para novos projetos."
@@ -42,6 +46,10 @@
     "telegram": {
       "label": "Telegram",
       "description": "O bot ao qual as pessoas conectam sua conta do Telegram, e o que entrega notificações do Telegram para projetos que não definem seu próprio bot."
+    },
+    "slack": {
+      "label": "Slack",
+      "description": "O bot que publica as notificações do projeto e os resumos diários no canal do Slack que cada projeto define, para os projetos que não definem um bot próprio."
     },
     "email": {
       "label": "Provedor de e-mail",

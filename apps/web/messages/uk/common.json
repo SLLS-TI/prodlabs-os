@@ -155,7 +155,12 @@
     "notes": "Нотатки",
     "subtasks": "Підзадачі",
     "checklists": "Чеклісти",
-    "issueStats": "Статистика задач"
+    "issueStats": "Статистика задач",
+    "aiTeam": "AI-команда",
+    "inbox": "Вхідні",
+    "workItems": "Задачі",
+    "members": "Учасники",
+    "notifications": "Сповіщення"
   },
   "featureOffTitle": "Розділ «{feature}» вимкнено",
   "toggleSidebar": "Показати або сховати бічну панель",
@@ -211,5 +216,12 @@
     "page": "Сторінка {number}",
     "perPage": "на сторінці",
     "range": "{first}-{last} з {total}"
-  }
+  },
+  "logo": "Логотип",
+  "uploadLogo": "Завантажити логотип",
+  "changeLogo": "Змінити логотип",
+  "uploadingLogo": "Завантаження…",
+  "logoFormats": "PNG, JPEG, GIF, WebP або AVIF.",
+  "logoMaxSize": "До {mb} МБ.",
+  "logoTooLarge": "Зображення перевищує ліміт {mb} МБ."
 }

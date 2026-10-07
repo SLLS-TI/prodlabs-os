@@ -6,8 +6,10 @@ import {
   getDeliveryConfig,
   getInstanceBotConfig,
   getInstanceEmailConfig,
+  getInstanceSlackConfig,
   getProjectEmailConfig,
   isInstanceBotUsable,
+  isInstanceSlackUsable,
   type DeliveryPayload,
   type NotificationConfig,
 } from '@repo/db';
@@ -16,12 +18,13 @@ import { sendEmail, emailBody, type EmailConfig, type SendResult } from '@repo/m
 
 // Sends one claimed notification_delivery row over its channel. Email transport lives
 // in @repo/mailer (shared with the authentication mail sent from @repo/auth); Telegram
-// is only used here, so it stays in this file. A team that set no bot token of its own
-// sends through the instance bot, the same one members link their Telegram accounts
-// through. Adding a channel is a new branch here plus a compose function in the api's
-// outbound.ts; nothing else changes. The result tells the caller whether a failure is
-// worth retrying (transient: network error, timeout, rate limit, server error) or
-// permanent (bad credentials, rejected recipient, misconfiguration).
+// and Slack are only used here, so they stay in this file. A team that set no bot
+// token of its own sends through the instance bot (Telegram: the one members link
+// their accounts through; Slack: the instance Slack app). Adding a channel is a new
+// branch here plus a compose function in the api's outbound.ts; nothing else changes.
+// The result tells the caller whether a failure is worth retrying (transient: network
+// error, timeout, rate limit, server error) or permanent (bad credentials, rejected
+// recipient, misconfiguration).
 
 export type { SendResult };
 
@@ -108,9 +111,53 @@ async function sendTelegram(input: SendInput): Promise<SendResult> {
   }
 }
 
+async function sendSlack(input: SendInput): Promise<SendResult> {
+  const { slack } = input.config;
+  // The team's own bot when it set one, otherwise the instance bot.
+  const instance = slack.botToken ? null : await getInstanceSlackConfig();
+  const botToken =
+    slack.botToken || (instance && isInstanceSlackUsable(instance) ? instance.botToken : '');
+  if (!botToken) return { ok: false, retryable: false, error: 'slack not configured' };
+  if (!input.recipient) return { ok: false, retryable: false, error: 'no channel' };
+  try {
+    const res = await fetch('https://slack.com/api/chat.postMessage', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${botToken}`, 'content-type': 'application/json' },
+      signal: AbortSignal.timeout(15_000),
+      body: JSON.stringify({
+        channel: input.recipient,
+        text: input.payload.text,
+        unfurl_links: false,
+      }),
+    });
+    if (!res.ok) {
+      return {
+        ok: false,
+        retryable: res.status === 429 || res.status >= 500,
+        error: `Slack HTTP ${res.status}`,
+      };
+    }
+    // Slack answers HTTP 200 with { ok:false, error } for application errors.
+    // 'ratelimited'/'internal_error' are transient; 'channel_not_found',
+    // 'not_in_channel', 'invalid_auth' and the rest are permanent.
+    const body = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+    if (body?.ok) return { ok: true };
+    const err = body?.error ?? 'unknown';
+    const retryable = err === 'ratelimited' || err === 'internal_error';
+    return { ok: false, retryable, error: `Slack: ${err}` };
+  } catch (err) {
+    return {
+      ok: false,
+      retryable: true,
+      error: err instanceof Error ? err.message : 'slack request failed',
+    };
+  }
+}
+
 async function sendDelivery(input: SendInput): Promise<SendResult> {
   if (input.channel === 'email') return sendNotificationEmail(input);
   if (input.channel === 'telegram') return sendTelegram(input);
+  if (input.channel === 'slack') return sendSlack(input);
   return { ok: false, retryable: false, error: `unknown channel: ${input.channel}` };
 }
 

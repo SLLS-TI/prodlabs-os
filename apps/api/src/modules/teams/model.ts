@@ -116,6 +116,7 @@ export const TeamProjectPageResponse = pageResponse(
     ref: t.String({ description: "'<teamRef>.<key>': how routes name the project." }),
     name: t.String(),
     description: t.String(),
+    logoUrl: t.Nullable(t.String()),
     mcpEnabled: t.Boolean({ description: "Whether the team's MCP reach covers this project." }),
     memberCount: t.Number(),
     owners: t.Array(

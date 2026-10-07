@@ -220,6 +220,16 @@
     "botTokenHint": "Le token est vérifié auprès de Telegram à l'enregistrement : un token erroné est donc refusé ici, plutôt que d'échouer silencieusement plus tard.",
     "resolvedHint": "Déduit du token. C'est le bot que les utilisateurs verront lors de la connexion."
   },
+  "slack": {
+    "saved": "Paramètres Slack enregistrés",
+    "bot": "Bot",
+    "botConfigured": "Les projets publient leurs notifications et résumés quotidiens dans le canal Slack que chacun choisit, via ce bot.",
+    "botMissing": "Créez une app Slack avec un token de bot, installez-la sur votre espace de travail et collez le token du bot (xoxb-…) ici.",
+    "botToken": "Token du bot",
+    "botTokenHint": "Le token est vérifié auprès de Slack à l'enregistrement : un token erroné est donc refusé ici, plutôt que d'échouer silencieusement plus tard.",
+    "workspace": "Espace de travail",
+    "resolvedHint": "Déduit du token. C'est l'espace de travail Slack où le bot publie."
+  },
   "email": {
     "saved": "Fournisseur d'e-mail enregistré",
     "provider": "Fournisseur d'e-mail",
@@ -312,6 +322,56 @@
       "defaultRole": "Rôle par défaut",
       "remove": "Retirer le projet",
       "saved": "Accès du groupe enregistré"
+    }
+  },
+  "stats": {
+    "empty": "No projects on this instance yet.",
+    "week": {
+      "title": "This week's commitment",
+      "done": "Done",
+      "remaining": "Remaining",
+      "total": "Committed",
+      "empty": "Nothing due this week."
+    },
+    "summary": {
+      "globalScore": "Global health",
+      "overduePct": "Overdue share",
+      "redProjects": "At-risk projects",
+      "burnRatio": "Burn ratio",
+      "openIssues": "Open issues",
+      "closedLast7d": "Closed (7d)",
+      "unassigned": "Unassigned",
+      "worked": "Time logged"
+    },
+    "hours": {
+      "title": "Worked vs estimated",
+      "subtitle": "Hours per project, top 12 by total.",
+      "worked": "Worked",
+      "estimated": "Estimated",
+      "empty": "No time logged or estimated yet."
+    },
+    "overdue": {
+      "title": "Overdue work",
+      "subtitle": "Overdue open issues per project, top 12.",
+      "label": "Overdue",
+      "empty": "Nothing is overdue."
+    },
+    "table": {
+      "title": "Project health",
+      "subtitle": "Every project, sorted by health. A dash means a dimension has no data.",
+      "project": "Project",
+      "health": "Health",
+      "open": "Open",
+      "overdue": "Overdue",
+      "closedLast7d": "Closed (7d)",
+      "unassigned": "Unassigned"
+    },
+    "dimensions": {
+      "schedule": "Schedule",
+      "budget": "Budget",
+      "velocity": "Velocity",
+      "load": "Load",
+      "freshness": "Freshness"
     }
   }
 }

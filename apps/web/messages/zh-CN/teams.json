@@ -223,7 +223,11 @@
     "telegramBotHint": "为团队的所有项目投递通知的机器人。成员在自己的偏好设置中选择聊天。令牌以加密方式存储。",
     "botToken": "Bot API 令牌（可选）",
     "emailSaved": "邮件服务商已保存",
-    "telegramSaved": "Telegram 服务商已保存"
+    "telegramSaved": "Telegram 服务商已保存",
+    "slack": "Slack",
+    "slackBot": "Slack 机器人",
+    "slackBotHint": "为团队每个项目投递 Slack 通知的机器人。各项目在其“配置”页面设置自己的频道。令牌以加密方式存储。",
+    "slackSaved": "Slack 提供方已保存"
   },
   "integrations": {
     "noAccess": "你没有权限查看该团队的集成。",

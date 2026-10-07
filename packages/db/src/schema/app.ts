@@ -96,6 +96,17 @@ export const teamMember = pgTable(
   ],
 );
 
+// Weights for the cross-project health score (god stats). The canonical shape and
+// defaults live in the api helper (apps/api/src/modules/god/health.ts); this local
+// copy types the jsonb column without the db package depending on the api.
+type HealthWeights = {
+  schedule: number;
+  budget: number;
+  velocity: number;
+  load: number;
+  freshness: number;
+};
+
 // A project groups its own columns, issue types, labels, custom fields, and
 // issues. next_sequence is the atomic counter behind each issue's human
 // identifier (e.g. "MKT-42"): incrementing it under a row lock keeps concurrent
@@ -110,6 +121,10 @@ export const project = pgTable(
     key: text('key').notNull(),
     name: text('name').notNull(),
     description: text('description').notNull().default(''),
+    // Relative serve URL of the project's custom logo (/project-logos/<id>/<uuid>/raw),
+    // or null to fall back to the name initials. Set from Settings -> General and on
+    // project creation.
+    logoUrl: text('logo_url'),
     nextSequence: integer('next_sequence').notNull().default(1),
     // The project member whose identity every team-member action is shown under to a
     // client-role viewer (see project_member.role 'client'). Null falls back to the
@@ -122,7 +137,9 @@ export const project = pgTable(
     mcpEnabled: boolean('mcp_enabled').notNull().default(false),
     // Optional sections of the app, toggled per project in Settings -> Features. All
     // on by default. Turning one off only hides its UI; the rows it owns stay and
-    // come back with it.
+    // come back with it. The ai_team..notifications flags are navigation-only: they
+    // hide a sidebar entry, are never blockable by a hosted plan, and never hide the
+    // rows behind the section.
     initiativesEnabled: boolean('initiatives_enabled').notNull().default(true),
     dashboardsEnabled: boolean('dashboards_enabled').notNull().default(true),
     documentsEnabled: boolean('documents_enabled').notNull().default(true),
@@ -131,6 +148,11 @@ export const project = pgTable(
     subtasksEnabled: boolean('subtasks_enabled').notNull().default(true),
     checklistsEnabled: boolean('checklists_enabled').notNull().default(true),
     issueStatsEnabled: boolean('issue_stats_enabled').notNull().default(true),
+    aiTeamEnabled: boolean('ai_team_enabled').notNull().default(true),
+    inboxEnabled: boolean('inbox_enabled').notNull().default(true),
+    workItemsEnabled: boolean('work_items_enabled').notNull().default(true),
+    membersEnabled: boolean('members_enabled').notNull().default(true),
+    notificationsEnabled: boolean('notifications_enabled').notNull().default(true),
     // Which kinds of estimate the issues of this project carry, set in Settings ->
     // Configuration. Both off by default; turning one off hides its UI and keeps the
     // values, which show again when it is turned back on.
@@ -150,6 +172,14 @@ export const project = pgTable(
     // An owner and an instance admin bypass the list. Operating the timer still also needs
     // work_items edit; this is the read gate.
     timeVisibleRoleIds: jsonb('time_visible_role_ids').$type<number[]>().notNull().default([]),
+    // Per-project weights for the cross-project health score (god stats). Null means use
+    // the code default (DEFAULT_HEALTH_WEIGHTS); a missing key falls back to its default.
+    // The score normalizes over whichever dimensions have data, so values matter only in
+    // proportion to each other.
+    healthWeights: jsonb('health_weights').$type<Partial<HealthWeights>>(),
+    // An optional hex background tint for the whole project interface. Null = no tint,
+    // the neutral default.
+    color: text('color'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -933,9 +963,10 @@ export const userTelegramAccount = pgTable(
 // apps/api/src/modules/notifications/outbound.ts) and drained by the worker
 // following the same claim/retry pattern as webhook_delivery. The message text is
 // composed at enqueue time and stored in `payload`; the channel credentials are read
-// from team_notification_setting at send time. channel is 'email' | 'telegram'
-// ('email' picks SMTP or Resend from the team config). recipient is the member's
-// email address for email rows, or their Telegram chat id for telegram rows.
+// from team_notification_setting at send time. channel is 'email' | 'telegram' |
+// 'slack' ('email' picks SMTP or Resend from the team config). recipient is the
+// member's email address for email rows, their Telegram chat id for telegram rows,
+// or the project's Slack channel for slack rows.
 // The stored message on a notification_delivery row, composed at enqueue time by the
 // api and read by the worker that sends it. `subject`/`html` are channel-specific:
 // email uses `subject` and builds its own HTML from `text`; Telegram sends `html`
@@ -971,11 +1002,36 @@ export const notificationDelivery = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    check('notification_delivery_channel_check', sql`${t.channel} IN ('email', 'telegram')`),
+    check(
+      'notification_delivery_channel_check',
+      sql`${t.channel} IN ('email', 'telegram', 'slack')`,
+    ),
     // Backs the worker's claim query: due pending rows ordered by next_attempt_at.
     index('notification_delivery_due_idx')
       .on(t.nextAttemptAt)
       .where(sql`${t.status} = 'pending'`),
+  ],
+);
+
+// Idempotency marker for the daily Slack digests. One row per (project, slot, local
+// date) the worker's digest loop has already enqueued. The loop inserts the marker
+// with ON CONFLICT DO NOTHING and only enqueues the Slack row when the insert took,
+// so a digest fires exactly once per project per slot per day regardless of worker
+// restarts or replica count. runDate is the local date in DIGEST_TIMEZONE the digest
+// covered. The api applies the migration; the worker writes the rows.
+export const slackDigestRun = pgTable(
+  'slack_digest_run',
+  {
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => project.id, { onDelete: 'cascade' }),
+    slot: text('slot').notNull(),
+    runDate: date('run_date').notNull(),
+    postedAt: timestamp('posted_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.projectId, t.slot, t.runDate] }),
+    check('slack_digest_run_slot_check', sql`${t.slot} IN ('morning', 'evening')`),
   ],
 );
 

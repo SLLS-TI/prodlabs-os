@@ -23,6 +23,10 @@
       "label": "Проекты",
       "description": "Все проекты этого инстанса: что в каждом, когда была последняя активность и у кого есть доступ."
     },
+    "stats": {
+      "label": "Statistics",
+      "description": "Cross-project health, time, and overdue work across every project on this instance."
+    },
     "general": {
       "label": "Общее",
       "description": "Настройки по умолчанию для новых проектов."
@@ -42,6 +46,10 @@
     "telegram": {
       "label": "Telegram",
       "description": "Бот, к которому люди подключают свой Telegram, и бот, доставляющий Telegram-уведомления для проектов без собственного бота."
+    },
+    "slack": {
+      "label": "Slack",
+      "description": "Бот, который публикует уведомления проекта и ежедневные сводки в канал Slack, заданный каждым проектом, для проектов без собственного бота."
     },
     "email": {
       "label": "Почтовый провайдер",

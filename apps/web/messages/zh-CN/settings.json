@@ -103,6 +103,9 @@
     "saved": "项目已更新",
     "project": "项目",
     "projectHint": "项目标识是工作项编号的前缀，创建后无法更改。",
+    "themeColor": "主题颜色",
+    "themeColorHint": "为此项目的整个界面添加色调。留空则不添加色调。",
+    "themeColorNone": "无颜色",
     "key": "标识",
     "features": "功能",
     "featuresHint": "选择此项目显示的功能区。关闭功能只会隐藏入口，不会删除内容。",
@@ -114,7 +117,12 @@
       "subtasks": "将工作项拆分为父工作项下的子任务。",
       "checklists": "在工作项中跟踪简单步骤。",
       "issueStats": "统计工作项在各状态中停留的时间。",
-      "documents": "组织和共享项目文档。"
+      "documents": "组织和共享项目文档。",
+      "aiTeam": "AI 团队部分：计划和智能体。",
+      "inbox": "项目收件箱和未读动态。",
+      "workItems": "工作项看板和已保存的视图。",
+      "members": "项目成员列表。",
+      "notifications": "此项目的通知偏好设置。"
     },
     "featureOn": "已启用{feature}",
     "featureOff": "已停用{feature}"
@@ -156,7 +164,31 @@
     "timeVisibilityNone": "未选择任何角色 — 所有人都能查看时间跟踪。",
     "clientMasking": "对客户展示的身份",
     "clientMaskingHint": "客户角色的成员会看到团队的所有活动都归于这一个用户。选择此人，或回退为项目所有者。",
-    "clientMaskingAuto": "项目所有者"
+    "clientMaskingAuto": "项目所有者",
+    "slack": "Slack",
+    "slackHint": "将本项目的事项事件和每日摘要发送到某个 Slack 频道。仅项目所有者可更改。",
+    "slackSaved": "Slack 频道已保存",
+    "slackOwnerOnly": "仅项目所有者可配置 Slack 频道。",
+    "slackEnabled": "发送到 Slack",
+    "slackEnabledHint": "开启后，事项事件和每日摘要会发送到下面的频道。",
+    "slackChannel": "频道",
+    "slackChannelHint": "频道 id（C01234567）或 #名称。请先把机器人邀请到频道，否则发送会因 not_in_channel 失败。",
+    "healthWeight": {
+      "title": "Health score weights",
+      "hint": "How much each dimension counts toward this project's score in the cross-project statistics.",
+      "weights": "Weights",
+      "weightsHint": "A larger weight makes that dimension matter more.",
+      "dimensions": {
+        "schedule": "Schedule",
+        "budget": "Budget",
+        "velocity": "Velocity",
+        "load": "Load",
+        "freshness": "Freshness"
+      },
+      "total": "Total: {total}",
+      "totalHint": "Total: {total}. Weights need not sum to 100 — the score uses them in proportion.",
+      "reset": "Reset to defaults"
+    }
   },
   "states": {
     "addState": "添加{type}状态",

@@ -1,5 +1,5 @@
 {
-  "id": "ccfd71cf-de8f-4cbc-987f-2a1bdab3cc9c",
+  "id": "5c3ebefd-53b8-4bff-bd47-2841211fb7af",
   "prevId": "597453a9-58d1-4c95-b4e9-1bb2c02e422b",
   "version": "7",
   "dialect": "postgresql",
@@ -7943,12 +7943,6 @@
           "notNull": true,
           "default": 1
         },
-        "face_user_id": {
-          "name": "face_user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "mcp_enabled": {
           "name": "mcp_enabled",
           "type": "boolean",
@@ -8007,6 +8001,41 @@
         },
         "issue_stats_enabled": {
           "name": "issue_stats_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "ai_team_enabled": {
+          "name": "ai_team_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "inbox_enabled": {
+          "name": "inbox_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "work_items_enabled": {
+          "name": "work_items_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "members_enabled": {
+          "name": "members_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "notifications_enabled": {
+          "name": "notifications_enabled",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
@@ -8073,19 +8102,6 @@
             "id"
           ],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "project_face_user_id_user_id_fk": {
-          "name": "project_face_user_id_user_id_fk",
-          "tableFrom": "project",
-          "tableTo": "user",
-          "columnsFrom": [
-            "face_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -9362,7 +9378,7 @@
       "checkConstraints": {
         "project_member_role_check": {
           "name": "project_member_role_check",
-          "value": "\"project_member\".\"role\" IN ('owner', 'member', 'client')"
+          "value": "\"project_member\".\"role\" IN ('owner', 'member')"
         },
         "project_member_source_check": {
           "name": "project_member_source_check",

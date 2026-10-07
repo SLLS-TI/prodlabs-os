@@ -220,6 +220,16 @@
     "botTokenHint": "Токен проверяется в Telegram при сохранении, поэтому неверный отклоняется сразу, а не молча ломается позже.",
     "resolvedHint": "Получено из токена. Именно этого бота увидят люди при подключении."
   },
+  "slack": {
+    "saved": "Настройки Slack сохранены",
+    "bot": "Бот",
+    "botConfigured": "Проекты публикуют свои уведомления и ежедневные сводки в канал Slack, который выбирает каждый из них, через этого бота.",
+    "botMissing": "Создайте приложение Slack с токеном бота, установите его в рабочее пространство и вставьте токен бота (xoxb-…) сюда.",
+    "botToken": "Токен бота",
+    "botTokenHint": "Токен проверяется в Slack при сохранении, поэтому неверный отклоняется сразу, а не молча ломается позже.",
+    "workspace": "Рабочее пространство",
+    "resolvedHint": "Получено из токена. Это рабочее пространство Slack, куда бот публикует."
+  },
   "email": {
     "saved": "Почтовый провайдер сохранён",
     "provider": "Почтовый провайдер",
@@ -312,6 +322,56 @@
       "defaultRole": "Роль по умолчанию",
       "remove": "Убрать проект",
       "saved": "Доступ группы сохранён"
+    }
+  },
+  "stats": {
+    "empty": "No projects on this instance yet.",
+    "week": {
+      "title": "This week's commitment",
+      "done": "Done",
+      "remaining": "Remaining",
+      "total": "Committed",
+      "empty": "Nothing due this week."
+    },
+    "summary": {
+      "globalScore": "Global health",
+      "overduePct": "Overdue share",
+      "redProjects": "At-risk projects",
+      "burnRatio": "Burn ratio",
+      "openIssues": "Open issues",
+      "closedLast7d": "Closed (7d)",
+      "unassigned": "Unassigned",
+      "worked": "Time logged"
+    },
+    "hours": {
+      "title": "Worked vs estimated",
+      "subtitle": "Hours per project, top 12 by total.",
+      "worked": "Worked",
+      "estimated": "Estimated",
+      "empty": "No time logged or estimated yet."
+    },
+    "overdue": {
+      "title": "Overdue work",
+      "subtitle": "Overdue open issues per project, top 12.",
+      "label": "Overdue",
+      "empty": "Nothing is overdue."
+    },
+    "table": {
+      "title": "Project health",
+      "subtitle": "Every project, sorted by health. A dash means a dimension has no data.",
+      "project": "Project",
+      "health": "Health",
+      "open": "Open",
+      "overdue": "Overdue",
+      "closedLast7d": "Closed (7d)",
+      "unassigned": "Unassigned"
+    },
+    "dimensions": {
+      "schedule": "Schedule",
+      "budget": "Budget",
+      "velocity": "Velocity",
+      "load": "Load",
+      "freshness": "Freshness"
     }
   }
 }
