@@ -195,6 +195,13 @@
     "label": "{logged} / {goal} minggu ini",
     "tooltip": "Tercatat {logged} minggu ini"
   },
+  "projectTimer": {
+    "start": "Mulai timer proyek",
+    "stop": "Hentikan timer proyek",
+    "running": "Timer proyek berjalan: {time}",
+    "stopped": "Tercatat {time} ke proyek",
+    "stoppedNoTime": "Timer proyek dihentikan"
+  },
   "links": {
     "title": "Tautan",
     "remove": "Hapus tautan ke {issue}",

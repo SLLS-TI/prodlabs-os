@@ -195,6 +195,13 @@
     "label": "{logged} / {goal} esta semana",
     "tooltip": "Registrado {logged} esta semana"
   },
+  "projectTimer": {
+    "start": "Iniciar temporizador del proyecto",
+    "stop": "Detener temporizador del proyecto",
+    "running": "Temporizador del proyecto en marcha: {time}",
+    "stopped": "Registrado {time} en el proyecto",
+    "stoppedNoTime": "Temporizador del proyecto detenido"
+  },
   "links": {
     "title": "Enlaces",
     "remove": "Quitar el enlace a {issue}",

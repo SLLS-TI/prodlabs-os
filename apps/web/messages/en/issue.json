@@ -195,6 +195,13 @@
     "label": "{logged} / {goal} this week",
     "tooltip": "Logged {logged} this week"
   },
+  "projectTimer": {
+    "start": "Start project timer",
+    "stop": "Stop project timer",
+    "running": "Project timer running: {time}",
+    "stopped": "Logged {time} to the project",
+    "stoppedNoTime": "Project timer stopped"
+  },
   "links": {
     "title": "Links",
     "remove": "Remove the link to {issue}",

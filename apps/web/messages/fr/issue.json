@@ -195,6 +195,13 @@
     "label": "{logged} / {goal} cette semaine",
     "tooltip": "Enregistré {logged} cette semaine"
   },
+  "projectTimer": {
+    "start": "Démarrer le minuteur du projet",
+    "stop": "Arrêter le minuteur du projet",
+    "running": "Minuteur du projet en cours : {time}",
+    "stopped": "{time} enregistré sur le projet",
+    "stoppedNoTime": "Minuteur du projet arrêté"
+  },
   "links": {
     "title": "Liens",
     "remove": "Retirer le lien vers {issue}",

@@ -195,6 +195,13 @@
     "label": "本周 {logged} / {goal}",
     "tooltip": "本周已记录 {logged}"
   },
+  "projectTimer": {
+    "start": "启动项目计时器",
+    "stop": "停止项目计时器",
+    "running": "项目计时器运行中：{time}",
+    "stopped": "已向项目记录 {time}",
+    "stoppedNoTime": "项目计时器已停止"
+  },
   "links": {
     "title": "关联",
     "remove": "移除与 {issue} 的关联",

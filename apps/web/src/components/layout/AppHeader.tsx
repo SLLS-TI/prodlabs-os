@@ -10,6 +10,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import UserMenu from '@/components/layout/UserMenu';
 import WeeklyProgressBar from '@/features/issue/components/WeeklyProgressBar';
+import ProjectTimerButton from '@/features/issue/components/ProjectTimerButton';
 
 // The slim header inside the sidebar inset, shared by the project view and the
 // settings pages.
@@ -78,6 +79,8 @@ export default function AppHeader({
           <TooltipContent>{t('newIssueHint', { key: newIssueKey ?? '' })}</TooltipContent>
         </Tooltip>
       )}
+
+      {showTime && <ProjectTimerButton projectKey={projectKey} canEdit />}
 
       <UserMenu />
     </header>
