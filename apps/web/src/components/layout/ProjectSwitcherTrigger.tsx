@@ -31,10 +31,14 @@ export default function ProjectSwitcherTrigger({
       className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
     >
       {current ? (
-        <div className="flex flex-col items-center gap-1">
+        <div className="relative shrink-0">
           <ProjectLogo name={current.name} logoUrl={current.logoUrl} className="size-9! text-xs" />
           {showLevel && current.levelEmoji && (
-            <ProjectLevelChip emoji={current.levelEmoji} color={current.levelColor} />
+            <ProjectLevelChip
+              emoji={current.levelEmoji}
+              color={current.levelColor}
+              className="absolute -end-1.5 -top-1.5"
+            />
           )}
         </div>
       ) : (
