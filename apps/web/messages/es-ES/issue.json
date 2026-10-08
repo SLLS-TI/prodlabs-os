@@ -191,6 +191,10 @@
     "stopped": "Registrado {time}",
     "stoppedNoTime": "Temporizador detenido"
   },
+  "weeklyBar": {
+    "label": "{logged} / {goal} esta semana",
+    "tooltip": "Registrado {logged} esta semana"
+  },
   "links": {
     "title": "Enlaces",
     "remove": "Quitar el enlace a {issue}",

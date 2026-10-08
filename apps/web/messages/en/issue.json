@@ -191,6 +191,10 @@
     "stopped": "Logged {time}",
     "stoppedNoTime": "Timer stopped"
   },
+  "weeklyBar": {
+    "label": "{logged} / {goal} this week",
+    "tooltip": "Logged {logged} this week"
+  },
   "links": {
     "title": "Links",
     "remove": "Remove the link to {issue}",

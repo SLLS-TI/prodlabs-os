@@ -191,6 +191,10 @@
     "stopped": "تم تسجيل {time}",
     "stoppedNoTime": "تم إيقاف المؤقّت"
   },
+  "weeklyBar": {
+    "label": "{logged} / {goal} هذا الأسبوع",
+    "tooltip": "تم تسجيل {logged} هذا الأسبوع"
+  },
   "links": {
     "title": "الروابط",
     "remove": "إزالة الرابط إلى {issue}",

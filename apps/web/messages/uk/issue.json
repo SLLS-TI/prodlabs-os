@@ -191,6 +191,10 @@
     "stopped": "Записано {time}",
     "stoppedNoTime": "Таймер зупинено"
   },
+  "weeklyBar": {
+    "label": "{logged} / {goal} цього тижня",
+    "tooltip": "Зафіксовано {logged} цього тижня"
+  },
   "links": {
     "title": "Зв'язки",
     "remove": "Прибрати зв'язок з {issue}",

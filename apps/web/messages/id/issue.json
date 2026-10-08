@@ -191,6 +191,10 @@
     "stopped": "Mencatat {time}",
     "stoppedNoTime": "Timer dihentikan"
   },
+  "weeklyBar": {
+    "label": "{logged} / {goal} minggu ini",
+    "tooltip": "Tercatat {logged} minggu ini"
+  },
   "links": {
     "title": "Tautan",
     "remove": "Hapus tautan ke {issue}",
