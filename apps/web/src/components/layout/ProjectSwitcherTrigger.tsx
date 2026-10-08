@@ -4,6 +4,9 @@ import { useTranslations } from 'next-intl';
 import type { Project } from '@/lib/api/endpoints/projects';
 import ItsAPlanMark from '@/components/brand/ItsAPlanMark';
 import ProjectLogo from '@/components/common/ProjectLogo';
+import ProjectLevelChip from '@/components/common/ProjectLevelChip';
+import { levelSuffix } from '@/components/common/projectLevelName';
+import { usePermissions } from '@/hooks/usePermissions';
 import { SidebarMenuButton } from '@/components/ui/sidebar';
 
 export default function ProjectSwitcherTrigger({
@@ -11,22 +14,34 @@ export default function ProjectSwitcherTrigger({
   ...props
 }: ComponentProps<typeof SidebarMenuButton> & { current?: Project }) {
   const t = useTranslations('nav');
+  const { role } = usePermissions();
+  const showLevel = role !== 'client';
+  const levelName = showLevel ? (current?.levelName ?? null) : null;
 
   return (
     <SidebarMenuButton
       {...props}
       size="lg"
-      title={current ? `${current.name} (${current.key}) · ${current.teamName}` : t('projects')}
+      title={
+        current
+          ? `${levelSuffix(current.name, levelName)} (${current.key}) · ${current.teamName}`
+          : t('projects')
+      }
       className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
     >
       {current ? (
-        <ProjectLogo name={current.name} logoUrl={current.logoUrl} className="size-9! text-xs" />
+        <div className="flex flex-col items-center gap-1">
+          <ProjectLogo name={current.name} logoUrl={current.logoUrl} className="size-9! text-xs" />
+          {showLevel && current.levelEmoji && (
+            <ProjectLevelChip emoji={current.levelEmoji} color={current.levelColor} />
+          )}
+        </div>
       ) : (
         <ItsAPlanMark className="size-9! shrink-0 text-sidebar-foreground" />
       )}
       <div className="grid min-w-0 flex-1 gap-1 text-start text-sm leading-tight">
         <span dir="auto" className="truncate font-semibold tracking-tight">
-          {current?.name ?? t('noProjects')}
+          {current ? levelSuffix(current.name, levelName) : t('noProjects')}
         </span>
         <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
           {current && (

@@ -24,6 +24,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import CommandLayer from '@/components/layout/CommandLayer';
 import ShellBody from '@/components/layout/ShellBody';
 import ShellHeaderTitle from '@/components/layout/ShellHeaderTitle';
+import { levelSuffix } from '@/components/common/projectLevelName';
 import ShellOverlays from '@/components/layout/ShellOverlays';
 import { ChatPanel } from '@/features/ai-chat/components/panel/ChatPanel';
 import { useChatPanel } from '@/features/ai-chat/hooks/useChatPanel';
@@ -208,7 +209,14 @@ export default function Shell({
             title={
               <ShellHeaderTitle
                 route={route}
-                projectName={project?.project.name ?? t('project')}
+                projectName={
+                  project
+                    ? levelSuffix(
+                        project.project.name,
+                        project.viewer.role !== 'client' ? project.project.levelName : null,
+                      )
+                    : t('project')
+                }
                 issueIdentifier={issueQuery.data?.identifier ?? null}
                 issueParent={issueQuery.data?.parent ?? null}
               />
