@@ -5,6 +5,7 @@ import {
   project,
   projectColumn,
   projectMember,
+  projectWorklog,
   issueActivity,
   issueType,
   user,
@@ -17,6 +18,7 @@ import {
 } from '@repo/db';
 import { and, desc, eq, inArray, isNull, isNotNull, sql } from 'drizzle-orm';
 import { HttpError, iso } from '#shared/lib';
+import { listProjects } from '#modules/projects/service';
 
 // Read-only project metrics for the dashboards feature. Every figure is derived
 // from the existing issue / project_column / issue_activity / issue_status tables —
@@ -853,11 +855,16 @@ export interface TimeGoalStats {
   status: 'under' | 'on' | 'over' | 'none';
 }
 
-// The project's time goal and the time logged against it. 'total' sums every worklog
-// entry; 'weekly' sums only the current week's, which is Monday 00:00 to the next
-// Monday (date_trunc('week', ...), the boundary getThroughput/getPulse use). spent_on
-// is a date, so this is pure calendar arithmetic with no timezone. status is 'none'
-// when no goal is set.
+// The weekly window the time-goal surfaces use: Monday 00:00 to the next Monday
+// (date_trunc('week', ...), the boundary getThroughput/getPulse use). spent_on is a
+// date, so this is pure calendar arithmetic with no timezone.
+const weeklyWindow = (column: typeof issueWorklog.spentOn | typeof projectWorklog.spentOn) =>
+  sql`${column} >= date_trunc('week', current_date)
+      AND ${column} < date_trunc('week', current_date) + interval '7 days'`;
+
+// The project's time goal and the time logged against it. The logged total is the sum of
+// the issue worklogs and the project worklogs (the global project timer): 'total' sums
+// every entry, 'weekly' only the current week's. status is 'none' when no goal is set.
 export async function getTimeGoal(projectId: number): Promise<TimeGoalStats> {
   const [row] = await db
     .select({ goalMinutes: project.timeGoalMinutes, period: project.timeGoalPeriod })
@@ -866,24 +873,81 @@ export async function getTimeGoal(projectId: number): Promise<TimeGoalStats> {
   if (!row) throw new HttpError(404, 'Project not found');
 
   const period = row.period as 'total' | 'weekly' | null;
-  const [logged] = await db
+  const [issueLogged] = await db
     .select({ minutes: sql<number>`coalesce(sum(${issueWorklog.minutes}), 0)::int` })
     .from(issueWorklog)
     .innerJoin(issue, eq(issue.id, issueWorklog.issueId))
     .where(
       and(
         eq(issue.projectId, projectId),
-        period === 'weekly'
-          ? sql`${issueWorklog.spentOn} >= date_trunc('week', current_date)
-                AND ${issueWorklog.spentOn} < date_trunc('week', current_date) + interval '7 days'`
-          : undefined,
+        period === 'weekly' ? weeklyWindow(issueWorklog.spentOn) : undefined,
       ),
     );
-  const loggedMinutes = logged?.minutes ?? 0;
+  const [projectLogged] = await db
+    .select({ minutes: sql<number>`coalesce(sum(${projectWorklog.minutes}), 0)::int` })
+    .from(projectWorklog)
+    .where(
+      and(
+        eq(projectWorklog.projectId, projectId),
+        period === 'weekly' ? weeklyWindow(projectWorklog.spentOn) : undefined,
+      ),
+    );
+  const loggedMinutes = (issueLogged?.minutes ?? 0) + (projectLogged?.minutes ?? 0);
 
   if (row.goalMinutes == null)
     return { goalMinutes: null, period: null, loggedMinutes, status: 'none' };
   const status =
     loggedMinutes > row.goalMinutes ? 'over' : loggedMinutes === row.goalMinutes ? 'on' : 'under';
   return { goalMinutes: row.goalMinutes, period, loggedMinutes, status };
+}
+
+export interface BatchTimeGoalItem {
+  projectId: number;
+  loggedMinutes: number;
+  goalMinutes: number;
+  period: 'weekly';
+}
+
+// Weekly progress for every project the caller may see time for that has a weekly goal,
+// in one pass — what the project switcher rings read. The visible set and the
+// client-role masking both come from listProjects: a client gets canSeeTimeTracking
+// false for every project, so their set (and the result) is empty. Projects with no goal
+// or a 'total' goal are omitted, so the switcher rings only the weekly-goal ones. For the
+// resulting ids, two grouped reads over the weekly window (issue worklogs joined to the
+// issue, and project worklogs) are summed per project.
+export async function batchTimeGoal(userId: string): Promise<BatchTimeGoalItem[]> {
+  const projects = (await listProjects(userId)).filter(
+    (p) => p.canSeeTimeTracking && p.timeGoalPeriod === 'weekly' && p.timeGoalMinutes != null,
+  );
+  if (projects.length === 0) return [];
+  const ids = projects.map((p) => p.id);
+
+  const issueRows = await db
+    .select({
+      projectId: issue.projectId,
+      minutes: sql<number>`coalesce(sum(${issueWorklog.minutes}), 0)::int`,
+    })
+    .from(issueWorklog)
+    .innerJoin(issue, eq(issue.id, issueWorklog.issueId))
+    .where(and(inArray(issue.projectId, ids), weeklyWindow(issueWorklog.spentOn)))
+    .groupBy(issue.projectId);
+  const projectRows = await db
+    .select({
+      projectId: projectWorklog.projectId,
+      minutes: sql<number>`coalesce(sum(${projectWorklog.minutes}), 0)::int`,
+    })
+    .from(projectWorklog)
+    .where(and(inArray(projectWorklog.projectId, ids), weeklyWindow(projectWorklog.spentOn)))
+    .groupBy(projectWorklog.projectId);
+
+  const logged = new Map<number, number>();
+  for (const r of issueRows) logged.set(r.projectId, (logged.get(r.projectId) ?? 0) + r.minutes);
+  for (const r of projectRows) logged.set(r.projectId, (logged.get(r.projectId) ?? 0) + r.minutes);
+
+  return projects.map((p) => ({
+    projectId: p.id,
+    loggedMinutes: logged.get(p.id) ?? 0,
+    goalMinutes: p.timeGoalMinutes!,
+    period: 'weekly',
+  }));
 }

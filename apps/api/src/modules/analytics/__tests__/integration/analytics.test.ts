@@ -785,6 +785,20 @@ describe('analytics', () => {
       });
     }
 
+    // Promotes a fresh member to the client role (invites only grant owner/member).
+    async function addClient(asOwner: Api): Promise<Api> {
+      const user = await signUpTestUser();
+      const invite = await asOwner
+        .projects({ projectKey: 'MKT' })
+        .invites.post({ email: user.email, role: 'member' });
+      const api = authedApi(user.cookie);
+      await api.invites({ token: invite.data!.token }).accept.post();
+      await asOwner.projects({ projectKey: 'MKT' }).members({ userId: user.userId }).patch({
+        role: 'client',
+      });
+      return api;
+    }
+
     const byUser = (client: Api) =>
       client.projects({ projectKey: 'MKT' })['analytics']['time-by-user'].get();
     const goal = (client: Api) =>
@@ -861,6 +875,94 @@ describe('analytics', () => {
           loggedMinutes: 75,
           status: 'under',
         });
+      });
+
+      it('counts a project-timer worklog toward the goal alongside issue worklogs', async () => {
+        const { asOwner, col } = await setupProject();
+        const issue = await createIssue(asOwner, col.backlog);
+        await setGoal(asOwner, 120, 'weekly');
+
+        await log(asOwner, issue.id, 30);
+        // The global project timer writes a project_worklog of at least a minute.
+        await asOwner.projects({ projectKey: 'MKT' }).timer.start.post();
+        const stopped = (await asOwner.projects({ projectKey: 'MKT' }).timer.stop.post()).data!;
+        const timerMinutes = stopped.worklog!.minutes;
+
+        const res = await goal(asOwner);
+        expect(res.data).toMatchObject({
+          period: 'weekly',
+          loggedMinutes: 30 + timerMinutes,
+        });
+      });
+    });
+
+    describe('time goal batch', () => {
+      const batch = (client: Api) => client['analytics']['time-goal'].batch.get();
+
+      it('returns only weekly-goal projects, summing issue and project worklogs', async () => {
+        const { asOwner, col } = await setupProject();
+        const issue = await createIssue(asOwner, col.backlog);
+        await setGoal(asOwner, 120, 'weekly');
+        await log(asOwner, issue.id, 40);
+        await asOwner.projects({ projectKey: 'MKT' }).timer.start.post();
+        const stopped = (await asOwner.projects({ projectKey: 'MKT' }).timer.stop.post()).data!;
+
+        // A second project with a total goal must not appear.
+        await asOwner.projects.post({ key: 'OPS', name: 'Ops' });
+        await asOwner.projects({ projectKey: 'OPS' }).settings.estimates.patch({
+          points: false,
+          time: false,
+          logging: true,
+          timeGoalMinutes: 500,
+          timeGoalPeriod: 'total',
+          timeVisibleRoleIds: [],
+        });
+
+        const res = await batch(asOwner);
+        expect(res.status).toBe(200);
+        const mkt = (await asOwner.projects.get()).data!.find((p) => p.key === 'MKT')!;
+        expect(res.data).toEqual([
+          {
+            projectId: mkt.id,
+            goalMinutes: 120,
+            period: 'weekly',
+            loggedMinutes: 40 + stopped.worklog!.minutes,
+          },
+        ]);
+      });
+
+      it('returns an empty list for a client', async () => {
+        const { asOwner } = await setupProject();
+        await setGoal(asOwner, 120, 'weekly');
+        const asClient = await addClient(asOwner);
+
+        expect((await batch(asClient)).data).toEqual([]);
+      });
+
+      it('omits a project a member cannot see time for', async () => {
+        const { asOwner } = await setupProject();
+        const allowed = await createRole(asOwner, 'MKT', {
+          name: 'Allowed',
+          permissions: { work_items: { read: true }, dashboards: { read: true } },
+        });
+        const other = await createRole(asOwner, 'MKT', {
+          name: 'Other',
+          permissions: { work_items: { read: true }, dashboards: { read: true } },
+        });
+        const otherMember = await addProjectMember(asOwner, 'MKT', other.data!.id);
+        await setGoal(asOwner, 120, 'weekly');
+        // Restrict visibility to the allowed role; the other member loses it.
+        await asOwner.projects({ projectKey: 'MKT' }).settings.estimates.patch({
+          points: false,
+          time: false,
+          logging: true,
+          timeGoalMinutes: 120,
+          timeGoalPeriod: 'weekly',
+          timeVisibleRoleIds: [allowed.data!.id],
+        });
+
+        expect((await batch(otherMember)).data).toEqual([]);
+        expect((await batch(asOwner)).data).toHaveLength(1);
       });
     });
 

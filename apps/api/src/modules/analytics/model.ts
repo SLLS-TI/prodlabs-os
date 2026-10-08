@@ -144,6 +144,17 @@ export const TimeGoalDto = t.Object({
   status: t.Union([t.Literal('under'), t.Literal('on'), t.Literal('over'), t.Literal('none')]),
 });
 
+// One project's weekly progress for the switcher rings (BatchTimeGoalItem from the
+// service). Only projects the caller may see time for, with a weekly goal, appear.
+export const BatchTimeGoalItem = t.Object({
+  projectId: t.Number(),
+  loggedMinutes: t.Number(),
+  goalMinutes: t.Number(),
+  period: t.Literal('weekly'),
+});
+
+export const BatchTimeGoalListResponse = t.Array(BatchTimeGoalItem);
+
 export const breakdownQuery = t.Object({
   by: t.Union([
     t.Literal('status'),
