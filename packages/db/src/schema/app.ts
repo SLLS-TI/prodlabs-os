@@ -131,6 +131,14 @@ export const project = pgTable(
     // oldest owner. set null when that user leaves the project or is deleted, so the
     // fallback takes over rather than a dangling reference remaining.
     faceUserId: text('face_user_id').references(() => user.id, { onDelete: 'set null' }),
+    // The project member responsible for the project (its responsável), shown with name
+    // and avatar in every project listing. Independent of face_user_id, which is the mask
+    // a client sees. Must be an owner or member of the project (never a client); set null
+    // when that user leaves the project or is deleted so no dangling reference remains.
+    // Never shown to a client-role viewer — the API strips it from the DTO for them.
+    responsibleUserId: text('responsible_user_id').references(() => user.id, {
+      onDelete: 'set null',
+    }),
     // Whether this project is in the team's MCP reach. Managed from the team's MCP
     // settings, not from the project, and only counts while team.mcp_enabled is on.
     // The starting value is the instance-wide project default set in god mode.
