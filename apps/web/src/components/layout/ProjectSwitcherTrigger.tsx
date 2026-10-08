@@ -2,15 +2,22 @@ import type { ComponentProps } from 'react';
 import { ChevronsUpDown, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Project } from '@/lib/api/endpoints/projects';
+import type { BatchTimeGoalItem } from '@/lib/api/endpoints/analytics';
 import ItsAPlanMark from '@/components/brand/ItsAPlanMark';
 import ProjectLogo from '@/components/common/ProjectLogo';
+import RingProgress from '@/components/common/RingProgress';
 import { SidebarMenuButton } from '@/components/ui/sidebar';
 
 export default function ProjectSwitcherTrigger({
   current,
+  progress,
   ...props
-}: ComponentProps<typeof SidebarMenuButton> & { current?: Project }) {
+}: ComponentProps<typeof SidebarMenuButton> & {
+  current?: Project;
+  progress: Map<number, BatchTimeGoalItem>;
+}) {
   const t = useTranslations('nav');
+  const item = current ? progress.get(current.id) : undefined;
 
   return (
     <SidebarMenuButton
@@ -20,7 +27,17 @@ export default function ProjectSwitcherTrigger({
       className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
     >
       {current ? (
-        <ProjectLogo name={current.name} logoUrl={current.logoUrl} className="size-9! text-xs" />
+        item ? (
+          <RingProgress value={item.loggedMinutes} max={item.goalMinutes} className="size-9">
+            <ProjectLogo
+              name={current.name}
+              logoUrl={current.logoUrl}
+              className="size-7! text-xs"
+            />
+          </RingProgress>
+        ) : (
+          <ProjectLogo name={current.name} logoUrl={current.logoUrl} className="size-9! text-xs" />
+        )
       ) : (
         <ItsAPlanMark className="size-9! shrink-0 text-sidebar-foreground" />
       )}

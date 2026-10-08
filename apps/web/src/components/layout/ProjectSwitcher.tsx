@@ -6,6 +6,7 @@ import { useTeamsQuery } from '@/services/teams.service';
 import { qk } from '@/services/queryKeys';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import { SidebarMenu, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
+import { useProjectWeeklyProgress } from '@/hooks/useProjectWeeklyProgress';
 import ProjectSwitcherTrigger from './ProjectSwitcherTrigger';
 import ProjectSwitcherMenu from './ProjectSwitcherMenu';
 import { useProjectSwitcherPreferences } from './hooks/useProjectSwitcherPreferences';
@@ -27,6 +28,9 @@ export default function ProjectSwitcher({
   const current = projects.find((project) => project.ref === currentProjectKey);
   const [open, setOpen] = useState(false);
   const [openTeams, setOpenTeams] = useState<Record<number, boolean>>({});
+  // One batch request for the whole list, fired only while the switcher is open; the
+  // trigger and rows read the same cached result.
+  const progress = useProjectWeeklyProgress(open);
 
   return (
     <SidebarMenu>
@@ -40,13 +44,14 @@ export default function ProjectSwitcher({
           }}
         >
           <PopoverTrigger asChild>
-            <ProjectSwitcherTrigger current={current} />
+            <ProjectSwitcherTrigger current={current} progress={progress} />
           </PopoverTrigger>
           <ProjectSwitcherMenu
             projects={projects}
             teams={teams}
             current={current}
             preferences={preferences}
+            progress={progress}
             openTeams={openTeams}
             onOpenTeam={(teamId, value) => setOpenTeams((prev) => ({ ...prev, [teamId]: value }))}
             onSelectProject={(key) => {

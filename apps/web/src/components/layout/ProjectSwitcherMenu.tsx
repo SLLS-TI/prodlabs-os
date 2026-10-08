@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Project } from '@/lib/api/endpoints/projects';
 import type { Team } from '@/lib/api/endpoints/teams';
+import type { BatchTimeGoalItem } from '@/lib/api/endpoints/analytics';
 import { useSidebarSide } from '@/hooks/useSidebarSide';
 import ResizeGrip from '@/components/common/ResizeGrip';
 import { PopoverContent } from '@/components/ui/popover';
@@ -18,6 +19,7 @@ export default function ProjectSwitcherMenu({
   teams,
   current,
   preferences,
+  progress,
   openTeams,
   onOpenTeam,
   onSelectProject,
@@ -27,6 +29,7 @@ export default function ProjectSwitcherMenu({
   teams: Team[];
   current?: Project;
   preferences: ReturnType<typeof useProjectSwitcherPreferences>;
+  progress: Map<number, BatchTimeGoalItem>;
   openTeams: Record<number, boolean>;
   onOpenTeam: (teamId: number, open: boolean) => void;
   onSelectProject: (key: string) => void;
@@ -67,6 +70,7 @@ export default function ProjectSwitcherMenu({
         projects={projects}
         teams={teams}
         current={current}
+        progress={progress}
         sort={preferences.sort}
         onSortChange={preferences.setSort}
         showHidden={showHidden}

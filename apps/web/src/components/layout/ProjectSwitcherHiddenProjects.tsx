@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { Archive, ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Project } from '@/lib/api/endpoints/projects';
+import type { BatchTimeGoalItem } from '@/lib/api/endpoints/analytics';
 import { Button } from '@/components/ui/button';
 import { CommandGroup } from '@/components/ui/command';
 import ProjectSwitcherProjectRow from './ProjectSwitcherProjectRow';
@@ -12,6 +13,7 @@ export default function ProjectSwitcherHiddenProjects({
   expanded,
   onExpandedChange,
   currentProjectKey,
+  progress,
   onSelectProject,
 }: {
   projects: Project[];
@@ -19,6 +21,7 @@ export default function ProjectSwitcherHiddenProjects({
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
   currentProjectKey: string | null;
+  progress: Map<number, BatchTimeGoalItem>;
   onSelectProject: (key: string) => void;
 }) {
   const t = useTranslations('nav.projectPicker');
@@ -51,6 +54,7 @@ export default function ProjectSwitcherHiddenProjects({
               key={project.id}
               project={project}
               currentProjectKey={currentProjectKey}
+              progress={progress.get(project.id)}
               onSelectProject={onSelectProject}
             />
           ))}

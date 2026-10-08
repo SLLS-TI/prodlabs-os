@@ -1,6 +1,7 @@
 import { ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
+import type { BatchTimeGoalItem } from '@/lib/api/endpoints/analytics';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import ProjectSwitcherProjectRow from './ProjectSwitcherProjectRow';
@@ -9,6 +10,7 @@ import type { TeamGroup } from './utils/projectSwitcher';
 export default function ProjectSwitcherTeamGroup({
   group,
   currentProjectKey,
+  progress,
   open,
   searching,
   onOpenChange,
@@ -16,6 +18,7 @@ export default function ProjectSwitcherTeamGroup({
 }: {
   group: TeamGroup;
   currentProjectKey: string | null;
+  progress: Map<number, BatchTimeGoalItem>;
   open: boolean;
   searching: boolean;
   onOpenChange: (open: boolean) => void;
@@ -56,6 +59,7 @@ export default function ProjectSwitcherTeamGroup({
             key={project.ref}
             project={project}
             currentProjectKey={currentProjectKey}
+            progress={progress.get(project.id)}
             onSelectProject={onSelectProject}
           />
         ))}

@@ -2,6 +2,7 @@ import { useState, type Ref } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import type { Project } from '@/lib/api/endpoints/projects';
 import type { Team } from '@/lib/api/endpoints/teams';
+import type { BatchTimeGoalItem } from '@/lib/api/endpoints/analytics';
 import { Command, CommandInput, CommandList } from '@/components/ui/command';
 import ProjectSwitcherTeamGroup from './ProjectSwitcherTeamGroup';
 import ProjectSwitcherHiddenProjects from './ProjectSwitcherHiddenProjects';
@@ -12,6 +13,7 @@ export default function ProjectSwitcherList({
   projects,
   teams,
   current,
+  progress,
   sort,
   onSortChange,
   showHidden,
@@ -24,6 +26,7 @@ export default function ProjectSwitcherList({
   projects: Project[];
   teams: Team[];
   current?: Project;
+  progress: Map<number, BatchTimeGoalItem>;
   sort: ProjectSort;
   onSortChange: (sort: ProjectSort) => void;
   showHidden: boolean;
@@ -85,6 +88,7 @@ export default function ProjectSwitcherList({
             key={group.teamId}
             group={group}
             currentProjectKey={current?.ref ?? null}
+            progress={progress}
             open={
               searching ||
               (openTeams[group.teamId] ??
@@ -103,6 +107,7 @@ export default function ProjectSwitcherList({
             expanded={showHidden}
             onExpandedChange={onShowHiddenChange}
             currentProjectKey={current?.ref ?? null}
+            progress={progress}
             onSelectProject={onSelectProject}
           />
         )}
