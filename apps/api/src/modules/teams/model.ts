@@ -122,6 +122,11 @@ export const TeamProjectPageResponse = pageResponse(
     name: t.String(),
     description: t.String(),
     logoUrl: t.Nullable(t.String()),
+    // The project's level: a single emoji, its name, and the emoji's dominant color (hex).
+    // A client cannot reach this route, so no strip is applied here.
+    levelEmoji: t.Nullable(t.String()),
+    levelName: t.Nullable(t.String()),
+    levelColor: t.Nullable(t.String()),
     mcpEnabled: t.Boolean({ description: "Whether the team's MCP reach covers this project." }),
     memberCount: t.Number(),
     owners: t.Array(

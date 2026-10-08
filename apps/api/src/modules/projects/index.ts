@@ -52,6 +52,7 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  stripLevel,
   projectFeatures,
   setProjectFeatures,
   getAutoArchiveSettings,
@@ -212,7 +213,7 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
       const effectiveRoleId = viewer.roleId ?? (await getDefaultRoleId(project.teamId));
       const mask = await resolveMaskContext(project.id, user);
       return {
-        project,
+        project: stripLevel(project, viewer.role),
         columns,
         issueTypes,
         labels,
