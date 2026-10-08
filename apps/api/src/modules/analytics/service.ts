@@ -856,8 +856,8 @@ export interface TimeGoalStats {
 }
 
 // The weekly window the time-goal surfaces use: Monday 00:00 to the next Monday
-// (date_trunc('week', ...), the boundary getThroughput/getPulse use). spent_on is a
-// date, so this is pure calendar arithmetic with no timezone.
+// (date_trunc('week', current_date)). spent_on is a date, so this is pure calendar
+// arithmetic with no timezone.
 const weeklyWindow = (column: typeof issueWorklog.spentOn | typeof projectWorklog.spentOn) =>
   sql`${column} >= date_trunc('week', current_date)
       AND ${column} < date_trunc('week', current_date) + interval '7 days'`;
