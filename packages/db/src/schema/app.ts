@@ -180,6 +180,13 @@ export const project = pgTable(
     // An optional hex background tint for the whole project interface. Null = no tint,
     // the neutral default.
     color: text('color'),
+    // The project's "level": a single emoji, its name, and the emoji's dominant color
+    // (hex), lightened at render into the emoji chip. All three are set together from
+    // Settings -> General and cleared together; null means no level. Never shown to a
+    // client-role viewer — the API strips them from a client's read.
+    levelEmoji: text('level_emoji'),
+    levelName: text('level_name'),
+    levelColor: text('level_color'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
