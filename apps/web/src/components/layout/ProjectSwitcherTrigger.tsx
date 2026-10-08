@@ -3,6 +3,7 @@ import { ChevronsUpDown, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Project } from '@/lib/api/endpoints/projects';
 import ItsAPlanMark from '@/components/brand/ItsAPlanMark';
+import Avatar from '@/components/common/Avatar';
 import ProjectLogo from '@/components/common/ProjectLogo';
 import { SidebarMenuButton } from '@/components/ui/sidebar';
 
@@ -38,6 +39,18 @@ export default function ProjectSwitcherTrigger({
           <span dir="auto" className="truncate">
             {current?.teamName ?? '—'}
           </span>
+          {current?.responsible && (
+            <>
+              <Avatar
+                name={current.responsible.name}
+                image={current.responsible.image}
+                className="size-4 shrink-0"
+              />
+              <span dir="auto" className="truncate">
+                {current.responsible.name}
+              </span>
+            </>
+          )}
         </span>
       </div>
       <ChevronsUpDown className="ms-auto" />

@@ -15,12 +15,14 @@ import { SettingsResourceProvider } from './context/settingsPermission';
 import SettingsSubtaskAutomation from './components/configuration/SettingsSubtaskAutomation';
 import SettingsEstimates from './components/configuration/SettingsEstimates';
 import SettingsClientMasking from './components/configuration/SettingsClientMasking';
+import SettingsProjectResponsible from './components/configuration/SettingsProjectResponsible';
 import SettingsAutoArchive from './components/configuration/SettingsAutoArchive';
 import SettingsSlackChannel from './components/configuration/SettingsSlackChannel';
 import SettingsHealthWeights from './components/configuration/SettingsHealthWeights';
 import { useAutoArchiveForm } from './hooks/useAutoArchiveForm';
 import { useEstimatesForm } from './hooks/useEstimatesForm';
 import { useMaskingForm } from './hooks/useMaskingForm';
+import { useResponsibleForm } from './hooks/useResponsibleForm';
 import { useHealthWeightsForm } from './hooks/useHealthWeightsForm';
 import { useSubtaskAutomationForm } from './hooks/useSubtaskAutomationForm';
 import { useSlackChannelForm } from './hooks/useSlackChannelForm';
@@ -45,17 +47,24 @@ function ConfigurationPage({ project }: { project: ProjectDetail }) {
   const subtasks = useSubtaskAutomationForm(project.project.ref);
   const estimates = useEstimatesForm(project.project);
   const masking = useMaskingForm(project.project);
+  const responsible = useResponsibleForm(project.project);
   const archive = useAutoArchiveForm(project.project.ref);
   const slack = useSlackChannelForm(project.project.ref);
   const healthWeights = useHealthWeightsForm(project.project.ref);
   const saving =
-    subtasks.saving || estimates.saving || masking.saving || archive.saving || healthWeights.saving;
+    subtasks.saving ||
+    estimates.saving ||
+    masking.saving ||
+    responsible.saving ||
+    archive.saving ||
+    healthWeights.saving;
   const loaded = subtasks.loaded && archive.loaded && healthWeights.loaded;
 
   async function save() {
     await subtasks.save();
     await estimates.save();
     await masking.save();
+    await responsible.save();
     await archive.save();
     await healthWeights.save();
     toast.success(t('saved'));
@@ -79,6 +88,7 @@ function ConfigurationPage({ project }: { project: ProjectDetail }) {
             {features.subtasks && <SettingsSubtaskAutomation form={subtasks} />}
             <SettingsEstimates form={estimates} />
             <SettingsClientMasking form={masking} />
+            <SettingsProjectResponsible form={responsible} />
             <SettingsAutoArchive form={archive} />
             <SettingsSlackChannel form={slack} />
             <SettingsHealthWeights form={healthWeights} />

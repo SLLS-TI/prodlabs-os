@@ -17,6 +17,7 @@ import {
   projectSetting,
   team,
   teamMember,
+  user,
 } from '@repo/db';
 import {
   and,
@@ -96,6 +97,13 @@ export interface ProjectRow {
   // The member a client viewer sees every team-member action attributed to, or null to
   // fall back to the oldest owner. Owner-only config, set on the masking settings page.
   faceUserId: string | null;
+  // The project member responsible for the project, or null when none is set. The raw FK,
+  // consumed only by the settings form. Nulled for a client-role viewer.
+  responsibleUserId: string | null;
+  // The responsible's resolved identity (name + image), filled by attachResponsibles and
+  // resolveResponsible; null when none is set or the user row is gone. Consumed by the
+  // project-switcher surfaces. Nulled for a client-role viewer. mapProject leaves it null.
+  responsible: { userId: string; name: string; image: string | null } | null;
   // Per-project weights for the cross-project health score (god stats), or null when never
   // configured. The health-weights settings route reads them; the board scaffold does not
   // carry them.
@@ -197,10 +205,42 @@ export async function mapProject(row: ProjectWithTeam): Promise<ProjectRow> {
     timeGoalPeriod: row.timeGoalPeriod as 'total' | 'weekly' | null,
     timeVisibleRoleIds: row.timeVisibleRoleIds,
     faceUserId: row.faceUserId,
+    responsibleUserId: row.responsibleUserId,
+    responsible: null,
     healthWeights: row.healthWeights,
     availableFeatures: PROJECT_FEATURES.filter((feature) => !blockedFeatures.includes(feature)),
     createdAt: iso(row.createdAt),
   };
+}
+
+// Resolves the responsible identity (name + image) for a set of project rows in one
+// query, then sets it on each. Called after mapProject, which leaves responsible null,
+// so the list resolves every row's identity without an N+1. A row whose
+// responsibleUserId is null, or whose user row is gone (an FK-set-null race), stays null.
+async function attachResponsibles<T extends ProjectRow>(rows: T[]): Promise<T[]> {
+  const ids = [...new Set(rows.map((r) => r.responsibleUserId).filter((id): id is string => !!id))];
+  if (ids.length === 0) return rows;
+  const identities = await db
+    .select({ userId: user.id, name: user.name, image: user.image })
+    .from(user)
+    .where(inArray(user.id, ids));
+  const byId = new Map(identities.map((u) => [u.userId, u]));
+  for (const row of rows) {
+    row.responsible = row.responsibleUserId ? (byId.get(row.responsibleUserId) ?? null) : null;
+  }
+  return rows;
+}
+
+// The responsible identity for a single project, for the board scaffold handler. null
+// when the user row is gone (an FK-set-null race).
+export async function resolveResponsible(
+  userId: string,
+): Promise<{ userId: string; name: string; image: string | null } | null> {
+  const [row] = await db
+    .select({ userId: user.id, name: user.name, image: user.image })
+    .from(user)
+    .where(eq(user.id, userId));
+  return row ?? null;
 }
 
 export async function listProjects(
@@ -281,7 +321,7 @@ export async function listProjects(
     }
     return pending;
   };
-  return Promise.all(
+  const items = await Promise.all(
     rows.map(
       async ({
         memberRole,
@@ -308,6 +348,16 @@ export async function listProjects(
       },
     ),
   );
+  await attachResponsibles(items);
+  // A client-role viewer never learns the responsible: strip both the resolved identity
+  // and the raw FK from their items. The per-row role is already resolved above.
+  for (const item of items) {
+    if (item.role === 'client') {
+      item.responsible = null;
+      item.responsibleUserId = null;
+    }
+  }
+  return items;
 }
 
 // Resolves the project a URL names. The full form is "<teamRef>.<key>", where the
@@ -751,6 +801,39 @@ export async function setMaskingSettings(
     .where(eq(project.id, projectId))
     .returning({ faceUserId: project.faceUserId });
   return row ? { faceUserId: row.faceUserId } : null;
+}
+
+export interface ResponsibleSettings {
+  responsibleUserId: string | null;
+}
+
+// Sets the project's responsible member (owner-only route). A non-null id must be a
+// member of the project whose role is owner or member — never a client, who must never
+// be surfaced as the responsible. null clears it. Returns null when the project is gone.
+export async function setResponsibleSettings(
+  projectId: number,
+  input: ResponsibleSettings,
+): Promise<ResponsibleSettings | null> {
+  if (input.responsibleUserId != null) {
+    const [member] = await db
+      .select({ role: projectMember.role })
+      .from(projectMember)
+      .where(
+        and(
+          eq(projectMember.projectId, projectId),
+          eq(projectMember.userId, input.responsibleUserId),
+        ),
+      )
+      .limit(1);
+    if (!member) throw new HttpError(400, 'The responsible must be a member of the project');
+    if (member.role === 'client') throw new HttpError(400, 'The responsible cannot be a client');
+  }
+  const [row] = await db
+    .update(project)
+    .set({ responsibleUserId: input.responsibleUserId })
+    .where(eq(project.id, projectId))
+    .returning({ responsibleUserId: project.responsibleUserId });
+  return row ? { responsibleUserId: row.responsibleUserId } : null;
 }
 
 // The health-score weights, always filled with the defaults merged over the stored partial

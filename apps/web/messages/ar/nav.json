@@ -45,6 +45,7 @@
   "godModeOwnerOnly": "وضع المشرف متاح لمالك النسخة بس.",
   "project": "المشروع",
   "projectPicker": {
+    "responsible": "المسؤول",
     "sortName": "Project name",
     "noResults": "No matching projects",
     "sortCreated": "Newest created",

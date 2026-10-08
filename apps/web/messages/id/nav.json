@@ -45,6 +45,7 @@
   "godModeOwnerOnly": "Mode God hanya terbuka untuk pemilik instance.",
   "project": "Proyek",
   "projectPicker": {
+    "responsible": "Penanggung jawab",
     "sortName": "Project name",
     "noResults": "No matching projects",
     "sortCreated": "Newest created",
