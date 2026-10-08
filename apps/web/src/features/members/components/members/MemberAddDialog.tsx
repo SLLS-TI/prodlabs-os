@@ -32,8 +32,10 @@ const REFUSAL_KEY: Record<string, RefusalKey> = {
   INVITE_ALREADY_PENDING: 'alreadyInvited',
 };
 
-// Owner is not a custom role, so it sits outside the roles list under this value.
+// Owner and client are not custom roles, so they sit outside the roles list under
+// these values.
 const OWNER_VALUE = 'owner';
+const CLIENT_VALUE = 'client';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -66,6 +68,7 @@ export default function MemberAddDialog({
   onClose: () => void;
 }) {
   const t = useTranslations('members.add');
+  const tMembers = useTranslations('members');
   const tCommon = useTranslations('common');
   const [query, setQuery] = useState('');
   const [target, setTarget] = useState<MemberOption | null>(null);
@@ -83,6 +86,11 @@ export default function MemberAddDialog({
   // the roles load, so a submit before that cannot fall back to Owner.
   const defaultRoleId = roles.find((r) => r.isDefault)?.id ?? roles[0]?.id;
   const role = roleValue || (defaultRoleId != null ? String(defaultRoleId) : '');
+
+  // Client is a restricted read-oriented role granted only to a member of the team
+  // joining directly — the API refuses it on an invite, so the option is offered only
+  // while the target is not an email invite.
+  const canAddClient = canAdd && target?.kind !== 'invite';
 
   const typed = query.trim().toLowerCase();
   // An address nobody in the team carries is offered as an invite — unless the
@@ -103,7 +111,9 @@ export default function MemberAddDialog({
     const input =
       role === OWNER_VALUE
         ? { role: 'owner' as const }
-        : { role: 'member' as const, roleId: Number(role) };
+        : role === CLIENT_VALUE
+          ? { role: 'client' as const }
+          : { role: 'member' as const, roleId: Number(role) };
     try {
       if (target.kind === 'member') {
         await addMember.mutateAsync({ userId: target.candidate.userId, ...input });
@@ -142,6 +152,9 @@ export default function MemberAddDialog({
               onChange={(option) => {
                 setTarget(option);
                 setRefusal(null);
+                // Client cannot be invited, so picking an email invite drops it back
+                // to the default role.
+                if (option?.kind === 'invite' && roleValue === CLIENT_VALUE) setRoleValue('');
               }}
               query={query}
               onQueryChange={setQuery}
@@ -166,6 +179,9 @@ export default function MemberAddDialog({
                   </SelectItem>
                 ))}
                 {canGrantOwner && <SelectItem value={OWNER_VALUE}>{tCommon('owner')}</SelectItem>}
+                {canAddClient && (
+                  <SelectItem value={CLIENT_VALUE}>{tMembers('roleClient')}</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
