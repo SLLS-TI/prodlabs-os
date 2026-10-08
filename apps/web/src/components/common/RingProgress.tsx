@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { goalLevel, goalTextClass } from '@/utils/goalColor';
 
-// A circular progress ring drawn around its children (a ProjectLogo). The arc length
-// is the fraction of value/max, clamped to a full circle; over-goal is shown by the
-// destructive color, not by overflowing the ring. Design-system tokens only, so it
-// adapts in light and dark mode. Size comes from the className (size-7 on rows, size-9
-// on the trigger).
+// A circular progress ring drawn around its children (a ProjectLogo, clipped to a
+// circle so it matches the ring). The arc length is the fraction of value/max, clamped
+// to a full circle; its color tracks how much of the goal is met (see goalColor). Size
+// comes from the className (size-7 on rows, size-9 on the trigger).
 export default function RingProgress({
   value,
   max,
@@ -17,9 +17,10 @@ export default function RingProgress({
   className?: string;
   children?: ReactNode;
 }) {
-  const fraction = max > 0 ? Math.min(1, value / max) : 0;
-  const over = value > max;
-  const percent = Math.round((max > 0 ? value / max : 0) * 100);
+  const ratio = max > 0 ? value / max : 0;
+  const fraction = Math.min(1, ratio);
+  const level = goalLevel(ratio);
+  const percent = Math.round(ratio * 100);
 
   return (
     <span className={cn('relative inline-flex shrink-0 items-center justify-center', className)}>
@@ -46,11 +47,13 @@ export default function RingProgress({
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeDasharray={`${fraction * 100} 100`}
-          className={over ? 'text-destructive' : 'text-foreground/70'}
+          className={goalTextClass[level]}
           stroke="currentColor"
         />
       </svg>
-      <span className="flex items-center justify-center">{children}</span>
+      <span className="flex items-center justify-center overflow-hidden rounded-full">
+        {children}
+      </span>
     </span>
   );
 }

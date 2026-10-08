@@ -40,8 +40,6 @@ export default function AppHeader({
       <Separator orientation="vertical" className="me-1 h-4" />
       <div className="min-w-0 truncate text-sm font-medium">{title}</div>
 
-      {showTime && <WeeklyProgressBar projectKey={projectKey} />}
-
       <Tooltip>
         <TooltipTrigger asChild>
           <button
@@ -62,6 +60,8 @@ export default function AppHeader({
         </TooltipTrigger>
         <TooltipContent>{t('searchHint', { key: paletteKey ?? '' })}</TooltipContent>
       </Tooltip>
+
+      {showTime && <WeeklyProgressBar projectKey={projectKey} />}
 
       {canCreateIssue && (
         <Tooltip>
