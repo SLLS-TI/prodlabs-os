@@ -188,4 +188,40 @@ describe('project responsible', () => {
     expect(scaffold.data!.project.responsibleUserId).toBeNull();
     expect(scaffold.data!.project.responsible).toBeNull();
   });
+
+  it('set-nulls the responsible when they leave the team', async () => {
+    const { asOwner, teammate } = await setupProject();
+    await asOwner
+      .projects({ projectKey: 'MKT' })
+      .settings.responsible.patch({ responsibleUserId: teammate.user.userId });
+
+    const teamId = (await asOwner.teams.get()).data![0].id;
+    const removed = await asOwner
+      .teams({ teamId })
+      .members({ userId: teammate.user.userId })
+      .delete();
+    expect(removed.status).toBe(204);
+
+    const listed = await listedProject(asOwner);
+    expect(listed.responsibleUserId).toBeNull();
+    expect(listed.responsible).toBeNull();
+
+    const scaffold = await asOwner.projects({ projectKey: 'MKT' }).get();
+    expect(scaffold.data!.project.responsibleUserId).toBeNull();
+    expect(scaffold.data!.project.responsible).toBeNull();
+  });
+
+  it('keeps the responsible when a different member leaves', async () => {
+    const { asOwner, teammate } = await setupProject();
+    const other = await joinProject(asOwner, 'member', 'Other');
+    await asOwner
+      .projects({ projectKey: 'MKT' })
+      .settings.responsible.patch({ responsibleUserId: teammate.user.userId });
+
+    await asOwner.projects({ projectKey: 'MKT' }).members({ userId: other.user.userId }).delete();
+
+    const listed = await listedProject(asOwner);
+    expect(listed.responsibleUserId).toBe(teammate.user.userId);
+    expect(listed.responsible).toMatchObject({ userId: teammate.user.userId });
+  });
 });
