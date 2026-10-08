@@ -77,6 +77,10 @@ export interface TeamProject {
   description: string;
   // Relative serve URL of the project's custom logo, or null to fall back to initials.
   logoUrl: string | null;
+  // The project's level: a single emoji, its name, and the emoji's dominant color (hex).
+  levelEmoji: string | null;
+  levelName: string | null;
+  levelColor: string | null;
   // Whether the team's MCP reach covers this project. Only counts while the team's
   // own switch is on.
   mcpEnabled: boolean;

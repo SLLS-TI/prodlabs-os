@@ -45,6 +45,7 @@
   "godModeOwnerOnly": "Le God mode est réservé au propriétaire de l'instance.",
   "project": "Projet",
   "projectPicker": {
+    "responsible": "Responsable",
     "sortName": "Project name",
     "noResults": "No matching projects",
     "sortCreated": "Newest created",

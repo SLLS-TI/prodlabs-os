@@ -569,6 +569,12 @@ export async function removeMember(projectId: number, userId: string): Promise<v
       .where(
         and(eq(projectColumn.projectId, projectId), eq(projectColumn.autoAssignUserId, userId)),
       );
+    // The responsible is a member too: a removed one would keep showing in the project
+    // listing, since the FK set-null only fires on user deletion.
+    await tx
+      .update(project)
+      .set({ responsibleUserId: null })
+      .where(and(eq(project.id, projectId), eq(project.responsibleUserId, userId)));
   });
 }
 

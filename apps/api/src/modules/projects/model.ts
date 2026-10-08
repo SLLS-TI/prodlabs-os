@@ -58,6 +58,11 @@ export const updateProjectBody = t.Object({
   name: t.Optional(t.String({ minLength: 1 })),
   description: t.Optional(t.String({ maxLength: PROJECT_DESCRIPTION_LIMIT })),
   color: t.Optional(t.Nullable(t.String())),
+  // The emoji is a coarse length guard here; the service does the authoritative
+  // single-grapheme check. Null clears the whole level trio together.
+  levelEmoji: t.Optional(t.Nullable(t.String({ maxLength: 16 }))),
+  levelName: t.Optional(t.Nullable(t.String({ maxLength: 40 }))),
+  levelColor: t.Optional(t.Nullable(t.String({ pattern: '^#[0-9a-fA-F]{6}$' }))),
 });
 
 // Params of the public logo raw route: the numeric project id and the object's uuid.
@@ -150,6 +155,18 @@ export const ProjectResponse = t.Object({
   // The member a client viewer sees every team-member action attributed to, or null to
   // fall back to the oldest owner. Owner-only config, read by the masking settings page.
   faceUserId: t.Nullable(t.String()),
+  // The project's level: a single emoji, its name, and the emoji's dominant color (hex),
+  // lightened at render into the chip. Null when unset. Stripped to null for a client viewer.
+  levelEmoji: t.Nullable(t.String()),
+  levelName: t.Nullable(t.String()),
+  levelColor: t.Nullable(t.String()),
+  // The project's responsible member: the raw FK (read by the settings form) and the
+  // resolved identity (name + image, shown in the project switcher). Both null when none
+  // is set, and both nulled for a client-role viewer.
+  responsibleUserId: t.Nullable(t.String()),
+  responsible: t.Nullable(
+    t.Object({ userId: t.String(), name: t.String(), image: t.Nullable(t.String()) }),
+  ),
   availableFeatures: t.Array(t.UnionEnum([...PROJECT_FEATURES])),
   createdAt: t.String(),
 });
@@ -161,6 +178,13 @@ export const MaskingResponse = t.Object({
 });
 
 export const updateMaskingBody = MaskingResponse;
+
+// The responsible-member settings write (owner-only). The raw FK; null clears it.
+export const ResponsibleResponse = t.Object({
+  responsibleUserId: t.Nullable(t.String()),
+});
+
+export const updateResponsibleBody = ResponsibleResponse;
 
 // A project in the caller's list (ProjectListItem): ProjectRow plus the caller's
 // own role in it, and the caller's permission matrix when requested with

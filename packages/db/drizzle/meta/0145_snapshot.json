@@ -1,6 +1,6 @@
 {
-  "id": "d00054cf-241d-42ad-9c21-1ecaa2438da0",
-  "prevId": "7a494b2b-afef-49a6-8cd8-e33ebcbc6a6f",
+  "id": "b92f3494-7ca4-4566-bbf6-709dd0884422",
+  "prevId": "d00054cf-241d-42ad-9c21-1ecaa2438da0",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -8107,6 +8107,24 @@
         },
         "color": {
           "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "level_emoji": {
+          "name": "level_emoji",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "level_name": {
+          "name": "level_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "level_color": {
+          "name": "level_color",
           "type": "text",
           "primaryKey": false,
           "notNull": false

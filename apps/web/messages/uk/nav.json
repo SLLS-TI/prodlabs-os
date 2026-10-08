@@ -45,6 +45,7 @@
   "godModeOwnerOnly": "Режим адміністратора доступний лише власнику інстансу.",
   "project": "Проєкт",
   "projectPicker": {
+    "responsible": "Відповідальний",
     "sortName": "Project name",
     "noResults": "No matching projects",
     "sortCreated": "Newest created",

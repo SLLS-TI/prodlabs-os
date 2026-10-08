@@ -108,6 +108,10 @@ export interface TeamProjectRow {
   description: string;
   // Relative serve URL of the project's custom logo, or null to fall back to initials.
   logoUrl: string | null;
+  // The project's level: a single emoji, its name, and the emoji's dominant color (hex).
+  levelEmoji: string | null;
+  levelName: string | null;
+  levelColor: string | null;
   // Whether the team's MCP reach covers this project. Only counts while the team's
   // own switch is on.
   mcpEnabled: boolean;
@@ -571,6 +575,9 @@ export async function listTeamProjects(
         name: project.name,
         description: project.description,
         logoUrl: project.logoUrl,
+        levelEmoji: project.levelEmoji,
+        levelName: project.levelName,
+        levelColor: project.levelColor,
         mcpEnabled: project.mcpEnabled,
         createdAt: project.createdAt,
         memberCount: sql<number>`count(${projectMember.userId})::int`,
@@ -628,6 +635,9 @@ export async function listTeamProjects(
       name: p.name,
       description: p.description,
       logoUrl: p.logoUrl,
+      levelEmoji: p.levelEmoji,
+      levelName: p.levelName,
+      levelColor: p.levelColor,
       mcpEnabled: p.mcpEnabled,
       memberCount: p.memberCount,
       owners: ownersByProject.get(p.id) ?? [],
@@ -971,6 +981,11 @@ async function dropTeamMembership(tx: Transaction, teamId: number, userId: strin
         inArray(projectColumn.projectId, teamProjects),
       ),
     );
+  // The responsible is a project member too, cleared the same way removeMember does.
+  await tx
+    .update(project)
+    .set({ responsibleUserId: null })
+    .where(and(eq(project.teamId, teamId), eq(project.responsibleUserId, userId)));
   await tx
     .delete(teamMember)
     .where(and(eq(teamMember.teamId, teamId), eq(teamMember.userId, userId)));

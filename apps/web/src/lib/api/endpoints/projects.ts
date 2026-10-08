@@ -69,6 +69,16 @@ export interface Project {
   // The member a client-role viewer sees every team-member action attributed to, or
   // null to fall back to the oldest owner. Owner-only config, read by the settings page.
   faceUserId: string | null;
+  // The project's level: a single emoji, its name, and the emoji's dominant color (hex).
+  // Null when unset. The API strips all three to null for a client viewer.
+  levelEmoji: string | null;
+  levelName: string | null;
+  levelColor: string | null;
+  // The project's responsible member: the raw FK (read by the settings form) and the
+  // resolved identity (name + image, shown in the project switcher). Both null when none
+  // is set; a client-role viewer never receives either.
+  responsibleUserId: string | null;
+  responsible: { userId: string; name: string; image: string | null } | null;
   createdAt: string;
   // Latest work-item activity or comment, present on the project list response.
   lastActivityAt?: string | null;
@@ -154,10 +164,18 @@ export const updateProjectPreferences = (projectKey: string, patch: ProjectPrefe
     body: JSON.stringify(patch),
   });
 
-// Update a project's name/description/color. The key is immutable, so it is not sent.
+// Update a project's name/description/color/level. The key is immutable, so it is not
+// sent. The level trio is set and cleared together: a null emoji clears all three.
 export const updateProject = (
   projectKey: string,
-  patch: { name?: string; description?: string; color?: string | null },
+  patch: {
+    name?: string;
+    description?: string;
+    color?: string | null;
+    levelEmoji?: string | null;
+    levelName?: string | null;
+    levelColor?: string | null;
+  },
 ) => request<Project>(`/projects/${projectKey}`, { method: 'PATCH', body: JSON.stringify(patch) });
 
 // The board scaffold (no issues). The issues come from getBoardIssues.

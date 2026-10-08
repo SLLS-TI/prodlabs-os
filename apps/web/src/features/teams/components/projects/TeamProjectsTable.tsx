@@ -8,6 +8,8 @@ import { formatDate } from '@/utils/dates';
 import { projectPath } from '@/utils/paths';
 import Avatar from '@/components/common/Avatar';
 import ProjectLogo from '@/components/common/ProjectLogo';
+import ProjectLevelChip from '@/components/common/ProjectLevelChip';
+import { levelSuffix } from '@/components/common/projectLevelName';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -69,11 +71,16 @@ export default function TeamProjectsTable({
             >
               <TableCell className="px-3 py-3">
                 <div className="flex min-w-0 items-start gap-2.5">
-                  <ProjectLogo
-                    name={project.name}
-                    logoUrl={project.logoUrl}
-                    className="size-7 self-start text-[11px]"
-                  />
+                  <div className="flex flex-col items-center gap-1 self-start">
+                    <ProjectLogo
+                      name={project.name}
+                      logoUrl={project.logoUrl}
+                      className="size-7 text-[11px]"
+                    />
+                    {project.levelEmoji && (
+                      <ProjectLevelChip emoji={project.levelEmoji} color={project.levelColor} />
+                    )}
+                  </div>
                   <Badge
                     variant="outline"
                     className="min-w-12 shrink-0 justify-center rounded px-1 py-0 font-mono text-[10px] text-muted-foreground"
@@ -84,7 +91,7 @@ export default function TeamProjectsTable({
                     className="min-w-0 text-sm font-medium wrap-anywhere whitespace-normal"
                     dir="auto"
                   >
-                    {project.name}
+                    {levelSuffix(project.name, project.levelName)}
                   </span>
                 </div>
               </TableCell>

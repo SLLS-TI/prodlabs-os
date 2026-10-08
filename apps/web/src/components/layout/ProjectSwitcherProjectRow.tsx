@@ -5,6 +5,10 @@ import { cn } from '@/lib/utils';
 import { useRelativeTime } from '@/context/relativeTimeContext';
 import ProjectLogo from '@/components/common/ProjectLogo';
 import RingProgress from '@/components/common/RingProgress';
+import ProjectLevelChip from '@/components/common/ProjectLevelChip';
+import { levelSuffix } from '@/components/common/projectLevelName';
+import { usePermissions } from '@/hooks/usePermissions';
+import { AssigneeAvatar } from '@/features/issue/components/shared/IssueBadges';
 import { CommandItem } from '@/components/ui/command';
 import ProjectSwitcherHideButton from './ProjectSwitcherHideButton';
 import ProjectSwitcherStarButton from './ProjectSwitcherStarButton';
@@ -23,6 +27,7 @@ export default function ProjectSwitcherProjectRow({
   const t = useTranslations('nav.projectPicker');
   const current = project.ref === currentProjectKey;
   const relativeTime = useRelativeTime();
+  const showLevel = usePermissions().role !== 'client';
 
   return (
     <div className="group/row relative flex items-center gap-0.5 rounded-sm has-[[data-selected=true]]:bg-accent">
@@ -35,25 +40,30 @@ export default function ProjectSwitcherProjectRow({
         aria-current={current || undefined}
         className="min-w-0 flex-1 gap-2.5 p-2 data-[selected=true]:bg-transparent"
       >
-        {progress ? (
-          <RingProgress
-            value={progress.loggedMinutes}
-            max={progress.goalMinutes}
-            className="size-7 self-start"
-          >
+        <div className="flex flex-col items-center gap-1 self-start">
+          {progress ? (
+            <RingProgress
+              value={progress.loggedMinutes}
+              max={progress.goalMinutes}
+              className="size-7"
+            >
+              <ProjectLogo
+                name={project.name}
+                logoUrl={project.logoUrl}
+                className="size-5 text-[9px]"
+              />
+            </RingProgress>
+          ) : (
             <ProjectLogo
               name={project.name}
               logoUrl={project.logoUrl}
-              className="size-5 text-[9px]"
+              className="size-7 text-[11px]"
             />
-          </RingProgress>
-        ) : (
-          <ProjectLogo
-            name={project.name}
-            logoUrl={project.logoUrl}
-            className="size-7 self-start text-[11px]"
-          />
-        )}
+          )}
+          {showLevel && project.levelEmoji && (
+            <ProjectLevelChip emoji={project.levelEmoji} color={project.levelColor} />
+          )}
+        </div>
         <div className="min-w-0 flex-1">
           <span
             className={cn(
@@ -62,7 +72,7 @@ export default function ProjectSwitcherProjectRow({
             )}
             dir="auto"
           >
-            {project.name}
+            {levelSuffix(project.name, showLevel ? project.levelName : null)}
           </span>
           <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground/70">
             <span dir="ltr" className="shrink-0 font-mono text-[10px] tracking-wider uppercase">
@@ -77,6 +87,18 @@ export default function ProjectSwitcherProjectRow({
               </>
             )}
           </span>
+          {project.responsible && (
+            <span className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground/70">
+              <AssigneeAvatar
+                name={project.responsible.name}
+                image={project.responsible.image}
+                className="size-4"
+              />
+              <span dir="auto" className="truncate" aria-label={t('responsible')}>
+                {project.responsible.name}
+              </span>
+            </span>
+          )}
         </div>
       </CommandItem>
       <ProjectSwitcherHideButton project={project} />
