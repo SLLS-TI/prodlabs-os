@@ -69,6 +69,11 @@ export interface Project {
   // The member a client-role viewer sees every team-member action attributed to, or
   // null to fall back to the oldest owner. Owner-only config, read by the settings page.
   faceUserId: string | null;
+  // The project's responsible member: the raw FK (read by the settings form) and the
+  // resolved identity (name + image, shown in the project switcher). Both null when none
+  // is set; a client-role viewer never receives either.
+  responsibleUserId: string | null;
+  responsible: { userId: string; name: string; image: string | null } | null;
   createdAt: string;
   // Latest work-item activity or comment, present on the project list response.
   lastActivityAt?: string | null;
