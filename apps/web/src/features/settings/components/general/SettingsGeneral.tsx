@@ -7,6 +7,7 @@ import SettingsCard from '@/components/common/page/SettingsCard';
 import SettingsSection from '@/components/common/page/SettingsSection';
 import SettingsColorField from '../crud/SettingsColorField';
 import ProjectLogoUpload from './ProjectLogoUpload';
+import SettingsLevelField from './SettingsLevelField';
 import type { GeneralForm } from '../../hooks/useGeneralForm';
 
 // The Project block of the General page. The key is shown read-only: it prefixes
@@ -73,6 +74,7 @@ export default function SettingsGeneral({ form }: { form: GeneralForm }) {
             <p className="text-sm text-muted-foreground">{t('themeColorNone')}</p>
           )}
         </div>
+        <SettingsLevelField form={form} />
       </SettingsCard>
     </SettingsSection>
   );

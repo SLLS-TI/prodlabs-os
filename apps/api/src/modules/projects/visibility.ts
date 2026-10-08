@@ -18,6 +18,12 @@ export function canSeeTimeTracking(
   return effectiveRoleId != null && timeVisibleRoleIds.includes(effectiveRoleId);
 }
 
+// Whether this viewer may see the project's level (emoji + name + color). Everyone but
+// a client; a client never sees any trace of the level, on any surface.
+export function canSeeLevel(role: MemberRole): boolean {
+  return role !== 'client';
+}
+
 // The identity a client sees for every maskable actor: the project's configured face
 // user, else the oldest owner (createdAt asc). null only when the project has no owner
 // at all, which cannot happen in practice. Resolved once per client read request.

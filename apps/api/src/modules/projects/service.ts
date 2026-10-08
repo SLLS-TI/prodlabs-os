@@ -42,7 +42,8 @@ import { getLimits } from '#shared/limits';
 import { deleteThreadsWhere } from '#modules/agents/core/runtime/memory';
 import { getProjectDefaults } from '#modules/settings/service';
 import { getDefaultRoleId } from '#modules/roles/service';
-import { canSeeTimeTracking } from './visibility';
+import { canSeeLevel, canSeeTimeTracking } from './visibility';
+import { isSingleEmoji } from './emoji';
 import { dropUnusedTeamMembership } from '#modules/scim/reconcile';
 import { projectRef, teamRef } from '#modules/teams/ref';
 import { deleteObjects } from '@repo/storage';
@@ -97,6 +98,11 @@ export interface ProjectRow {
   // The member a client viewer sees every team-member action attributed to, or null to
   // fall back to the oldest owner. Owner-only config, set on the masking settings page.
   faceUserId: string | null;
+  // The project's level: a single emoji, its name, and the emoji's dominant color (hex),
+  // lightened at render into the chip. Null when unset. Stripped to null for a client viewer.
+  levelEmoji: string | null;
+  levelName: string | null;
+  levelColor: string | null;
   // The project member responsible for the project, or null when none is set. The raw FK,
   // consumed only by the settings form. Nulled for a client-role viewer.
   responsibleUserId: string | null;
@@ -205,12 +211,23 @@ export async function mapProject(row: ProjectWithTeam): Promise<ProjectRow> {
     timeGoalPeriod: row.timeGoalPeriod as 'total' | 'weekly' | null,
     timeVisibleRoleIds: row.timeVisibleRoleIds,
     faceUserId: row.faceUserId,
+    levelEmoji: row.levelEmoji,
+    levelName: row.levelName,
+    levelColor: row.levelColor,
     responsibleUserId: row.responsibleUserId,
     responsible: null,
     healthWeights: row.healthWeights,
     availableFeatures: PROJECT_FEATURES.filter((feature) => !blockedFeatures.includes(feature)),
     createdAt: iso(row.createdAt),
   };
+}
+
+// Nulls the level fields for a client viewer so no trace of the level reaches them.
+export function stripLevel<
+  T extends { levelEmoji: string | null; levelName: string | null; levelColor: string | null },
+>(row: T, role: MemberRole): T {
+  if (canSeeLevel(role)) return row;
+  return { ...row, levelEmoji: null, levelName: null, levelColor: null };
 }
 
 // Resolves the responsible identity (name + image) for a set of project rows in one
@@ -336,7 +353,7 @@ export async function listProjects(
         const role = context.role;
         const effectiveRoleId = context.roleId ?? (await resolveDefaultRole(row.teamId));
         const item: ProjectListItem = {
-          ...(await mapProject(row)),
+          ...stripLevel(await mapProject(row), role),
           role,
           lastActivityAt: lastActivityAt ? iso(lastActivityAt) : null,
           isFavorite,
@@ -636,7 +653,15 @@ export async function createProject(
 // identifier, so it may be replaced once. A valid key does not change.
 export async function updateProject(
   projectId: number,
-  patch: { key?: string; name?: string; description?: string; color?: string | null },
+  patch: {
+    key?: string;
+    name?: string;
+    description?: string;
+    color?: string | null;
+    levelEmoji?: string | null;
+    levelName?: string | null;
+    levelColor?: string | null;
+  },
 ): Promise<ProjectRow | null> {
   const values: Partial<typeof project.$inferInsert> = {};
   if (patch.key !== undefined) {
@@ -652,6 +677,21 @@ export async function updateProject(
   if (patch.name !== undefined) values.name = patch.name;
   if (patch.description !== undefined) values.description = patch.description;
   if (patch.color !== undefined) values.color = patch.color;
+  // The level trio is set and cleared together: a null emoji clears all three.
+  if (patch.levelEmoji !== undefined) {
+    if (patch.levelEmoji === null) {
+      values.levelEmoji = null;
+      values.levelName = null;
+      values.levelColor = null;
+    } else {
+      if (!isSingleEmoji(patch.levelEmoji)) {
+        throw new HttpError(400, 'The level emoji must be a single emoji');
+      }
+      values.levelEmoji = patch.levelEmoji;
+    }
+  }
+  if (patch.levelName !== undefined) values.levelName = patch.levelName;
+  if (patch.levelColor !== undefined) values.levelColor = patch.levelColor;
   if (Object.keys(values).length === 0) return getProjectById(projectId);
   await db.update(project).set(values).where(eq(project.id, projectId));
   return getProjectById(projectId);

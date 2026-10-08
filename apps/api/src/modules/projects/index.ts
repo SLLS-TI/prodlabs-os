@@ -54,6 +54,7 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  stripLevel,
   projectFeatures,
   setProjectFeatures,
   getAutoArchiveSettings,
@@ -223,9 +224,12 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
           ? null
           : await resolveResponsible(project.responsibleUserId);
       return {
-        project: mask
-          ? { ...project, responsible: null, responsibleUserId: null }
-          : { ...project, responsible },
+        project: stripLevel(
+          mask
+            ? { ...project, responsible: null, responsibleUserId: null }
+            : { ...project, responsible },
+          viewer.role,
+        ),
         columns,
         issueTypes,
         labels,
