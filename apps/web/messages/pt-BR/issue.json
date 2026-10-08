@@ -191,6 +191,17 @@
     "stopped": "Registrado {time}",
     "stoppedNoTime": "Timer parado"
   },
+  "weeklyBar": {
+    "label": "{logged} / {goal} esta semana",
+    "tooltip": "Registrado {logged} esta semana"
+  },
+  "projectTimer": {
+    "start": "Iniciar timer do projeto",
+    "stop": "Parar timer do projeto",
+    "running": "Timer do projeto rodando: {time}",
+    "stopped": "Registrado {time} no projeto",
+    "stoppedNoTime": "Timer do projeto parado"
+  },
   "links": {
     "title": "Links",
     "remove": "Remover o link para {issue}",

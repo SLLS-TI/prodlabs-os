@@ -222,6 +222,7 @@ export default function Shell({
               />
             }
             hasProject={!!project}
+            projectKey={projectKey}
             onOpenCommand={() => overlays.setShowCommand(true)}
             onNewIssue={openNewIssue}
           />

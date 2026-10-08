@@ -356,3 +356,38 @@ export const updateSlackProjectBody = t.Object({
   channel: t.String({ maxLength: 200 }),
   enabled: t.Boolean(),
 });
+
+// ProjectTimerSessionRow from timers.ts: the bare session returned by start and inside
+// stop.
+export const ProjectTimerSessionResponse = t.Object({
+  id: t.Number(),
+  projectId: t.Number(),
+  userId: t.String(),
+  startedAt: t.String(),
+});
+
+// RunningProjectTimerRow from timers.ts: a running session enriched with its project,
+// returned by GET /projects/timers/running. projectKey is the full ref for routing and
+// stopping.
+export const RunningProjectTimerResponse = t.Composite([
+  ProjectTimerSessionResponse,
+  t.Object({ projectKey: t.String(), projectName: t.String() }),
+]);
+
+// ProjectWorklogRow from timers.ts: one entry of time logged against a project directly.
+export const ProjectWorklogResponse = t.Object({
+  id: t.Number(),
+  projectId: t.Number(),
+  userId: t.String(),
+  minutes: t.Number(),
+  spentOn: t.String(),
+  note: t.Nullable(t.String()),
+  createdAt: t.String(),
+});
+
+// The result of stopping a project timer: the stopped session and the worklog it wrote,
+// or null when the span rounded to no minutes.
+export const StopProjectTimerResponse = t.Object({
+  session: ProjectTimerSessionResponse,
+  worklog: t.Nullable(ProjectWorklogResponse),
+});

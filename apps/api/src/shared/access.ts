@@ -221,11 +221,11 @@ export async function assertPermission(
 
 // Asserts the viewer may read this project's time tracking, 403 otherwise. The
 // per-project read gate behind every time surface (worklogs, the analytics time
-// endpoints, and the timer). Owners always pass; otherwise the project's
+// endpoints, and the timers). Owners always pass; otherwise the project's
 // time_visible_role_ids allowlist decides, with the viewer's role resolved to the
-// team's default when they have none. Operating the timer still also needs
-// work_items edit — this is the additional read gate, so a member who cannot see
-// time cannot operate it. God mode is not special-cased, consistent with
+// team's default when they have none. Each write surface adds its own permission on
+// top of this gate: the issue timer needs work_items edit, the project timer needs
+// project membership. God mode is not special-cased, consistent with
 // assertPermission: a god who is a project owner passes, one who is not a member
 // has already been refused upstream.
 export async function assertTimeVisible(

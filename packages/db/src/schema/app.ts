@@ -1840,6 +1840,55 @@ export const issueTimerSession = pgTable(
   ],
 );
 
+// A member's running or finished timer on a project, not tied to an issue. Mirrors
+// issue_timer_session: running while stopped_at IS NULL; stopping stamps stopped_at and
+// writes a project_worklog from the elapsed time. Coexists with issue timers — a member
+// may run both at once. At most one running session per (user, project).
+export const projectTimerSession = pgTable(
+  'project_timer_session',
+  {
+    id: serial('id').primaryKey(),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => project.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+    stoppedAt: timestamp('stopped_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('project_timer_session_running_idx')
+      .on(t.userId, t.projectId)
+      .where(sql`${t.stoppedAt} IS NULL`),
+  ],
+);
+
+// Time a member logged against a project directly (via the global project timer), one
+// row per entry. Parallel to issue_worklog but with no issue. spent_on is a date, so the
+// weekly window is pure calendar arithmetic.
+export const projectWorklog = pgTable(
+  'project_worklog',
+  {
+    id: serial('id').primaryKey(),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => project.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    minutes: integer('minutes').notNull(),
+    spentOn: date('spent_on').notNull(),
+    note: text('note'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check('project_worklog_minutes_check', sql`${t.minutes} > 0`),
+    index('project_worklog_project_idx').on(t.projectId, t.spentOn.desc()),
+  ],
+);
+
 // One side of a change: the text the feed shows, and the id of the row behind it
 // when the side names one. The text is a snapshot, so an entry still reads
 // correctly after that row is renamed or deleted; the id is what makes the entry

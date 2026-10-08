@@ -250,6 +250,12 @@ export const qk = {
   // The current user's running timers across every issue, loaded once and shared by
   // every view; running state is resolved from it client-side.
   timerSessions: () => ['timerSessions'] as const,
+  // The current user's running project timers (the global, issue-independent timer),
+  // loaded once and shared the same way.
+  projectTimerSessions: () => ['projectTimerSessions'] as const,
+  // Weekly time-goal progress for every project the caller may see time for, in one
+  // batch request behind the project switcher rings.
+  weeklyProgress: () => ['weeklyProgress'] as const,
   // A project's inbox notifications (the list, scoped by the active filters) and the
   // project's unread count (the sidebar badge + live-refresh target).
   notifications: (projectKey: string, filters?: unknown) =>

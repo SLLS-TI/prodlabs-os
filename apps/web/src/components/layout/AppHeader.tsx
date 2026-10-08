@@ -2,36 +2,45 @@ import type { ReactNode } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useProjectFeatures } from '@/hooks/useProjectFeatures';
 import { useHotkeyLabel } from '@/context/useHotkeys';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import UserMenu from '@/components/layout/UserMenu';
+import WeeklyProgressBar from '@/features/issue/components/WeeklyProgressBar';
+import ProjectTimerButton from '@/features/issue/components/ProjectTimerButton';
 
 // The slim header inside the sidebar inset, shared by the project view and the
 // settings pages.
 export default function AppHeader({
   title,
   hasProject,
+  projectKey,
   onOpenCommand,
   onNewIssue,
 }: {
   title: ReactNode;
   hasProject: boolean;
+  projectKey: string | null;
   onOpenCommand: () => void;
   onNewIssue: () => void;
 }) {
   const t = useTranslations('nav');
-  const { can } = usePermissions();
+  const { can, canSeeTime } = usePermissions();
+  const features = useProjectFeatures();
   const paletteKey = useHotkeyLabel('palette.toggle');
   const newIssueKey = useHotkeyLabel('issue.new');
   const canCreateIssue = hasProject && can('work_items', 'create');
+  const showTime = projectKey != null && features.timeLogging && canSeeTime;
   return (
     <header className="flex h-12 shrink-0 items-center gap-2 border-b px-2 sm:px-4">
       <SidebarTrigger />
       <Separator orientation="vertical" className="me-1 h-4" />
       <div className="min-w-0 truncate text-sm font-medium">{title}</div>
+
+      {showTime && <WeeklyProgressBar projectKey={projectKey} />}
 
       <Tooltip>
         <TooltipTrigger asChild>
@@ -70,6 +79,8 @@ export default function AppHeader({
           <TooltipContent>{t('newIssueHint', { key: newIssueKey ?? '' })}</TooltipContent>
         </Tooltip>
       )}
+
+      {showTime && <ProjectTimerButton projectKey={projectKey} canEdit />}
 
       <UserMenu />
     </header>

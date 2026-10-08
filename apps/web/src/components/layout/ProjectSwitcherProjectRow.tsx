@@ -1,8 +1,10 @@
 import { useTranslations } from 'next-intl';
 import type { Project } from '@/lib/api/endpoints/projects';
+import type { BatchTimeGoalItem } from '@/lib/api/endpoints/analytics';
 import { cn } from '@/lib/utils';
 import { useRelativeTime } from '@/context/relativeTimeContext';
 import ProjectLogo from '@/components/common/ProjectLogo';
+import RingProgress from '@/components/common/RingProgress';
 import ProjectLevelChip from '@/components/common/ProjectLevelChip';
 import { levelSuffix } from '@/components/common/projectLevelName';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -14,10 +16,12 @@ import ProjectSwitcherStarButton from './ProjectSwitcherStarButton';
 export default function ProjectSwitcherProjectRow({
   project,
   currentProjectKey,
+  progress,
   onSelectProject,
 }: {
   project: Project;
   currentProjectKey: string | null;
+  progress?: BatchTimeGoalItem;
   onSelectProject: (key: string) => void;
 }) {
   const t = useTranslations('nav.projectPicker');
@@ -37,11 +41,25 @@ export default function ProjectSwitcherProjectRow({
         className="min-w-0 flex-1 gap-2.5 p-2 data-[selected=true]:bg-transparent"
       >
         <div className="relative shrink-0 self-start">
-          <ProjectLogo
-            name={project.name}
-            logoUrl={project.logoUrl}
-            className="size-7 text-[11px]"
-          />
+          {progress ? (
+            <RingProgress
+              value={progress.loggedMinutes}
+              max={progress.goalMinutes}
+              className="size-7"
+            >
+              <ProjectLogo
+                name={project.name}
+                logoUrl={project.logoUrl}
+                className="size-5 text-[9px]"
+              />
+            </RingProgress>
+          ) : (
+            <ProjectLogo
+              name={project.name}
+              logoUrl={project.logoUrl}
+              className="size-7 text-[11px]"
+            />
+          )}
           {showLevel && project.levelEmoji && (
             <ProjectLevelChip
               emoji={project.levelEmoji}

@@ -9,6 +9,7 @@ import {
   AgentRunFeedListResponse,
   AgentRunStatsDto,
   AgentWorkloadListResponse,
+  BatchTimeGoalListResponse,
   BreakdownListResponse,
   BurnupDto,
   PulseListResponse,
@@ -38,6 +39,7 @@ import {
   getAgentWorkload,
   getTimeByUser,
   getTimeGoal,
+  batchTimeGoal,
   type ActivityCursor,
   type PulseUnit,
 } from './service';
@@ -303,4 +305,13 @@ export const analyticsRoutes = new Elysia({
           "The project's time goal and the time logged against it (all-time or this week).",
       },
     },
-  );
+  )
+
+  // Weekly progress for every project the caller may see time for that has a weekly
+  // goal, in one request — the project switcher rings. Caller-scoped (no :projectKey),
+  // so the per-project time-visibility masking is applied inside the service, which
+  // returns an empty list for a client.
+  .get('/analytics/time-goal/batch', async ({ user }) => batchTimeGoal(requireUser(user).id), {
+    response: { 200: BatchTimeGoalListResponse, ...accessErrors },
+    detail: { summary: "Get weekly time-goal progress for the caller's projects" },
+  });

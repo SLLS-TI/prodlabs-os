@@ -2,9 +2,11 @@ import type { ComponentProps } from 'react';
 import { ChevronsUpDown, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Project } from '@/lib/api/endpoints/projects';
+import type { BatchTimeGoalItem } from '@/lib/api/endpoints/analytics';
 import ItsAPlanMark from '@/components/brand/ItsAPlanMark';
 import Avatar from '@/components/common/Avatar';
 import ProjectLogo from '@/components/common/ProjectLogo';
+import RingProgress from '@/components/common/RingProgress';
 import ProjectLevelChip from '@/components/common/ProjectLevelChip';
 import { levelSuffix } from '@/components/common/projectLevelName';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -12,9 +14,14 @@ import { SidebarMenuButton } from '@/components/ui/sidebar';
 
 export default function ProjectSwitcherTrigger({
   current,
+  progress,
   ...props
-}: ComponentProps<typeof SidebarMenuButton> & { current?: Project }) {
+}: ComponentProps<typeof SidebarMenuButton> & {
+  current?: Project;
+  progress: Map<number, BatchTimeGoalItem>;
+}) {
   const t = useTranslations('nav');
+  const item = current ? progress.get(current.id) : undefined;
   const { role } = usePermissions();
   const showLevel = role !== 'client';
   const levelName = showLevel ? (current?.levelName ?? null) : null;
@@ -32,7 +39,21 @@ export default function ProjectSwitcherTrigger({
     >
       {current ? (
         <div className="relative shrink-0">
-          <ProjectLogo name={current.name} logoUrl={current.logoUrl} className="size-9! text-xs" />
+          {item ? (
+            <RingProgress value={item.loggedMinutes} max={item.goalMinutes} className="size-9">
+              <ProjectLogo
+                name={current.name}
+                logoUrl={current.logoUrl}
+                className="size-7! text-xs"
+              />
+            </RingProgress>
+          ) : (
+            <ProjectLogo
+              name={current.name}
+              logoUrl={current.logoUrl}
+              className="size-9! text-xs"
+            />
+          )}
           {showLevel && current.levelEmoji && (
             <ProjectLevelChip
               emoji={current.levelEmoji}

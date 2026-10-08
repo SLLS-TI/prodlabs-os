@@ -191,6 +191,17 @@
     "stopped": "تم تسجيل {time}",
     "stoppedNoTime": "تم إيقاف المؤقّت"
   },
+  "weeklyBar": {
+    "label": "{logged} / {goal} هذا الأسبوع",
+    "tooltip": "تم تسجيل {logged} هذا الأسبوع"
+  },
+  "projectTimer": {
+    "start": "بدء مؤقت المشروع",
+    "stop": "إيقاف مؤقت المشروع",
+    "running": "مؤقت المشروع قيد التشغيل: {time}",
+    "stopped": "تم تسجيل {time} على المشروع",
+    "stoppedNoTime": "تم إيقاف مؤقت المشروع"
+  },
   "links": {
     "title": "الروابط",
     "remove": "إزالة الرابط إلى {issue}",

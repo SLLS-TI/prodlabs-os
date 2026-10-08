@@ -130,6 +130,15 @@ export interface TimeGoalStats {
   status: 'under' | 'on' | 'over' | 'none';
 }
 
+// One project's weekly progress, for the project-switcher rings. Only projects the
+// caller may see time for, with a weekly goal, are returned.
+export interface BatchTimeGoalItem {
+  projectId: number;
+  loggedMinutes: number;
+  goalMinutes: number;
+  period: 'weekly';
+}
+
 // Analytics — read-only project metrics behind the dashboard widgets.
 export const getBreakdown = (projectKey: string, by: BreakdownBy) =>
   request<BreakdownItem[]>(`/projects/${projectKey}/analytics/breakdown?by=${by}`);
@@ -203,3 +212,6 @@ export const getTimeByUser = (projectKey: string) =>
 
 export const getTimeGoal = (projectKey: string) =>
   request<TimeGoalStats>(`/projects/${projectKey}/analytics/time-goal`);
+
+export const getWeeklyProgressBatch = () =>
+  request<BatchTimeGoalItem[]>('/analytics/time-goal/batch');
