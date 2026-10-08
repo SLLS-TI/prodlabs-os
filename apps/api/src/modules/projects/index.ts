@@ -31,6 +31,7 @@ import {
   ProjectLogoResponse,
   ProjectResponse,
   ProjectSettingsResponse,
+  ResponsibleResponse,
   SlackProjectResponse,
   SubtaskAutomationResponse,
   copyProjectBody,
@@ -41,6 +42,7 @@ import {
   updateEstimatesBody,
   updateHealthWeightsBody,
   updateMaskingBody,
+  updateResponsibleBody,
   updateProjectBody,
   updateProjectSettingsBody,
   updateSlackProjectBody,
@@ -63,6 +65,8 @@ import {
   setSlackProjectSettings,
   setEstimateSettings,
   setMaskingSettings,
+  setResponsibleSettings,
+  resolveResponsible,
   getHealthWeights,
   setHealthWeights,
 } from './service';
@@ -212,8 +216,20 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
       if (!viewer) throw new HttpError(403, 'You do not have access to this project');
       const effectiveRoleId = viewer.roleId ?? (await getDefaultRoleId(project.teamId));
       const mask = await resolveMaskContext(project.id, user);
+      // A client (mask non-null) never learns the responsible — strip both the resolved
+      // identity and the raw FK. An owner/member gets the raw FK (the settings form reads
+      // it) and the resolved identity (the switcher shows it).
+      const responsible =
+        mask || !project.responsibleUserId
+          ? null
+          : await resolveResponsible(project.responsibleUserId);
       return {
-        project: stripLevel(project, viewer.role),
+        project: stripLevel(
+          mask
+            ? { ...project, responsible: null, responsibleUserId: null }
+            : { ...project, responsible },
+          viewer.role,
+        ),
         columns,
         issueTypes,
         labels,
@@ -448,6 +464,25 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
       projectOwner: true,
       response: { 200: MaskingResponse, ...commonErrors },
       detail: { summary: "Set a project's client-facing face user" },
+    },
+  )
+
+  // Sets the project's responsible member: who is shown with name and avatar in every
+  // project listing. Owner-only. A non-null id must be an owner or member of the project
+  // (never a client). The current value comes with the project payload, so only the
+  // write lives here.
+  .patch(
+    '/projects/:projectKey/settings/responsible',
+    async ({ project, body }) => {
+      const updated = await setResponsibleSettings(project.id, body);
+      if (!updated) throw new HttpError(404, 'Project not found');
+      return updated;
+    },
+    {
+      body: updateResponsibleBody,
+      projectOwner: true,
+      response: { 200: ResponsibleResponse, ...commonErrors },
+      detail: { summary: "Set a project's responsible member" },
     },
   )
 

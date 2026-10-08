@@ -165,6 +165,19 @@ export const updateMasking = (projectKey: string, input: MaskingSettings) =>
     body: JSON.stringify(input),
   });
 
+// The project's responsible member: the raw FK of the owner or member responsible for
+// the project, shown with name and avatar in every project listing. Owner-only; null
+// clears it.
+export interface ResponsibleSettings {
+  responsibleUserId: string | null;
+}
+
+export const updateResponsible = (projectKey: string, input: ResponsibleSettings) =>
+  request<ResponsibleSettings>(`/projects/${projectKey}/settings/responsible`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+
 // The project's Slack channel (projectOwner only).
 export const getSlackProjectSettings = (projectKey: string) =>
   request<SlackProjectSettings>(`/projects/${projectKey}/settings/slack`);

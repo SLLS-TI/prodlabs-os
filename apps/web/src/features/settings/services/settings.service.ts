@@ -13,6 +13,7 @@ import {
   type HealthWeights,
   type MaskingSettings,
   type ProjectFeatures,
+  type ResponsibleSettings,
   type SlackProjectSettings,
   type SubtaskAutomationSettings,
   getAutoArchive,
@@ -23,6 +24,7 @@ import {
   updateSlackProjectSettings,
   updateEstimates,
   updateMasking,
+  updateResponsible,
   getHealthWeights,
   updateHealthWeights,
   updateProjectSettings,
@@ -236,6 +238,21 @@ export function useUpdateMasking(projectKey: string) {
   return useProjectMutation(projectKey, (input: MaskingSettings) =>
     updateMasking(projectKey, input),
   );
+}
+
+// The responsible member shows in the project switcher, which reads the projects list,
+// so the write invalidates qk.projects on top of the project detail useInvalidateProject
+// refreshes.
+export function useUpdateResponsible(projectKey: string) {
+  const qc = useQueryClient();
+  const invalidate = useInvalidateProject(projectKey);
+  return useMutation({
+    mutationFn: (input: ResponsibleSettings) => updateResponsible(projectKey, input),
+    onSuccess: () => {
+      invalidate();
+      void qc.invalidateQueries({ queryKey: qk.projects });
+    },
+  });
 }
 
 // The health-score weights have their own read (they are not on the project payload),

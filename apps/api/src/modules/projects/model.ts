@@ -160,6 +160,13 @@ export const ProjectResponse = t.Object({
   levelEmoji: t.Nullable(t.String()),
   levelName: t.Nullable(t.String()),
   levelColor: t.Nullable(t.String()),
+  // The project's responsible member: the raw FK (read by the settings form) and the
+  // resolved identity (name + image, shown in the project switcher). Both null when none
+  // is set, and both nulled for a client-role viewer.
+  responsibleUserId: t.Nullable(t.String()),
+  responsible: t.Nullable(
+    t.Object({ userId: t.String(), name: t.String(), image: t.Nullable(t.String()) }),
+  ),
   availableFeatures: t.Array(t.UnionEnum([...PROJECT_FEATURES])),
   createdAt: t.String(),
 });
@@ -171,6 +178,13 @@ export const MaskingResponse = t.Object({
 });
 
 export const updateMaskingBody = MaskingResponse;
+
+// The responsible-member settings write (owner-only). The raw FK; null clears it.
+export const ResponsibleResponse = t.Object({
+  responsibleUserId: t.Nullable(t.String()),
+});
+
+export const updateResponsibleBody = ResponsibleResponse;
 
 // A project in the caller's list (ProjectListItem): ProjectRow plus the caller's
 // own role in it, and the caller's permission matrix when requested with

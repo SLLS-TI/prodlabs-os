@@ -981,6 +981,11 @@ async function dropTeamMembership(tx: Transaction, teamId: number, userId: strin
         inArray(projectColumn.projectId, teamProjects),
       ),
     );
+  // The responsible is a project member too, cleared the same way removeMember does.
+  await tx
+    .update(project)
+    .set({ responsibleUserId: null })
+    .where(and(eq(project.teamId, teamId), eq(project.responsibleUserId, userId)));
   await tx
     .delete(teamMember)
     .where(and(eq(teamMember.teamId, teamId), eq(teamMember.userId, userId)));
