@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react';
-import { ChevronsUpDown, Users } from 'lucide-react';
+import { ChevronsUpDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Project } from '@/lib/api/endpoints/projects';
 import type { BatchTimeGoalItem } from '@/lib/api/endpoints/analytics';
@@ -69,29 +69,18 @@ export default function ProjectSwitcherTrigger({
         <span dir="auto" className="truncate font-semibold tracking-tight">
           {current ? levelSuffix(current.name, levelName) : t('noProjects')}
         </span>
-        <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-          {current && (
-            <span dir="ltr" className="shrink-0 font-mono text-[10px] tracking-wider uppercase">
-              {current.key}
+        {current?.responsible && (
+          <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+            <Avatar
+              name={current.responsible.name}
+              image={current.responsible.image}
+              className="size-4 shrink-0"
+            />
+            <span dir="auto" className="truncate">
+              {current.responsible.name}
             </span>
-          )}
-          <Users className="size-3 shrink-0" />
-          <span dir="auto" className="truncate">
-            {current?.teamName ?? '—'}
           </span>
-          {current?.responsible && (
-            <>
-              <Avatar
-                name={current.responsible.name}
-                image={current.responsible.image}
-                className="size-4 shrink-0"
-              />
-              <span dir="auto" className="truncate">
-                {current.responsible.name}
-              </span>
-            </>
-          )}
-        </span>
+        )}
       </div>
       <ChevronsUpDown className="ms-auto" />
     </SidebarMenuButton>
