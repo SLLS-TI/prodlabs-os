@@ -4,7 +4,13 @@ import { noContent } from '#shared/http';
 import { HttpError } from '#shared/lib';
 import { authContext } from '#shared/auth-context';
 import { guards } from '#shared/guards';
-import { isMaskableActor, requireUser, resolveMaskContext, type MaskContext } from '#shared/access';
+import {
+  assertTimeVisible,
+  isMaskableActor,
+  requireUser,
+  resolveMaskContext,
+  type MaskContext,
+} from '#shared/access';
 import { isMcpRequest } from '#shared/mcp-request';
 import { accessErrors, commonErrors, errors } from '#shared/responses';
 import {
@@ -31,7 +37,10 @@ import {
   ProjectLogoResponse,
   ProjectResponse,
   ProjectSettingsResponse,
+  ProjectTimerSessionResponse,
+  RunningProjectTimerResponse,
   SlackProjectResponse,
+  StopProjectTimerResponse,
   SubtaskAutomationResponse,
   copyProjectBody,
   createProjectBody,
@@ -68,6 +77,7 @@ import {
 import { copyProject } from './copy';
 import { projectPreferences } from './preferences';
 import { replaceProjectLogo, clearProjectLogo, readProjectLogo } from './logo';
+import { listRunningProjectTimers, startProjectTimer, stopProjectTimer } from './timers';
 
 // For a client viewer, reduces the assignee-candidate list to the viewing client plus a
 // single face entry standing for the team, so the web resolves a masked assignee's chip
@@ -104,6 +114,19 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
   .use(authContext)
   .use(guards)
   .use(projectPreferences)
+
+  // The caller's running project timers across the whole instance. Read on page init
+  // so the header can show which project is ticking for this user. Registered before
+  // /projects/:projectKey so the literal "timers" segment wins over the param. Reads
+  // only the caller's own sessions, so it needs no project guard beyond the session.
+  .get(
+    '/projects/timers/running',
+    async ({ user }) => listRunningProjectTimers(requireUser(user).id),
+    {
+      response: { 200: t.Array(RunningProjectTimerResponse), ...accessErrors },
+      detail: { summary: "Get the caller's running project timers" },
+    },
+  )
   .get(
     '/projects',
     ({ user, request, query }) =>
@@ -239,6 +262,47 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
           'templates, and assignable users and agents. Resolves the ids create_issue and update_issue ' +
           'take. For issues use list_issues or search_issues.',
         ...mcpTool('get_project'),
+      },
+    },
+  )
+
+  // Starts the caller's global timer on the project, not tied to an issue. Idempotent
+  // per (project, caller): a second start while one is running returns the running
+  // session. Any project member who can see time may operate it — projectMember plus
+  // assertTimeVisible, which denies the client role and members off the time allowlist.
+  .post(
+    '/projects/:projectKey/timer/start',
+    async ({ project, user, set }) => {
+      await assertTimeVisible(project.id, user);
+      set.status = 201;
+      return startProjectTimer(project.id, requireUser(user).id);
+    },
+    {
+      projectMember: true,
+      response: { 201: ProjectTimerSessionResponse, ...commonErrors },
+      detail: {
+        summary: 'Start the project timer',
+        description:
+          "Start the caller's global timer on the project. Already running returns the running session.",
+      },
+    },
+  )
+
+  // Stops the caller's running project timer and writes a worklog from the elapsed time
+  // (rounded up to at least one minute). 404 when none is running.
+  .post(
+    '/projects/:projectKey/timer/stop',
+    async ({ project, user }) => {
+      await assertTimeVisible(project.id, user);
+      return stopProjectTimer(project.id, requireUser(user).id);
+    },
+    {
+      projectMember: true,
+      response: { 200: StopProjectTimerResponse, ...commonErrors },
+      detail: {
+        summary: 'Stop the project timer',
+        description:
+          "Stop the caller's running project timer and log the elapsed time against the project.",
       },
     },
   )
