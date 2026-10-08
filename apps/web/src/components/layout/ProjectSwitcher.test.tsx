@@ -70,6 +70,9 @@ const projects: Project[] = Array.from({ length: 20 }, (_, index) => ({
   timeGoalPeriod: null,
   timeVisibleRoleIds: [],
   faceUserId: null,
+  levelEmoji: null,
+  levelName: null,
+  levelColor: null,
   createdAt: '2026-01-01T00:00:00Z',
 }));
 

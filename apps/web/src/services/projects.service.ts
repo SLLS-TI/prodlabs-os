@@ -122,7 +122,14 @@ export function useUpdateProject() {
       patch,
     }: {
       projectKey: string;
-      patch: { name?: string; description?: string; color?: string | null };
+      patch: {
+        name?: string;
+        description?: string;
+        color?: string | null;
+        levelEmoji?: string | null;
+        levelName?: string | null;
+        levelColor?: string | null;
+      };
     }) => updateProject(projectKey, patch),
     onSuccess: (updated, { projectKey }) => {
       // Reflect the new name/description/color in the cached list immediately, then
@@ -133,7 +140,15 @@ export function useUpdateProject() {
       qc.setQueryData<Project[]>(qk.projects, (prev) =>
         prev?.map((p) =>
           p.ref === projectKey
-            ? { ...p, name: updated.name, description: updated.description, color: updated.color }
+            ? {
+                ...p,
+                name: updated.name,
+                description: updated.description,
+                color: updated.color,
+                levelEmoji: updated.levelEmoji,
+                levelName: updated.levelName,
+                levelColor: updated.levelColor,
+              }
             : p,
         ),
       );
