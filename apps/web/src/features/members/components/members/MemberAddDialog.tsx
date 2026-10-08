@@ -87,10 +87,10 @@ export default function MemberAddDialog({
   const defaultRoleId = roles.find((r) => r.isDefault)?.id ?? roles[0]?.id;
   const role = roleValue || (defaultRoleId != null ? String(defaultRoleId) : '');
 
-  // Client is a restricted read-oriented role granted only to a member of the team
-  // joining directly — the API refuses it on an invite, so the option is offered only
-  // while the target is not an email invite.
-  const canAddClient = canAdd && target?.kind !== 'invite';
+  // Client is a restricted read-oriented role, grantable both to a team member joining
+  // directly and to an email invite. It is offered whenever the current target's path
+  // is permitted: adding for a team member, inviting for an email.
+  const canAddClient = target?.kind === 'invite' ? canInvite : canAdd;
 
   const typed = query.trim().toLowerCase();
   // An address nobody in the team carries is offered as an invite — unless the
@@ -152,9 +152,6 @@ export default function MemberAddDialog({
               onChange={(option) => {
                 setTarget(option);
                 setRefusal(null);
-                // Client cannot be invited, so picking an email invite drops it back
-                // to the default role.
-                if (option?.kind === 'invite' && roleValue === CLIENT_VALUE) setRoleValue('');
               }}
               query={query}
               onQueryChange={setQuery}

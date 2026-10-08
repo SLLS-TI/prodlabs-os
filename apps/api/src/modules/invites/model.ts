@@ -1,6 +1,6 @@
 import { t } from 'elysia';
 
-const projectRole = t.Union([t.Literal('owner'), t.Literal('member')]);
+const projectRole = t.Union([t.Literal('owner'), t.Literal('member'), t.Literal('client')]);
 
 const teamRole = t.Union([t.Literal('owner'), t.Literal('manager'), t.Literal('member')]);
 

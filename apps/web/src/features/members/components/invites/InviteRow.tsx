@@ -59,10 +59,14 @@ export default function InviteRow({
   }
 
   const invitedBy = invite.invitedByName || invite.invitedByEmail;
-  // Owner invites bypass roles; a member invite shows its chosen role, falling
-  // back to the default role's label when none was pinned.
+  // Owner and client invites bypass roles; a member invite shows its chosen role,
+  // falling back to the default role's label when none was pinned.
   const roleLabel =
-    invite.role === 'owner' ? tCommon('owner') : (invite.roleName ?? tCommon('member'));
+    invite.role === 'owner'
+      ? tCommon('owner')
+      : invite.role === 'client'
+        ? tCommon('client')
+        : (invite.roleName ?? tCommon('member'));
 
   return (
     <Item

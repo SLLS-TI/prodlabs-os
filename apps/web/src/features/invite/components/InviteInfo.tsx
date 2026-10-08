@@ -40,7 +40,11 @@ export default function InviteInfo({ invite }: { invite: InviteView }) {
   const tCommon = useTranslations('common');
   const tTeams = useTranslations('teams.manage');
   const projectRoleLabel =
-    invite.role === 'owner' ? tCommon('owner') : (invite.roleName ?? tCommon('member'));
+    invite.role === 'owner'
+      ? tCommon('owner')
+      : invite.role === 'client'
+        ? tCommon('client')
+        : (invite.roleName ?? tCommon('member'));
   return (
     <div className="divide-y rounded-lg border bg-muted/30 text-start">
       <InfoRow

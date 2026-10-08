@@ -410,7 +410,7 @@ export const teamInvite = pgTable(
     check(
       'team_invite_project_role_check',
       sql`(${t.projectId} IS NULL AND ${t.projectRole} IS NULL)
-        OR (${t.projectId} IS NOT NULL AND ${t.projectRole} IN ('owner', 'member'))`,
+        OR (${t.projectId} IS NOT NULL AND ${t.projectRole} IN ('owner', 'member', 'client'))`,
     ),
     check('team_invite_status_check', sql`${t.status} IN ('pending', 'accepted', 'rejected')`),
     uniqueIndex('team_invite_team_pending_uq')

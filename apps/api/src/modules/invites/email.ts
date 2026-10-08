@@ -24,7 +24,12 @@ export async function enqueueInviteEmail(
 
   const dedupeKey = `project-invite:${invite.id}`;
   const inviter = invite.invitedByName ?? invite.invitedByEmail ?? "An It's a Plan user";
-  const role = invite.role === 'owner' ? 'owner' : (invite.roleName ?? 'member');
+  const role =
+    invite.role === 'owner'
+      ? 'owner'
+      : invite.role === 'client'
+        ? 'client'
+        : (invite.roleName ?? 'member');
   const projectName = project.name.replace(/[\r\n]+/g, ' ');
   const url = new URL(`/invite/${invite.token}`, trustedOrigins[0]).toString();
 

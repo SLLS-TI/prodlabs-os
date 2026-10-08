@@ -131,9 +131,9 @@ export const inviteRoutes = new Elysia({ name: 'invites', detail: { tags: ['Invi
       detail: {
         summary: 'Create an invite',
         description:
-          'Create an invite link for an email and role (owner or member). For a member, roleId ' +
-          "picks the custom role, or null for the default role. Accepting it joins the project's " +
-          'team as well. Queues an email when the instance email provider is configured.',
+          'Create an invite link for an email and role (owner, member or client). For a member, ' +
+          'roleId picks the custom role, or null for the default role. Accepting it joins the ' +
+          "project's team as well. Queues an email when the instance email provider is configured.",
         ...mcpTool('create_invite'),
       },
     },
