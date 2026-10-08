@@ -38,7 +38,7 @@ export default function ProjectSwitcherTrigger({
       className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
     >
       {current ? (
-        <div className="flex flex-col items-center gap-1">
+        <div className="relative shrink-0">
           {item ? (
             <RingProgress value={item.loggedMinutes} max={item.goalMinutes} className="size-9">
               <ProjectLogo
@@ -55,7 +55,11 @@ export default function ProjectSwitcherTrigger({
             />
           )}
           {showLevel && current.levelEmoji && (
-            <ProjectLevelChip emoji={current.levelEmoji} color={current.levelColor} />
+            <ProjectLevelChip
+              emoji={current.levelEmoji}
+              color={current.levelColor}
+              className="absolute -end-1.5 -top-1.5"
+            />
           )}
         </div>
       ) : (

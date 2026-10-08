@@ -40,7 +40,7 @@ export default function ProjectSwitcherProjectRow({
         aria-current={current || undefined}
         className="min-w-0 flex-1 gap-2.5 p-2 data-[selected=true]:bg-transparent"
       >
-        <div className="flex flex-col items-center gap-1 self-start">
+        <div className="relative shrink-0 self-start">
           {progress ? (
             <RingProgress
               value={progress.loggedMinutes}
@@ -61,7 +61,11 @@ export default function ProjectSwitcherProjectRow({
             />
           )}
           {showLevel && project.levelEmoji && (
-            <ProjectLevelChip emoji={project.levelEmoji} color={project.levelColor} />
+            <ProjectLevelChip
+              emoji={project.levelEmoji}
+              color={project.levelColor}
+              className="absolute -end-1.5 -top-1.5 size-4 text-[10px]"
+            />
           )}
         </div>
         <div className="min-w-0 flex-1">
