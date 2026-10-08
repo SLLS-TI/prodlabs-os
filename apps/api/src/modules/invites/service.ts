@@ -21,9 +21,10 @@ export type InviteStatus = 'pending' | 'accepted' | 'rejected';
 // The rank an invite puts its invitee on in the team.
 export type InviteTeamRole = TeamRole;
 
-// The project standing an invite grants. The client role is assigned on the members
-// page, never through an invite, so an invite only ever names owner or member.
-export type InviteProjectRole = 'owner' | 'member';
+// The project standing an invite grants: owner, a member on a custom role, or the
+// restricted read-oriented client role. Client and owner both bypass custom roles,
+// so neither carries a role_id.
+export type InviteProjectRole = 'owner' | 'member' | 'client';
 
 // The standings a team rank outranks. An invite never lowers a rank, so accepting one
 // only rewrites a membership below the rank it grants.
@@ -219,7 +220,7 @@ export async function mayGrantInviteRanks(
 export async function createInvite(input: NewInvite): Promise<InviteRow> {
   const email = normalizeEmail(input.email);
   await assertNotAlreadyMember(input, email);
-  // Project owners bypass roles, so an owner invite never carries a role_id.
+  // Owners and clients bypass roles, so only a member invite carries a role_id.
   const roleId = input.projectRole === 'member' ? input.roleId : null;
   let row;
   try {
@@ -393,7 +394,7 @@ export async function acceptInvite(
 
     if (invite.projectId != null) {
       // A member joins on the invite's chosen role, falling back to the team's
-      // default role when none was set; a project owner bypasses roles.
+      // default role when none was set; a project owner or a client bypasses roles.
       let roleId: number | null = null;
       if (invite.projectRole === 'member') {
         if (invite.roleId != null) {
