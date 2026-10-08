@@ -3,6 +3,7 @@ import type { Project } from '@/lib/api/endpoints/projects';
 import { cn } from '@/lib/utils';
 import { useRelativeTime } from '@/context/relativeTimeContext';
 import ProjectLogo from '@/components/common/ProjectLogo';
+import { AssigneeAvatar } from '@/features/issue/components/shared/IssueBadges';
 import { CommandItem } from '@/components/ui/command';
 import ProjectSwitcherHideButton from './ProjectSwitcherHideButton';
 import ProjectSwitcherStarButton from './ProjectSwitcherStarButton';
@@ -59,6 +60,18 @@ export default function ProjectSwitcherProjectRow({
               </>
             )}
           </span>
+          {project.responsible && (
+            <span className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground/70">
+              <AssigneeAvatar
+                name={project.responsible.name}
+                image={project.responsible.image}
+                className="size-4"
+              />
+              <span dir="auto" className="truncate" aria-label={t('responsible')}>
+                {project.responsible.name}
+              </span>
+            </span>
+          )}
         </div>
       </CommandItem>
       <ProjectSwitcherHideButton project={project} />

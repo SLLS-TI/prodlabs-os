@@ -45,6 +45,7 @@
   "godModeOwnerOnly": "管理模式仅对实例管理员开放。",
   "project": "项目",
   "projectPicker": {
+    "responsible": "负责人",
     "sortName": "Project name",
     "noResults": "No matching projects",
     "sortCreated": "Newest created",

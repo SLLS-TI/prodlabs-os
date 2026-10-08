@@ -45,6 +45,7 @@
   "godModeOwnerOnly": "God mode is open to the instance owner only.",
   "project": "Project",
   "projectPicker": {
+    "responsible": "Responsible",
     "sortName": "Project name",
     "noResults": "No matching projects",
     "sortCreated": "Newest created",

@@ -45,6 +45,7 @@
   "godModeOwnerOnly": "Режим администратора доступен только владельцу инстанса.",
   "project": "Проект",
   "projectPicker": {
+    "responsible": "Ответственный",
     "sortName": "Project name",
     "noResults": "No matching projects",
     "sortCreated": "Newest created",

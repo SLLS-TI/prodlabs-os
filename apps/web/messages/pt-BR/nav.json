@@ -45,6 +45,7 @@
   "godModeOwnerOnly": "O modo god está aberto apenas ao dono da instância.",
   "project": "Projeto",
   "projectPicker": {
+    "responsible": "Responsável",
     "sortName": "Project name",
     "noResults": "No matching projects",
     "sortCreated": "Newest created",
