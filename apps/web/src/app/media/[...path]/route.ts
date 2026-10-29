@@ -5,9 +5,10 @@ import { serverRuntimeEnv } from '@/utils/runtimeEnv';
 // frozen into the build, so an absolute api url cannot be optimized by an image that
 // has to serve any instance.
 //
-// Only the api's public, unauthenticated media routes are reachable here, and no
-// request header is forwarded — this must never become a way to reach the rest of the
-// api through the web server.
+// Only the api's public, unauthenticated media routes are reachable here — this must
+// never become a way to reach the rest of the api through the web server. The session
+// cookie is forwarded to the avatar route alone, which serves a client the project
+// face's picture in place of an agency member's.
 const MEDIA_ROOTS = [
   'avatars',
   'attachments',
@@ -26,6 +27,7 @@ const PASSTHROUGH_HEADERS = [
   'etag',
   'x-content-type-options',
   'content-security-policy',
+  'vary',
 ];
 
 export async function GET(request: Request, { params }: { params: Promise<{ path: string[] }> }) {
@@ -40,7 +42,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
   const { search } = new URL(request.url);
   const upstream = await fetch(`${origin}/${path.join('/')}${search}`, {
     // The api answers 304 to it, and passing it on keeps a cached avatar cached.
-    headers: forwardedHeaders(request),
+    headers: forwardedHeaders(request, isAvatar(path)),
     cache: 'no-store',
   });
 
@@ -52,7 +54,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
   return new Response(upstream.body, { status: upstream.status, headers });
 }
 
-function forwardedHeaders(request: Request): HeadersInit {
+function isAvatar(path: string[]): boolean {
+  return path.length === 3 && path[0] === 'avatars' && path[2] === 'raw';
+}
+
+function forwardedHeaders(request: Request, withCookie: boolean): HeadersInit {
+  const headers: Record<string, string> = {};
   const ifNoneMatch = request.headers.get('if-none-match');
-  return ifNoneMatch ? { 'if-none-match': ifNoneMatch } : {};
+  if (ifNoneMatch) headers['if-none-match'] = ifNoneMatch;
+  const cookie = withCookie ? request.headers.get('cookie') : null;
+  if (cookie) headers.cookie = cookie;
+  return headers;
 }

@@ -1,4 +1,5 @@
 import { Elysia } from 'elysia';
+import { clientProjectIds } from '@repo/db';
 import { authContext } from '#shared/auth-context';
 import { errors } from '#shared/responses';
 import { linkPreviewMaxAge } from './cache';
@@ -12,7 +13,13 @@ export const linkPreviewRoutes = new Elysia({
   .use(authContext)
   .get(
     '/link-previews',
-    async ({ query, set }) => {
+    async ({ query, set, user }) => {
+      // A linked page can name and picture an agency member (a profile, a commit), so a
+      // client gets the bare link.
+      if (user && (await clientProjectIds(user.id)).length > 0) {
+        set.headers['Cache-Control'] = 'private, no-store';
+        return { url: query.url, title: null, description: null, image: null, siteName: null };
+      }
       const preview = await getLinkPreview(query.url);
       set.headers['Cache-Control'] = `private, max-age=${linkPreviewMaxAge(preview)}`;
       return preview;

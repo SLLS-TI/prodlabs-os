@@ -8,6 +8,8 @@ import {
   user,
   aiAgent,
   userPreference,
+  invalidateIdentityGuard,
+  teamInvite,
 } from '@repo/db';
 import { and, desc, eq, ilike, isNotNull, isNull, notExists, or, sql } from 'drizzle-orm';
 import { iso } from '#shared/lib';
@@ -205,8 +207,9 @@ export async function clientMemberIds(projectId: number): Promise<Set<string>> {
 // routes, which carry no project context of their own, to refuse an external client the
 // member identities those routes expose. Fails closed — true unless the user clearly has
 // a non-client foothold: a project membership as owner or member, or an owner/manager
-// rank on the team itself. A pure client (>=1 client project membership, zero owner/member
-// project memberships, and a plain or absent team rank) is treated as external.
+// rank on the team itself. A member with no project of the team is external when they
+// joined it through a client invite: a client removed from their last project before
+// their team row was dropped with it (removeMember) still holds that row.
 export async function isExternalTeamClient(
   teamId: number,
   userId: string,
@@ -218,13 +221,47 @@ export async function isExternalTeamClient(
     .from(projectMember)
     .innerJoin(project, eq(project.id, projectMember.projectId))
     .where(and(eq(project.teamId, teamId), eq(projectMember.userId, userId)));
-  if (rows.length === 0) return false;
-  let hasClient = false;
-  for (const r of rows) {
-    if (r.role === 'owner' || r.role === 'member') return false;
-    if (r.role === 'client') hasClient = true;
-  }
-  return hasClient;
+  if (rows.length === 0) return joinedAsClient(teamId, userId);
+  return !rows.some((r) => r.role === 'owner' || r.role === 'member');
+}
+
+async function joinedAsClient(teamId: number, userId: string): Promise<boolean> {
+  const rows = await db
+    .select({ id: teamInvite.id })
+    .from(teamInvite)
+    .where(
+      and(
+        eq(teamInvite.teamId, teamId),
+        eq(teamInvite.acceptedByUserId, userId),
+        eq(teamInvite.projectRole, 'client'),
+      ),
+    )
+    .limit(1);
+  return rows.length > 0;
+}
+
+// Drops the team row of a client who no longer has a project in the team, so a former
+// client cannot read the team's people. A row with a raised rank, or one SCIM owns,
+// stays.
+export async function dropFormerClientTeamMembership(
+  teamId: number,
+  userId: string,
+): Promise<void> {
+  await db.delete(teamMember).where(
+    and(
+      eq(teamMember.teamId, teamId),
+      eq(teamMember.userId, userId),
+      eq(teamMember.role, 'member'),
+      eq(teamMember.source, 'invite'),
+      notExists(
+        db
+          .select({ one: sql`1` })
+          .from(projectMember)
+          .innerJoin(project, eq(project.id, projectMember.projectId))
+          .where(and(eq(project.teamId, teamId), eq(projectMember.userId, userId))),
+      ),
+    ),
+  );
 }
 
 // The lowercased @handles of the current client members, so a mention of a client is
@@ -489,6 +526,7 @@ export async function addMember(
     .values({ projectId, userId, role, roleId })
     .onConflictDoNothing()
     .returning({ userId: projectMember.userId });
+  invalidateIdentityGuard();
   return inserted.length > 0;
 }
 
@@ -553,14 +591,16 @@ export async function setMembership(
     .set({ role, roleId })
     .where(and(eq(projectMember.projectId, projectId), eq(projectMember.userId, userId)))
     .returning({ userId: projectMember.userId });
+  invalidateIdentityGuard();
   return updated.length > 0;
 }
 
 export async function removeMember(projectId: number, userId: string): Promise<void> {
-  await db.transaction(async (tx) => {
-    await tx
+  const removed = await db.transaction(async (tx) => {
+    const rows = await tx
       .delete(projectMember)
-      .where(and(eq(projectMember.projectId, projectId), eq(projectMember.userId, userId)));
+      .where(and(eq(projectMember.projectId, projectId), eq(projectMember.userId, userId)))
+      .returning({ role: projectMember.role });
     // A column cannot keep assigning issues to someone who is no longer a member:
     // the same assignment sent as a patch would be refused.
     await tx
@@ -575,7 +615,16 @@ export async function removeMember(projectId: number, userId: string): Promise<v
       .update(project)
       .set({ responsibleUserId: null })
       .where(and(eq(project.id, projectId), eq(project.responsibleUserId, userId)));
+    return rows[0];
   });
+  if (removed?.role === 'client') {
+    const [owner] = await db
+      .select({ teamId: project.teamId })
+      .from(project)
+      .where(eq(project.id, projectId));
+    if (owner) await dropFormerClientTeamMembership(owner.teamId, userId);
+  }
+  invalidateIdentityGuard();
 }
 
 export async function countOwners(projectId: number): Promise<number> {

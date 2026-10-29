@@ -41,6 +41,7 @@ async function enqueueRun(asOwner: Api, columnId: number) {
     projectId: agent.projects[0].id,
     issueId: issue.id,
     sourceActivityId: null,
+    actorUserId: null,
     prompt: 'do it',
   });
   const [row] = await db.select().from(agentRun).where(eq(agentRun.issueId, issue.id));
@@ -87,6 +88,7 @@ describe('agent_run queue store', () => {
       projectId: agent.projects[0].id,
       issueId: issue.id,
       sourceActivityId: null,
+      actorUserId: null,
       prompt: 'again',
     });
     const teamId = await teamOf(asOwner, 'MKT');

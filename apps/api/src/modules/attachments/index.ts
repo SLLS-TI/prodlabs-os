@@ -74,8 +74,7 @@ export const attachmentRoutes = new Elysia({
     ),
     attachment: entityGuard('work_items', 'Attachment not found', async (p) => {
       const existing = await getAttachmentByPublicId(p.publicId);
-      if (!existing) return null;
-      return getIssueProjectId(existing.issueId);
+      return existing?.projectId ?? null;
     }),
     // For /attachments/view, which takes the attachment of an issue or an initiative:
     // the checks entityGuard makes, for whichever of the two it is.
@@ -85,8 +84,7 @@ export const attachmentRoutes = new Elysia({
         if (!id) throw new HttpError(404, 'Attachment not found');
         const issueRow = await getAttachmentByPublicId(id);
         if (issueRow) {
-          const projectId = await getIssueProjectId(issueRow.issueId);
-          if (projectId == null) throw new HttpError(404, 'Attachment not found');
+          const { projectId } = issueRow;
           await assertPermission(projectId, user, 'work_items', 'read');
           await assertMcpAllowed(projectId, request.headers);
           return { viewed: { row: issueRow, dto: attachmentDto(issueRow) } };
@@ -356,6 +354,7 @@ export const attachmentRoutes = new Elysia({
       const row = await getAttachmentByPublicId(params.publicId);
       if (!row) throw new HttpError(404, 'Attachment not found');
       return attachmentObjectResponse({
+        projectId: row.projectId,
         s3Key: row.s3Key,
         contentType: row.contentType,
         filename: row.filename,

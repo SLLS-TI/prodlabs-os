@@ -3,6 +3,7 @@ import { db, notificationDelivery, getInstanceEmailConfig } from '@repo/db';
 import { trustedOrigins } from '@repo/auth';
 import { hasEmailProvider } from '@repo/mailer';
 import { and, eq, sql } from 'drizzle-orm';
+import { resolveFaceIdentity } from '#modules/projects/visibility';
 import type { InviteRow } from './service';
 
 interface InviteProject {
@@ -23,14 +24,18 @@ export async function enqueueInviteEmail(
   if (!config || !hasEmailProvider(config)) return false;
 
   const dedupeKey = `project-invite:${invite.id}`;
-  const inviter = invite.invitedByName ?? invite.invitedByEmail ?? "An It's a Plan user";
+  const projectName = project.name.replace(/[\r\n]+/g, ' ');
+  // A client is invited by the project's face, never by the agency member who sent it.
+  const inviter =
+    invite.role === 'client'
+      ? ((await resolveFaceIdentity(project.id))?.name ?? `The ${projectName} team`)
+      : (invite.invitedByName ?? invite.invitedByEmail ?? "An It's a Plan user");
   const role =
     invite.role === 'owner'
       ? 'owner'
       : invite.role === 'client'
         ? 'client'
         : (invite.roleName ?? 'member');
-  const projectName = project.name.replace(/[\r\n]+/g, ' ');
   const url = new URL(`/invite/${invite.token}`, trustedOrigins[0]).toString();
 
   await db.transaction(async (tx) => {

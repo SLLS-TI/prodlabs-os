@@ -304,17 +304,42 @@ export async function resolveMaskContext(
   user: AuthUser | null | undefined,
 ): Promise<MaskContext | null> {
   if (!user || !(await checkMaskViewer(projectId, user))) return null;
+  return projectMaskContext(projectId, user.id);
+}
+
+// The mask context of a project for a given viewer id. A public share has no viewer and
+// passes '': everyone but the project's current clients reads as the face.
+export async function projectMaskContext(
+  projectId: number,
+  viewerId: string,
+): Promise<MaskContext> {
   const [face, clientIds, clientHandles] = await Promise.all([
     resolveFaceIdentity(projectId),
     clientMemberIds(projectId),
     clientMemberHandles(projectId),
   ]);
   return {
-    viewerId: user.id,
+    viewerId,
     face,
     clientMemberIds: clientIds,
     clientMemberHandles: clientHandles,
   };
+}
+
+// A person a client names in a write (an assignee, a watcher, a member field) must be
+// the face, the client or another current client. Anything else gets one error,
+// raised before any membership lookup, so a client cannot test whether an id belongs
+// to the agency.
+export async function assertClientUserTarget(
+  projectId: number,
+  actorUserId: string | null | undefined,
+  userId: string,
+): Promise<void> {
+  if (!actorUserId || userId === actorUserId) return;
+  if (!(await checkMaskViewer(projectId, { id: actorUserId }))) return;
+  const mask = await projectMaskContext(projectId, actorUserId);
+  if (userId === mask.face?.userId || mask.clientMemberIds.has(userId)) return;
+  throw new HttpError(400, 'Invalid user');
 }
 
 // Asserts the user is an owner of the project, addressed by id — the parallel of

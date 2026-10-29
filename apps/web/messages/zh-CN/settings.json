@@ -180,6 +180,8 @@
     "slackOwnerOnly": "仅项目所有者可配置 Slack 频道。",
     "slackEnabled": "发送到 Slack",
     "slackEnabledHint": "开启后，事项事件和每日摘要会发送到下面的频道。",
+    "slackInternalOnly": "内部频道",
+    "slackInternalOnlyHint": "此频道中没有客户。开启后在此发布团队成员的真实姓名；否则每条消息都显示项目的代表成员。",
     "slackChannel": "频道",
     "slackChannelHint": "频道 id（C01234567）或 #名称。请先把机器人邀请到频道，否则发送会因 not_in_channel 失败。",
     "healthWeight": {

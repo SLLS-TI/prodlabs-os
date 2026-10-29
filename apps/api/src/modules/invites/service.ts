@@ -1,4 +1,14 @@
-import { db, teamInvite, teamMember, projectMember, teamRole, team, project, user } from '@repo/db';
+import {
+  db,
+  invalidateIdentityGuard,
+  teamInvite,
+  teamMember,
+  projectMember,
+  teamRole,
+  team,
+  project,
+  user,
+} from '@repo/db';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { HttpError, iso, pgErrorCode } from '#shared/lib';
 import { teamRef } from '#modules/teams/ref';
@@ -378,7 +388,7 @@ export async function acceptInvite(
   // rank they hold.
   if (!(await getTeamMembership(invite.teamId, userId))) await assertTeamSeatFree(invite.teamId);
 
-  return db.transaction(async (tx) => {
+  const accepted = await db.transaction(async (tx) => {
     // An invite is refused for an address already in the team, so a conflict here is
     // someone who joined between the invite and this accept. setWhere rewrites only a
     // standing the invite outranks: an invite never lowers a rank.
@@ -444,6 +454,8 @@ export async function acceptInvite(
       role: invite.projectRole as InviteProjectRole | null,
     };
   });
+  invalidateIdentityGuard();
+  return accepted;
 }
 
 export async function rejectInvite(inviteId: number): Promise<void> {

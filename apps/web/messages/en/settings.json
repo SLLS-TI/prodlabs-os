@@ -180,6 +180,8 @@
     "slackOwnerOnly": "Only a project owner can configure the Slack channel.",
     "slackEnabled": "Post to Slack",
     "slackEnabledHint": "When on, issue events and the daily digests are posted to the channel below.",
+    "slackInternalOnly": "Internal channel",
+    "slackInternalOnlyHint": "No client is in this channel. Turn on to post your team's real names here; otherwise every post shows the project's face.",
     "slackChannel": "Channel",
     "slackChannelHint": "A channel id (C01234567) or #name. Invite the bot to the channel first, or posts fail with not_in_channel.",
     "healthWeight": {

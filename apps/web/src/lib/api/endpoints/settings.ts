@@ -50,6 +50,8 @@ export interface SubtaskAutomationSettings {
 export interface SlackProjectSettings {
   channel: string;
   enabled: boolean;
+  // The channel holds no client, so its posts keep the agency's names.
+  internalOnly: boolean;
 }
 
 // Which optional sections a project shows. All on by default; turning one off

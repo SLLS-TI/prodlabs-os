@@ -1,7 +1,25 @@
 export { db, type DbExecutor } from './client';
 export * from './schema';
 export * from './permissions';
-export { maskActor, type FaceIdentity, type MaskableActor } from './masking';
+export {
+  maskActor,
+  maskOrphanActor,
+  buildIdentityScrubber,
+  type FaceIdentity,
+  type MaskableActor,
+  type GuardIdentity,
+  type IdentityGuardGroup,
+  type IdentityScrubber,
+} from './masking';
+export {
+  clientProjectIds,
+  identityScrubberForProjects,
+  invalidateIdentityGuard,
+  loadIdentityGuardGroups,
+  projectHasClients,
+  viewerStanding,
+  type ViewerStanding,
+} from './identity-guard';
 export { isGlobalExternalClient } from './external-client';
 export { getSetting, getOrCreateSetting, setSetting } from './settings';
 export { readSecret, writeSecret } from './secrets';

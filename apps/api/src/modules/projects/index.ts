@@ -259,7 +259,8 @@ export const projectRoutes = new Elysia({ name: 'projects', detail: { tags: ['Pr
         labelGroups,
         assignees: collapseAssignees(assignees, mask),
         customFields,
-        issueTemplates,
+        // A client holds no issue_templates read; a template is agency-written.
+        issueTemplates: mask ? [] : issueTemplates,
         viewer: { role: viewer.role, teamRole },
         permissions: viewer.permissions,
         canSeeTimeTracking: canSeeTimeTracking(

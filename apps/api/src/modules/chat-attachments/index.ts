@@ -2,6 +2,7 @@ import { Elysia } from 'elysia';
 import { authContext } from '#shared/auth-context';
 import { guards, entityGuard } from '#shared/guards';
 import { HttpError } from '#shared/lib';
+import { publicFilename } from '#shared/identity-guard';
 import { getObject } from '@repo/storage';
 import { mcpTool } from '#mcp/generate';
 import { accessErrors, commonErrors, errors } from '#shared/responses';
@@ -194,9 +195,10 @@ export const chatAttachmentRoutes = new Elysia({
       const ct = row.contentType || obj.contentType;
       const inlineSafe = /^(image\/(png|jpe?g|gif|webp|avif|bmp)|video\/|audio\/)/i.test(ct);
       const inline = inlineSafe && query.download == null;
+      const filename = await publicFilename(row.projectId, row.filename);
       const headers: Record<string, string> = {
         'Content-Type': ct,
-        'Content-Disposition': `${inline ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(row.filename)}`,
+        'Content-Disposition': `${inline ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(filename)}`,
         'X-Content-Type-Options': 'nosniff',
         'Cache-Control': 'no-cache',
         ETag: etag,

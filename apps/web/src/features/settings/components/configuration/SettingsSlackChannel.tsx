@@ -58,6 +58,13 @@ export default function SettingsSlackChannel({ form }: { form: SlackChannelForm 
             />
             <p className="text-xs text-muted-foreground">{t('slackChannelHint')}</p>
           </div>
+          <div className="flex items-center justify-between gap-6">
+            <div className="max-w-2xl space-y-1">
+              <div className="text-sm font-medium">{t('slackInternalOnly')}</div>
+              <p className="text-xs text-muted-foreground">{t('slackInternalOnlyHint')}</p>
+            </div>
+            <EnabledSwitch checked={form.internalOnly} onChange={form.setInternalOnly} />
+          </div>
         </SettingsCard>
       )}
     </SettingsSection>

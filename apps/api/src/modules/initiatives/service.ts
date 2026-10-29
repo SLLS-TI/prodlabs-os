@@ -146,7 +146,7 @@ export interface InitiativeListPage {
 const PRIORITY_ORDER = sql`case ${initiative.priority}
   when 'urgent' then 0 when 'high' then 1 when 'medium' then 2 when 'low' then 3 else 4 end`;
 
-function orderExpr(sort: InitiativeSort) {
+function orderExpr(sort: InitiativeSort, mask: MaskContext | null) {
   switch (sort) {
     case 'title':
       return initiative.title;
@@ -154,9 +154,21 @@ function orderExpr(sort: InitiativeSort) {
       return PRIORITY_ORDER;
     case 'targetDate':
       return initiative.targetDate;
-    case 'owner':
-      // Sort by the owner's display name, not the opaque user id.
-      return sql`(select ${user.name} from ${user} where ${user.id} = ${initiative.ownerUserId})`;
+    case 'owner': {
+      // Sort by the owner's display name, not the opaque user id. A client sorts by the
+      // names it is shown: every owner who is not a current client is the face.
+      const name = sql`(select ${user.name} from ${user} where ${user.id} = ${initiative.ownerUserId})`;
+      if (!mask) return name;
+      const clients = [...mask.clientMemberIds];
+      const isClient = clients.length
+        ? sql`${initiative.ownerUserId} in (${sql.join(
+            clients.map((id) => sql`${id}`),
+            sql`, `,
+          )})`
+        : sql`false`;
+      return sql`case when ${initiative.ownerUserId} is null then null
+        when ${isClient} then ${name} else ${mask.face?.name ?? ''} end`;
+    }
   }
 }
 
@@ -178,7 +190,7 @@ export async function listInitiatives(
   // position. desc(id) breaks ties for a stable page order.
   const orderBy = opts.sort
     ? [
-        sql`${orderExpr(opts.sort)} ${opts.dir === 'desc' ? sql`desc` : sql`asc`} nulls last`,
+        sql`${orderExpr(opts.sort, mask)} ${opts.dir === 'desc' ? sql`desc` : sql`asc`} nulls last`,
         desc(initiative.id),
       ]
     : [asc(initiative.position), desc(initiative.id)];

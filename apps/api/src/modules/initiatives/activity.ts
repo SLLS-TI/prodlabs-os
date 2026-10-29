@@ -1,4 +1,12 @@
-import { db, issue, issueActivity, project, maskActor, type ActivityPayload } from '@repo/db';
+import {
+  db,
+  issue,
+  issueActivity,
+  project,
+  maskActor,
+  maskOrphanActor,
+  type ActivityPayload,
+} from '@repo/db';
 import { and, desc, eq, inArray, or, sql } from 'drizzle-orm';
 import { iso } from '#shared/lib';
 import { isMaskableActor, type MaskContext } from '#shared/access';
@@ -133,7 +141,10 @@ function maskInitiativeFeedItem(
   mask: MaskContext | null,
 ): InitiativeFeedItemRow {
   if (!mask) return item;
-  const masked = maskActor(item, mask.face, isMaskableActor(mask, item.actorUserId));
+  const masked = maskOrphanActor(
+    maskActor(item, mask.face, isMaskableActor(mask, item.actorUserId)),
+    mask.face,
+  );
   const body =
     masked.body != null
       ? maskMentionsInBody(masked.body, mask.clientMemberHandles, mask.face?.username ?? null)
@@ -143,6 +154,8 @@ function maskInitiativeFeedItem(
     payload = maskUserSides(payload, mask);
   else if (masked.action === 'title' || masked.action === 'description')
     payload = maskPayloadProse(payload, mask);
+  else if (masked.action === 'git_pr' || masked.action === 'github_pr')
+    payload = { subject: payload.subject };
   return body === masked.body && payload === masked.payload ? masked : { ...masked, body, payload };
 }
 
