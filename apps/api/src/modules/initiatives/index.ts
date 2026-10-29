@@ -383,9 +383,11 @@ export const initiativeRoutes = new Elysia({
     '/initiative-attachments/:publicId/raw',
     async ({ params, query, request }) => {
       const row = await getInitiativeAttachment(params.publicId);
-      if (!row) throw new HttpError(404, 'Attachment not found');
+      const projectId = row && (await getInitiativeAttachmentProjectId(params.publicId));
+      if (!row || projectId == null) throw new HttpError(404, 'Attachment not found');
 
       return attachmentObjectResponse({
+        projectId,
         s3Key: row.s3Key,
         contentType: row.contentType,
         filename: row.filename,

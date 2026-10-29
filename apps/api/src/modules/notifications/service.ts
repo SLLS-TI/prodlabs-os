@@ -9,7 +9,7 @@ import {
   projectColumn,
   type ActivityPayload,
 } from '@repo/db';
-import { and, desc, eq, inArray, lt, or, sql, isNull } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt, or, sql, isNull, type SQL } from 'drizzle-orm';
 import { addedMentionHandles, resolveMentionHandles, type MentionedUsers } from '#shared/mentions';
 import { autoWatchIssue, watcherUserIds } from '#modules/issues/watchers';
 import { resolveFaceIdentity } from '#modules/projects/visibility';
@@ -417,6 +417,29 @@ function mapRow(r: {
 // not reach them. includeRead defaults to true (the inbox shows read notifications
 // too); a snoozed notification (snoozed_until still in the future) is hidden unless
 // includeSnoozed. limit is clamped to 1..100.
+// The `from` filter matches the actor the viewer is shown: in a project where the
+// viewer is a client, an actor who is not a current client reads as the project's face
+// (face_user_id, else the oldest owner), so filtering by a real agency id finds nothing.
+function shownActorIs(viewerId: string, fromUserId: string): SQL {
+  const actor = notification.actorUserId;
+  const projectId = notification.projectId;
+  return sql`(CASE
+    WHEN ${projectId} IN (SELECT project_id FROM project_member
+      WHERE user_id = ${viewerId} AND role = 'client')
+    THEN (CASE
+      WHEN ${actor} IS NULL THEN NULL
+      WHEN EXISTS (SELECT 1 FROM project_member c
+        WHERE c.project_id = ${projectId} AND c.user_id = ${actor} AND c.role = 'client')
+        THEN ${actor}
+      ELSE coalesce(
+        (SELECT f.id FROM "user" f JOIN project p ON p.face_user_id = f.id WHERE p.id = ${projectId}),
+        (SELECT o.user_id FROM project_member o
+          WHERE o.project_id = ${projectId} AND o.role = 'owner' ORDER BY o.created_at LIMIT 1))
+      END)
+    ELSE ${actor}
+  END) = ${fromUserId}`;
+}
+
 export async function listNotifications(
   userId: string,
   opts: { before?: NotificationCursor | null; limit?: number; filters?: NotificationFilters } = {},
@@ -426,7 +449,7 @@ export async function listNotifications(
   const f = opts.filters ?? {};
   const conds = [eq(notification.userId, userId)];
   if (f.types && f.types.length) conds.push(inArray(notification.type, f.types));
-  if (f.fromUserId) conds.push(eq(notification.actorUserId, f.fromUserId));
+  if (f.fromUserId) conds.push(shownActorIs(userId, f.fromUserId));
   if (f.projectId != null) conds.push(eq(notification.projectId, f.projectId));
   if (f.includeRead === false) conds.push(isNull(notification.readAt));
   if (!f.includeSnoozed)

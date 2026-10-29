@@ -4,6 +4,7 @@ import { noContent } from '#shared/http';
 import { guards, entityGuard, assertMcpAllowed, requiresPermission } from '#shared/guards';
 import { authContext } from '#shared/auth-context';
 import {
+  assertClientUserTarget,
   assertPermission,
   assertProjectOwner,
   assertTimeVisible,
@@ -514,7 +515,8 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
       const parent = await getParentRef(issue.parentId);
       const subtasks = await listSubtasks(issue.id);
       const checklists = await listChecklists(issue.id);
-      const development = await listIssueDevelopmentLinks(issue.id);
+      // A repository, branch or pull request names the developer's own account.
+      const development = mask ? [] : await listIssueDevelopmentLinks(issue.id);
       return { ...issue, fields, links, watchers, parent, subtasks, checklists, development };
     },
     {
@@ -562,7 +564,8 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
       const parent = await getParentRef(issue.parentId);
       const subtasks = await listSubtasks(issue.id);
       const checklists = await listChecklists(issue.id);
-      const development = await listIssueDevelopmentLinks(issue.id);
+      // A repository, branch or pull request names the developer's own account.
+      const development = mask ? [] : await listIssueDevelopmentLinks(issue.id);
       return { ...issue, fields, links, watchers, parent, subtasks, checklists, development };
     },
     {
@@ -1274,6 +1277,7 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   .put(
     '/issues/:issueId/watchers/:userId',
     async ({ params, projectId, user }) => {
+      await assertClientUserTarget(projectId, user?.id, params.userId);
       if (!(await isEligibleIssueWatcher(projectId, params.userId))) {
         throw new HttpError(400, 'Watcher must be a human project member with work item access');
       }
@@ -1300,6 +1304,7 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
   .delete(
     '/issues/:issueId/watchers/:userId',
     async ({ params, projectId, user }) => {
+      await assertClientUserTarget(projectId, user?.id, params.userId);
       if (!(await isEligibleIssueWatcher(projectId, params.userId))) {
         throw new HttpError(400, 'Watcher must be a human project member with work item access');
       }
@@ -1416,6 +1421,7 @@ export const issueRoutes = new Elysia({ name: 'issues', detail: { tags: ['Issues
         params.issueId,
         query.from,
         query.to,
+        await checkTimeVisible(projectId, user),
         await resolveMaskContext(projectId, user),
       ),
     {

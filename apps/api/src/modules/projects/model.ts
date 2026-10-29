@@ -350,11 +350,13 @@ export const updateSubtaskAutomationBody = SubtaskAutomationResponse;
 export const SlackProjectResponse = t.Object({
   channel: t.String(),
   enabled: t.Boolean(),
+  internalOnly: t.Boolean(),
 });
 
 export const updateSlackProjectBody = t.Object({
   channel: t.String({ maxLength: 200 }),
   enabled: t.Boolean(),
+  internalOnly: t.Optional(t.Boolean()),
 });
 
 // ProjectTimerSessionRow from timers.ts: the bare session returned by start and inside

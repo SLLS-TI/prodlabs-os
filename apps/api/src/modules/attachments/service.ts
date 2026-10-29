@@ -80,12 +80,16 @@ export async function getProjectAttachmentBytes(projectId: number): Promise<numb
   return num(rows[0]?.total ?? 0);
 }
 
-export async function getAttachmentByPublicId(publicId: string): Promise<AttachmentRow | null> {
+export async function getAttachmentByPublicId(
+  publicId: string,
+): Promise<(AttachmentRow & { projectId: number }) | null> {
   const rows = await db
-    .select()
+    .select({ attachment: issueAttachment, projectId: issue.projectId })
     .from(issueAttachment)
+    .innerJoin(issue, eq(issue.id, issueAttachment.issueId))
     .where(eq(issueAttachment.publicId, publicId));
-  return rows[0] ? mapAttachment(rows[0]) : null;
+  const row = rows[0];
+  return row ? { ...mapAttachment(row.attachment), projectId: row.projectId } : null;
 }
 
 // Points an attachment at new bytes, keeping its row and its publicId. An embed

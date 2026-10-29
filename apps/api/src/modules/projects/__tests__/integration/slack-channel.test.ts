@@ -49,6 +49,17 @@ describe('project slack channel settings', () => {
     expect(res.data).toMatchObject({ channel: '', enabled: false });
   });
 
+  it('stores internalOnly and keeps it when a later update omits it', async () => {
+    const { api, projectKey } = await ownerWithProject();
+    const slack = api.projects({ projectKey }).settings.slack;
+
+    expect((await slack.get()).data).toMatchObject({ internalOnly: false });
+    await slack.patch({ channel: '#team', enabled: true, internalOnly: true });
+    await slack.patch({ channel: '#team-2', enabled: true });
+
+    expect((await slack.get()).data).toMatchObject({ channel: '#team-2', internalOnly: true });
+  });
+
   it('round-trips the stored value via GET', async () => {
     const { api, projectKey } = await ownerWithProject();
 

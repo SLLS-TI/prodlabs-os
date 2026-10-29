@@ -36,6 +36,7 @@ async function setup() {
       projectId,
       issueId: issue.id,
       sourceActivityId: null,
+      actorUserId: null,
       prompt,
     });
 

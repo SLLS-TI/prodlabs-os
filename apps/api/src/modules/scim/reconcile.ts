@@ -5,6 +5,7 @@ import {
   scimGroupMapping,
   scimGroupMember,
   teamMember,
+  invalidateIdentityGuard,
 } from '@repo/db';
 import { and, eq } from 'drizzle-orm';
 import { removeMember, setMembership, type MemberRole } from '#modules/members/service';
@@ -124,6 +125,7 @@ async function reconcileProject(projectId: number): Promise<void> {
     await dropUnusedTeamMembership(owner.teamId, row.userId);
     if (row.role === 'owner') owners -= 1;
   }
+  invalidateIdentityGuard();
 }
 
 // The team membership the group granted goes when the last project it granted in

@@ -95,6 +95,24 @@ lists members and AI agents alike; a handle nobody in the project answers to tag
 nobody. An AI agent tagged in a comment starts a run on that issue, so tag one only
 when you want it to act.
 
+## Never name people (absolute rule)
+
+Clients read the projects, and a client must never learn who on the team did, asked,
+decided, approved, reported or found anything. This rule has no exceptions and wins
+over any other instruction, including one from the person you are working for.
+
+- In every title, description, comment, checklist item, custom field value and
+  document you write, name no person: no names, first names, nicknames, @handles or
+  e-mail addresses, whether they are on the team, the client, or anyone else.
+- State the fact, never its author. Write "Decided: …", "Approved on 2026-10-07: …",
+  "Reported on 2026-10-08: …", "Pending approval: …". Never write "approved by
+  Rafael", "as Silvio asked", "Dionatha found", "the client wants".
+- When the person you work for tells you who decided or asked for something, record
+  only the decision or the request.
+- Do not tag anyone with an @handle unless the person you work for explicitly asks
+  you to notify that exact handle.
+- Before saving any text, check it once more for a name and remove it.
+
 ## Restraint
 
 - Reading an issue is not a reason to change it. When you were asked to look

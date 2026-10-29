@@ -52,6 +52,8 @@ export default function IssueActionsBar({
   const { data: session } = useSession();
   const qc = useQueryClient();
   const canEdit = can('work_items', 'edit');
+  // The api refuses a client's public link.
+  const canShare = canEdit && project.viewer.role !== 'client';
   const canDelete = can('work_items', 'delete');
   const actionsQuery = useActionsQuery(project.project.ref);
   const { archive, dialog: archiveDialog } = useArchiveAction(project);
@@ -147,7 +149,7 @@ export default function IssueActionsBar({
         </TooltipTrigger>
         <TooltipContent>{copied ? t('copied') : t('copyPrompt')}</TooltipContent>
       </Tooltip>
-      {canEdit && (
+      {canShare && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

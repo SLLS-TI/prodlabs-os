@@ -10,6 +10,7 @@ import {
   projectColumn,
   projectMember,
   team,
+  teamInvite,
   teamMember,
   teamRole,
   user,
@@ -236,6 +237,7 @@ async function loadTeamRows(userId: string, teamId?: number): Promise<TeamRow[]>
     skillCounts,
     toolCounts,
     projectStandings,
+    clientInvites,
   ] = await Promise.all([
     db
       .select({
@@ -285,10 +287,8 @@ async function loadTeamRows(userId: string, teamId?: number): Promise<TeamRow[]>
       .where(inArray(agentTool.teamId, ids))
       .groupBy(agentTool.teamId),
     // The caller's own project memberships in each team, split by whether the role is a
-    // non-client foothold (owner/member) or a client one. An external client of a team
-    // has a client membership and no non-client one. Fails closed: the owner/manager
-    // team rank is checked below, so a plain-member rank with no project standing reads
-    // as not-external (count zero), matching isExternalTeamClient.
+    // non-client foothold (owner/member) or a client one, and the teams they joined
+    // through a client invite. Matches isExternalTeamClient.
     db
       .select({
         teamId: project.teamId,
@@ -299,7 +299,18 @@ async function loadTeamRows(userId: string, teamId?: number): Promise<TeamRow[]>
       .innerJoin(project, eq(project.id, projectMember.projectId))
       .where(and(inArray(project.teamId, ids), eq(projectMember.userId, userId)))
       .groupBy(project.teamId),
+    db
+      .selectDistinct({ teamId: teamInvite.teamId })
+      .from(teamInvite)
+      .where(
+        and(
+          inArray(teamInvite.teamId, ids),
+          eq(teamInvite.acceptedByUserId, userId),
+          eq(teamInvite.projectRole, 'client'),
+        ),
+      ),
   ]);
+  const clientInvited = new Set(clientInvites.map((r) => r.teamId));
   const projects = new Map(projectCounts.map((r) => [r.teamId, r]));
   const members = new Map(memberCounts.map((r) => [r.teamId, r]));
   const roles = new Map(roleCounts.map((r) => [r.teamId, r.count]));
@@ -314,7 +325,9 @@ async function loadTeamRows(userId: string, teamId?: number): Promise<TeamRow[]>
     const projectCount = projects.get(row.id);
     const standingRow = standings.get(row.id);
     const isExternalClient =
-      !runsTeam(standing) && (standingRow?.nonClient ?? 0) === 0 && (standingRow?.client ?? 0) > 0;
+      !runsTeam(standing) &&
+      (standingRow?.nonClient ?? 0) === 0 &&
+      ((standingRow?.client ?? 0) > 0 || (!standingRow && clientInvited.has(row.id)));
     return {
       id: row.id,
       name: row.name,

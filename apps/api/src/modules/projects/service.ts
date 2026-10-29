@@ -18,6 +18,7 @@ import {
   team,
   teamMember,
   user,
+  invalidateIdentityGuard,
 } from '@repo/db';
 import {
   and,
@@ -34,7 +35,11 @@ import {
 import { HttpError, iso } from '#shared/lib';
 import { PROJECT_KEY_PATTERN } from './key';
 import { type Permissions } from '#shared/permissions';
-import { toMemberContext, type MemberRole } from '#modules/members/service';
+import {
+  dropFormerClientTeamMembership,
+  toMemberContext,
+  type MemberRole,
+} from '#modules/members/service';
 import { getProjectSetting, setProjectSetting } from '#shared/project-settings';
 import { DEFAULT_HEALTH_WEIGHTS, type HealthWeights } from '#modules/god/health';
 import { PROJECT_FEATURES, featureLabel, type ProjectFeature } from '#shared/features';
@@ -840,6 +845,7 @@ export async function setMaskingSettings(
     .set({ faceUserId: input.faceUserId })
     .where(eq(project.id, projectId))
     .returning({ faceUserId: project.faceUserId });
+  invalidateIdentityGuard();
   return row ? { faceUserId: row.faceUserId } : null;
 }
 
@@ -978,7 +984,7 @@ export async function setSubtaskAutomationSettings(
 }
 
 // The project's Slack target, stored in project_setting under SLACK_KEY as
-// { channel, enabled }. channel is a Slack channel id (C01234567) or '#name'; it is
+// { channel, enabled, internalOnly }. channel is a Slack channel id (C01234567) or '#name'; it is
 // not a secret, so it lives in project_setting rather than the encrypted store. The
 // bot token comes from the team's notification settings or the instance default at
 // send time. enabled is forced off when the channel is blank, so an enabled project
@@ -989,19 +995,30 @@ const SLACK_KEY = 'slack';
 export interface SlackProjectSettings {
   channel: string;
   enabled: boolean;
+  // The channel holds no client. Its posts keep the agency's names; the posts to any
+  // other channel of a project with clients show the project's face instead.
+  internalOnly: boolean;
 }
 
 export async function getSlackProjectSettings(projectId: number): Promise<SlackProjectSettings> {
   const stored = await getProjectSetting<Partial<SlackProjectSettings>>(projectId, SLACK_KEY);
-  return { channel: (stored?.channel ?? '').trim(), enabled: stored?.enabled === true };
+  return {
+    channel: (stored?.channel ?? '').trim(),
+    enabled: stored?.enabled === true,
+    internalOnly: stored?.internalOnly === true,
+  };
 }
 
 export async function setSlackProjectSettings(
   projectId: number,
-  input: SlackProjectSettings,
+  input: Omit<SlackProjectSettings, 'internalOnly'> & { internalOnly?: boolean },
 ): Promise<SlackProjectSettings> {
   const channel = input.channel.trim();
-  const next: SlackProjectSettings = { channel, enabled: input.enabled && channel.length > 0 };
+  const next: SlackProjectSettings = {
+    channel,
+    enabled: input.enabled && channel.length > 0,
+    internalOnly: input.internalOnly ?? (await getSlackProjectSettings(projectId)).internalOnly,
+  };
   await setProjectSetting(projectId, SLACK_KEY, next);
   return next;
 }
@@ -1025,6 +1042,11 @@ export async function deleteProject(projectId: number): Promise<void> {
     .from(projectMember)
     .innerJoin(project, eq(project.id, projectMember.projectId))
     .where(and(eq(projectMember.projectId, projectId), eq(projectMember.source, 'scim')));
+  const clients = await db
+    .select({ teamId: project.teamId, userId: projectMember.userId })
+    .from(projectMember)
+    .innerJoin(project, eq(project.id, projectMember.projectId))
+    .where(and(eq(projectMember.projectId, projectId), eq(projectMember.role, 'client')));
   const assetKeys = await db.transaction(async (tx) => {
     // Serialize with the final upload quota check. A concurrent upload either
     // commits before these reads or loses its FK race and cleans its S3 object.
@@ -1057,4 +1079,8 @@ export async function deleteProject(projectId: number): Promise<void> {
   for (const { teamId, userId } of provisioned) {
     await dropUnusedTeamMembership(teamId, userId);
   }
+  for (const { teamId, userId } of clients) {
+    await dropFormerClientTeamMembership(teamId, userId);
+  }
+  invalidateIdentityGuard();
 }

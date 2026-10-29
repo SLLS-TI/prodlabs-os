@@ -180,6 +180,8 @@
     "slackOwnerOnly": "Hanya pemilik proyek yang dapat mengonfigurasi kanal Slack.",
     "slackEnabled": "Kirim ke Slack",
     "slackEnabledHint": "Saat aktif, event isu dan ringkasan harian dikirim ke kanal di bawah.",
+    "slackInternalOnly": "Kanal internal",
+    "slackInternalOnlyHint": "Tidak ada klien di kanal ini. Aktifkan untuk mengirim nama asli tim di sini; jika tidak, setiap kiriman menampilkan wajah proyek.",
     "slackChannel": "Kanal",
     "slackChannelHint": "Id kanal (C01234567) atau #nama. Undang bot ke kanal lebih dulu, atau pesan gagal dengan not_in_channel.",
     "healthWeight": {

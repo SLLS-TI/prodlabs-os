@@ -400,6 +400,7 @@ export const documentRoutes = new Elysia({
       );
       if (!asset) throw new HttpError(404, 'Asset not found');
       return attachmentObjectResponse({
+        projectId: project.id,
         s3Key: asset.s3Key,
         contentType: asset.contentType,
         filename: asset.filename,

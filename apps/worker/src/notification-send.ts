@@ -15,6 +15,7 @@ import {
 } from '@repo/db';
 import { and, eq } from 'drizzle-orm';
 import { sendEmail, emailBody, type EmailConfig, type SendResult } from '@repo/mailer';
+import { guardDeliveryPayload } from './identity-guard';
 
 // Sends one claimed notification_delivery row over its channel. Email transport lives
 // in @repo/mailer (shared with the authentication mail sent from @repo/auth); Telegram
@@ -207,7 +208,7 @@ export async function deliverNotification(row: DeliveryRow): Promise<SendResult>
   return sendDelivery({
     channel: row.channel,
     recipient: row.recipient,
-    payload: row.payload,
+    payload: await guardDeliveryPayload(row),
     config: await getDeliveryConfig(teamId),
   });
 }

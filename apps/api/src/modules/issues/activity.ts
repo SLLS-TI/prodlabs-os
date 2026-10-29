@@ -9,6 +9,7 @@ import {
   initiative,
   cycle,
   maskActor,
+  maskOrphanActor,
   type ActivityPayload,
   type ActivitySide,
 } from '@repo/db';
@@ -107,7 +108,10 @@ function mapFeedItem(row: {
 // only.
 function maskFeedItem(item: FeedItemRow, mask: MaskContext | null): FeedItemRow {
   if (!mask) return item;
-  const masked = maskActor(item, mask.face, isMaskableActor(mask, item.actorUserId));
+  const masked = maskOrphanActor(
+    maskActor(item, mask.face, isMaskableActor(mask, item.actorUserId)),
+    mask.face,
+  );
   const faceUsername = mask.face?.username ?? null;
   const body =
     masked.body != null
@@ -118,6 +122,9 @@ function maskFeedItem(item: FeedItemRow, mask: MaskContext | null): FeedItemRow 
     payload = maskUserSides(payload, mask);
   else if (masked.action === 'title' || masked.action === 'description')
     payload = maskPayloadProse(payload, mask);
+  // The repository and the pull request URL name the developer's own account.
+  else if (masked.action === 'git_pr' || masked.action === 'github_pr')
+    payload = { subject: payload.subject };
   return body === masked.body && payload === masked.payload ? masked : { ...masked, body, payload };
 }
 
@@ -308,7 +315,8 @@ async function listReplies(
 export async function listFeedRange(
   issueId: number,
   from: string,
-  to?: string | null,
+  to: string | null | undefined,
+  canSeeTime: boolean,
   mask: MaskContext | null = null,
 ): Promise<FeedItemRow[]> {
   const fromDate = new Date(from);
@@ -324,6 +332,7 @@ export async function listFeedRange(
         eq(issueActivity.issueId, issueId),
         gte(issueActivity.createdAt, fromDate),
         toDate ? lt(issueActivity.createdAt, toDate) : undefined,
+        canSeeTime ? undefined : sql`${issueActivity.action} is distinct from 'worklog'`,
       ),
     )
     .orderBy(issueActivity.createdAt, issueActivity.id);
@@ -570,6 +579,7 @@ async function enqueueMentionRuns(
       projectId,
       issueId: comment.issueId,
       sourceActivityId: comment.id,
+      actorUserId: comment.actorUserId,
       prompt: comment.body ?? '',
     });
   }

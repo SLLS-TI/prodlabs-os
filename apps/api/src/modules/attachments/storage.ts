@@ -12,6 +12,7 @@ import {
 import { putObject, getObject, deleteObject } from '@repo/storage';
 import { HttpError } from '#shared/lib';
 import { getLimits } from '#shared/limits';
+import { publicFilename } from '#shared/identity-guard';
 
 // Re-exported so this stays the one place every attachment-owning module (issue,
 // chat, document, initiative) imports the key/filename helpers from — the
@@ -216,6 +217,7 @@ export function stripAttachmentEmbeds(text: string, publicId: string): string {
 // public and same-origin as the planner UI, so serving an HTML or SVG file inline
 // would be stored XSS. attachmentResponseHeaders is what keeps them inert.
 export async function attachmentObjectResponse(input: {
+  projectId: number;
   s3Key: string;
   contentType: string;
   filename: string;
@@ -237,7 +239,7 @@ export async function attachmentObjectResponse(input: {
   return new Response(obj.body, {
     headers: attachmentResponseHeaders({
       contentType: input.contentType || obj.contentType,
-      filename: input.filename,
+      filename: await publicFilename(input.projectId, input.filename),
       contentLength: obj.contentLength,
       etag,
       download: input.download,

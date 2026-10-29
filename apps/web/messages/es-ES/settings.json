@@ -180,6 +180,8 @@
     "slackOwnerOnly": "Solo el propietario del proyecto puede configurar el canal de Slack.",
     "slackEnabled": "Publicar en Slack",
     "slackEnabledHint": "Cuando está activado, los eventos de incidencias y los resúmenes diarios se publican en el canal de abajo.",
+    "slackInternalOnly": "Canal interno",
+    "slackInternalOnlyHint": "Ningún cliente está en este canal. Actívalo para publicar aquí los nombres reales del equipo; si no, cada publicación muestra la cara del proyecto.",
     "slackChannel": "Canal",
     "slackChannelHint": "Un id de canal (C01234567) o #nombre. Invita primero al bot al canal, o las publicaciones fallan con not_in_channel.",
     "healthWeight": {

@@ -17,12 +17,19 @@ import {
 } from '#modules/issues/links';
 import { getParentRef, listSubtasks, type IssueRef } from '#modules/issues/subtasks';
 import { applyFilters } from '#modules/views/filters';
+import { isMaskableActor, projectMaskContext, type MaskContext } from '#shared/access';
+import { projectIdentityScrubber } from '#shared/identity-guard';
 
 // Public read-only sharing: an issue or a saved view carries an unguessable
 // share_token that, when set, makes it readable without a session through the
 // /share/* routes. Enabling sets the token; revoking clears it. The public reads
 // return a self-contained bundle (project scaffold + the entity) so the read-only
 // page needs no other authenticated call.
+//
+// A public link reaches people outside the agency, clients included, so every bundle
+// is masked as a client read is: the people who are not current clients read as the
+// project's face, in ids, names, avatars and free text, and the feed carries no time
+// entries.
 
 // The project scaffold a read-only page needs to render issues: the same shape as
 // GET /projects/:projectKey minus the caller's viewer/permissions. Member emails
@@ -71,7 +78,11 @@ export interface SharedViewBundle {
 // The scaffold for a bundle. Without `extended` it carries only what the reduced
 // issue payload can reference — the columns and issue types — so a link that hides
 // the people, labels and custom fields does not name them in the scaffold either.
-async function buildScaffold(project: ProjectRow, extended: boolean): Promise<ShareScaffold> {
+async function buildScaffold(
+  project: ProjectRow,
+  extended: boolean,
+  mask: MaskContext,
+): Promise<ShareScaffold> {
   const [columns, issueTypes, labels, labelGroups, assignees, customFields] = await Promise.all([
     listColumns(project.id),
     listIssueTypes(project.id),
@@ -88,7 +99,7 @@ async function buildScaffold(project: ProjectRow, extended: boolean): Promise<Sh
     labels,
     labelGroups,
     // Drop the email — a public page renders names and avatars only.
-    assignees: assignees.map((a) => ({
+    assignees: maskAssignees(assignees, mask).map((a) => ({
       userId: a.userId,
       name: a.name,
       image: a.image,
@@ -97,6 +108,40 @@ async function buildScaffold(project: ProjectRow, extended: boolean): Promise<Sh
     })),
     customFields,
   };
+}
+
+type Candidate = Awaited<ReturnType<typeof listAssigneeCandidates>>[number];
+
+// The current clients as themselves, and everyone else collapsed into one face entry.
+function maskAssignees(assignees: Candidate[], mask: MaskContext): Candidate[] {
+  const kept = assignees.filter((a) => !isMaskableActor(mask, a.userId));
+  const face = mask.face;
+  if (!face || kept.length === assignees.length || kept.some((a) => a.userId === face.userId)) {
+    return kept;
+  }
+  const faceEntry: Candidate = {
+    ...assignees[0],
+    userId: face.userId,
+    name: face.name ?? '',
+    image: face.image,
+    kind: 'member',
+    agentKind: null,
+  };
+  return [faceEntry, ...kept];
+}
+
+// Rewrites the person ids an issue carries to the face (null with no face).
+function maskIssueIds<T extends IssueRow>(row: T, mask: MaskContext): T {
+  const faceId = mask.face?.userId ?? null;
+  return {
+    ...row,
+    assigneeUserId: isMaskableActor(mask, row.assigneeUserId) ? faceId : row.assigneeUserId,
+    delegateUserId: isMaskableActor(mask, row.delegateUserId) ? faceId : row.delegateUserId,
+  };
+}
+
+async function maskBundle<T>(projectId: number, bundle: T): Promise<T> {
+  return (await projectIdentityScrubber(projectId))(bundle);
 }
 
 // Cuts an issue down to what a non-extended share exposes: its title, description,
@@ -118,8 +163,8 @@ function redactIssue<T extends IssueRow>(row: T): T {
 // The read-only feed shows the newest activity; a public share never paginates,
 // so it is capped at listFeed's max page (100). An issue with more than that
 // shows its latest 100 entries.
-async function issueFeed(issueId: number): Promise<FeedItemRow[]> {
-  const page = await listFeed(issueId, { limit: 100 });
+async function issueFeed(issueId: number, mask: MaskContext): Promise<FeedItemRow[]> {
+  const page = await listFeed(issueId, { limit: 100 }, false, mask);
   return page.items;
 }
 
@@ -139,29 +184,35 @@ async function issueBundle(
 ): Promise<SharedIssueBundle> {
   const project = await getProjectById(issueRow.projectId);
   if (!project) throw new Error('project missing for shared issue');
+  const mask = await projectMaskContext(project.id, '');
   const [scaffold, fields, feed, links, parent, subtasks] = await Promise.all([
-    buildScaffold(project, extended),
+    buildScaffold(project, extended, mask),
     extended ? getIssueFieldValues(issueRow.id) : [],
-    extended ? issueFeed(issueRow.id) : [],
+    extended ? issueFeed(issueRow.id, mask) : [],
     listIssueLinks(issueRow.id),
     getParentRef(issueRow.parentId),
     listSubtasks(issueRow.id),
   ]);
   const shown = (id: number) => !onlyIssueIds || onlyIssueIds.has(id);
-  const visible = extended ? issueRow : redactIssue(issueRow);
-  return {
+  const visible = extended ? maskIssueIds(issueRow, mask) : redactIssue(issueRow);
+  const faceId = mask.face?.userId ?? null;
+  return maskBundle(project.id, {
     project: scaffold,
     issue: {
       ...visible,
       shareToken: keepShareToken ? issueRow.shareToken : null,
       shareExtended: keepShareToken && issueRow.shareExtended,
-      fields,
+      fields: fields.map((f) =>
+        f.fieldType === 'member' && typeof f.value === 'string' && isMaskableActor(mask, f.value)
+          ? { ...f, value: faceId }
+          : f,
+      ),
       links: links.filter((link) => shown(link.issue.id)),
       parent: parent && shown(parent.id) ? parent : null,
       subtasks: subtasks.filter((subtask) => shown(subtask.id)),
     },
     feed,
-  };
+  });
 }
 
 // --- Enable / revoke ------------------------------------------------------------
@@ -240,8 +291,9 @@ export async function getSharedView(token: string): Promise<SharedViewBundle | n
   if (!view) return null;
   const project = await getProjectById(view.projectId);
   if (!project) return null;
+  const mask = await projectMaskContext(project.id, '');
   const [scaffold, issues] = await Promise.all([
-    buildScaffold(project, view.shareExtended),
+    buildScaffold(project, view.shareExtended, mask),
     listIssues(project),
   ]);
   // Apply the view's own filters here so the bundle carries only the issues the
@@ -257,7 +309,7 @@ export async function getSharedView(token: string): Promise<SharedViewBundle | n
     if (row.parentId !== null)
       subtaskCounts.set(row.parentId, (subtaskCounts.get(row.parentId) ?? 0) + 1);
   const cards = await attachBoardLinks(visible, project.id);
-  return {
+  return maskBundle(project.id, {
     project: scaffold,
     // The filters stay on the server: they can name assignees, labels and custom
     // field values a link without `extended` withholds, and the bundle already
@@ -270,12 +322,12 @@ export async function getSharedView(token: string): Promise<SharedViewBundle | n
     },
     // A shared board never leaks its issues' own individual share tokens.
     issues: cards.map((i) => ({
-      ...(view.shareExtended ? i : redactIssue(i)),
+      ...(view.shareExtended ? maskIssueIds(i, mask) : redactIssue(i)),
       shareToken: null,
       links: i.links.filter((link) => shown.has(link.issueId)),
       subtaskCount: subtaskCounts.get(i.id) ?? 0,
     })),
-  };
+  });
 }
 
 // The read-only detail of one issue opened from a shared board. Enforces that the

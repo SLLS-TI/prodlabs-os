@@ -14,6 +14,8 @@ export interface SlackChannelForm {
   setChannel: (v: string) => void;
   enabled: boolean;
   setEnabled: (v: boolean) => void;
+  internalOnly: boolean;
+  setInternalOnly: (v: boolean) => void;
   dirty: boolean;
 }
 
@@ -24,19 +26,23 @@ export function useSlackChannelForm(projectKey: string): SlackChannelForm {
 
   const [channel, setChannel] = useState('');
   const [enabled, setEnabled] = useState(false);
+  const [internalOnly, setInternalOnly] = useState(false);
 
   const data = settingsQuery.data;
   useEffect(() => {
     setChannel(data?.channel ?? '');
     setEnabled(data?.enabled ?? false);
+    setInternalOnly(data?.internalOnly ?? false);
   }, [data]);
 
   const dirty =
     data != null &&
-    (channel.trim() !== data.channel || (enabled && channel.trim().length > 0) !== data.enabled);
+    (channel.trim() !== data.channel ||
+      (enabled && channel.trim().length > 0) !== data.enabled ||
+      internalOnly !== data.internalOnly);
 
   async function save() {
-    await update.mutateAsync({ channel: channel.trim(), enabled });
+    await update.mutateAsync({ channel: channel.trim(), enabled, internalOnly });
   }
 
   return {
@@ -48,6 +54,8 @@ export function useSlackChannelForm(projectKey: string): SlackChannelForm {
     setChannel,
     enabled,
     setEnabled,
+    internalOnly,
+    setInternalOnly,
     dirty,
   };
 }

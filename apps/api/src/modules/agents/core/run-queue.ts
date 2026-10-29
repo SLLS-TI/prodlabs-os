@@ -1,4 +1,4 @@
-import { db, agentRun, issue, project } from '@repo/db';
+import { db, agentRun, issue, project, projectMember } from '@repo/db';
 import { and, desc, eq, gt, inArray, isNotNull, lt, sql } from 'drizzle-orm';
 import { intEnv, iso } from '#shared/lib';
 import type { AgentRunTrigger } from '../model';
@@ -46,12 +46,16 @@ export async function enqueueAgentRun(input: {
   projectId: number;
   issueId: number;
   sourceActivityId: number | null;
+  // Who caused the run. A client causes none: the agent works with the agency's
+  // identities and writes what the client then reads.
+  actorUserId: string | null;
   prompt: string;
   trigger?: 'mention' | 'delegation' | 'field';
   // Seconds the run stays unclaimable after it is queued, so the issue can still be
   // edited before the agent reads it.
   delaySeconds?: number;
 }): Promise<void> {
+  if (input.actorUserId && (await isClient(input.projectId, input.actorUserId))) return;
   const delay = Math.max(0, Math.trunc(input.delaySeconds ?? 0));
   await db.insert(agentRun).values({
     agentId: input.agentId,
@@ -62,6 +66,14 @@ export async function enqueueAgentRun(input: {
     trigger: input.trigger ?? (input.sourceActivityId == null ? 'delegation' : 'mention'),
     nextAttemptAt: delay > 0 ? sql`now() + make_interval(secs => ${delay})` : undefined,
   });
+}
+
+async function isClient(projectId: number, userId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ role: projectMember.role })
+    .from(projectMember)
+    .where(and(eq(projectMember.projectId, projectId), eq(projectMember.userId, userId)));
+  return row?.role === 'client';
 }
 
 export interface ClaimedRun {

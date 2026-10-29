@@ -2,6 +2,8 @@ import { Elysia, t } from 'elysia';
 import { noContent } from '#shared/http';
 import { authContext } from '#shared/auth-context';
 import { requireUser } from '#shared/access';
+import { HttpError } from '#shared/lib';
+import { viewerAvatarId } from '#shared/identity-guard';
 import { errors } from '#shared/responses';
 import { AvatarResponse, avatarParams, uploadAvatarBody } from './model';
 import { clearAvatar, readAvatar, replaceAvatar } from './service';
@@ -37,17 +39,24 @@ export const avatarRoutes = new Elysia({ name: 'avatars', detail: { tags: ['Avat
   )
 
   // Public preview URL: unauthenticated so it works in an <img> tag. The id is an
-  // unguessable uuid. Only raster image types are stored, and nosniff plus the
+  // unguessable uuid. A signed-in client asking for an agency member's picture is
+  // served the project face's. Only raster image types are stored, and nosniff plus the
   // media allowlist keep the bytes from being interpreted as anything executable.
   .get(
     '/avatars/:id/raw',
-    async ({ params }) => {
-      const obj = await readAvatar(params.id);
+    async ({ params, user }) => {
+      const id = await viewerAvatarId(params.id, user);
+      if (!id) throw new HttpError(404, 'Avatar not found');
+      const obj = await readAvatar(id);
       const ct = /^image\//i.test(obj.contentType) ? obj.contentType : 'application/octet-stream';
+      // The bytes behind an id never change. A substituted picture depends on who asks,
+      // so it is never cached.
       const headers: Record<string, string> = {
         'Content-Type': ct,
         'X-Content-Type-Options': 'nosniff',
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        ...(id === params.id
+          ? { 'Cache-Control': 'public, max-age=31536000, immutable' }
+          : { 'Cache-Control': 'private, no-store', Vary: 'Cookie' }),
       };
       if (obj.contentLength != null) headers['Content-Length'] = String(obj.contentLength);
       return new Response(obj.body, { headers });

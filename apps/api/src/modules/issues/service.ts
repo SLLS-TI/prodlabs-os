@@ -34,7 +34,12 @@ import {
 import type { IssueQuery } from '#modules/agents/core/issue-query';
 import { iso, num, numOrNull, HttpError } from '#shared/lib';
 import type { ProjectRow } from '#modules/projects/service';
-import { assertProjectFeature, isMaskableActor, type MaskContext } from '#shared/access';
+import {
+  assertClientUserTarget,
+  assertProjectFeature,
+  isMaskableActor,
+  type MaskContext,
+} from '#shared/access';
 import {
   getCustomFieldById,
   type CustomFieldRow,
@@ -753,12 +758,15 @@ export interface NewIssueInput {
 async function assertAssignments(
   projectId: number,
   patch: { assigneeUserId?: string | null; delegateUserId?: string | null },
+  actorUserId: string | null | undefined,
 ): Promise<void> {
   if (patch.assigneeUserId) {
+    await assertClientUserTarget(projectId, actorUserId, patch.assigneeUserId);
     const role = await getMembership(projectId, patch.assigneeUserId);
     if (!role) throw new HttpError(400, 'Assignee must be a project member');
   }
   if (patch.delegateUserId) {
+    await assertClientUserTarget(projectId, actorUserId, patch.delegateUserId);
     if (!(await isProjectAgent(projectId, patch.delegateUserId)))
       throw new HttpError(400, 'Delegate must be an agent of this project');
   }
@@ -884,7 +892,7 @@ export async function createIssue(
   input: NewIssueInput,
   actorUserId?: string | null,
 ): Promise<IssueRow> {
-  await assertAssignments(project.id, input);
+  await assertAssignments(project.id, input, actorUserId);
   await assertInitiative(project.id, input.initiativeId);
   await assertCycle(project.id, input.cycleId);
   await assertColumn(project.id, input.columnId);
@@ -1062,7 +1070,7 @@ export async function updateIssue(
     patch.startDate !== undefined ? patch.startDate : before.startDate,
     patch.dueDate !== undefined ? patch.dueDate : before.dueDate,
   );
-  await assertAssignments(before.projectId, patch);
+  await assertAssignments(before.projectId, patch, actorId(actor));
   await assertInitiative(before.projectId, patch.initiativeId);
   await assertCycle(before.projectId, patch.cycleId, before.cycleId);
   await assertColumn(before.projectId, patch.columnId);
@@ -1151,6 +1159,7 @@ async function enqueueDelegateRun(after: IssueRow, actor?: ActivityActor): Promi
     projectId: after.projectId,
     issueId: after.id,
     sourceActivityId: null,
+    actorUserId: actorId(actor),
     prompt: `Work item ${after.identifier}: "${after.title}" has been delegated to you. Review it and take the appropriate next step.`,
     delaySeconds: agent.delegationDelaySec,
   });
@@ -1530,6 +1539,7 @@ async function enqueueFieldRun(
     projectId,
     issueId,
     sourceActivityId: null,
+    actorUserId: actorUserId ?? null,
     trigger: 'field',
     prompt: `Work item ${row.identifier}: "${row.title}" now has you as its "${field.name}". Review it and take the appropriate next step.`,
     delaySeconds: agent.delaySec,
@@ -1605,7 +1615,10 @@ export async function setIssueFieldValue(
     field.fieldType === 'member' && typeof input.value === 'string' && input.value !== ''
       ? input.value
       : null;
-  if (memberUserId) await assertFieldMember(projectId, field.memberScope, memberUserId);
+  if (memberUserId) {
+    await assertClientUserTarget(projectId, actorUserId, memberUserId);
+    await assertFieldMember(projectId, field.memberScope, memberUserId);
+  }
 
   // The markdown a field held before this write, so only the mentions the write
   // adds reach anyone.

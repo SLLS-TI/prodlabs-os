@@ -3,6 +3,7 @@ import { noContent } from '#shared/http';
 import { guards, entityGuard } from '#shared/guards';
 import { authContext } from '#shared/auth-context';
 import { HttpError } from '#shared/lib';
+import { checkMaskViewer, type AuthUser } from '#shared/access';
 import { commonErrors, errors } from '#shared/responses';
 import { getIssueProjectId } from '#modules/issues/service';
 import { getView } from '#modules/views/service';
@@ -25,6 +26,14 @@ import {
   getSharedViewIssue,
 } from './service';
 
+// A client may not publish a link: it would hand people outside the project what the
+// client reads.
+async function refuseClient(projectId: number, user: AuthUser | null): Promise<void> {
+  if (await checkMaskViewer(projectId, user)) {
+    throw new HttpError(403, 'A client cannot share');
+  }
+}
+
 export const shareRoutes = new Elysia({ name: 'share', detail: { tags: ['Share'] } })
   .use(authContext)
   .use(guards)
@@ -45,7 +54,8 @@ export const shareRoutes = new Elysia({ name: 'share', detail: { tags: ['Share']
 
   .post(
     '/issues/:issueId/share',
-    async ({ params, body }) => {
+    async ({ params, body, projectId, user }) => {
+      await refuseClient(projectId, user);
       const token = await enableIssueShare(params.issueId, body?.extended);
       if (!token) throw new HttpError(404, 'Issue not found');
       return { token };
@@ -61,7 +71,8 @@ export const shareRoutes = new Elysia({ name: 'share', detail: { tags: ['Share']
 
   .delete(
     '/issues/:issueId/share',
-    async ({ params }) => {
+    async ({ params, projectId, user }) => {
+      await refuseClient(projectId, user);
       const ok = await disableIssueShare(params.issueId);
       if (!ok) throw new HttpError(404, 'Issue not found');
       return noContent();
@@ -76,7 +87,8 @@ export const shareRoutes = new Elysia({ name: 'share', detail: { tags: ['Share']
 
   .post(
     '/views/:viewId/share',
-    async ({ params, body }) => {
+    async ({ params, body, projectId, user }) => {
+      await refuseClient(projectId, user);
       const token = await enableViewShare(params.viewId, body?.extended);
       if (!token) throw new HttpError(404, 'View not found');
       return { token };
@@ -92,7 +104,8 @@ export const shareRoutes = new Elysia({ name: 'share', detail: { tags: ['Share']
 
   .delete(
     '/views/:viewId/share',
-    async ({ params }) => {
+    async ({ params, projectId, user }) => {
+      await refuseClient(projectId, user);
       const ok = await disableViewShare(params.viewId);
       if (!ok) throw new HttpError(404, 'View not found');
       return noContent();

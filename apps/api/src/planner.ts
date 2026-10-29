@@ -1,6 +1,7 @@
 import { Elysia } from 'elysia';
 import { HttpError, pgErrorCode } from './shared/lib';
 import { authContext } from './shared/auth-context';
+import { guardResponseIdentities, guardSearchQuery } from './shared/identity-guard';
 import { projectRoutes, projectLogoRawRoute } from './modules/projects';
 import { teamRoutes } from './modules/teams';
 import { memberRoutes } from './modules/members';
@@ -57,8 +58,15 @@ import { linkPreviewRoutes } from './modules/link-previews';
 // Errors are normalized to a { error } JSON body: HttpError carries its own
 // status; a Postgres unique_violation becomes 409; request-body validation
 // failures become 400; anything else is a 500 with the error logged.
+//
+// For a viewer who is a client in any project, every response body (error bodies and
+// the routes MCP tools dispatch to included) has agency identities rewritten to the
+// project's face (shared/identity-guard.ts), and their search text is scrubbed the
+// same way before the handler runs.
 export const planner = new Elysia({ name: 'planner' })
   .use(authContext)
+  .onBeforeHandle({ as: 'global' }, guardSearchQuery)
+  .mapResponse({ as: 'global' }, guardResponseIdentities)
   .onError({ as: 'global' }, ({ code, error, set }) => {
     if (error instanceof HttpError) {
       set.status = error.status;
